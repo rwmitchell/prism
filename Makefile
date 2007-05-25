@@ -13,11 +13,11 @@ MSC = ./misc
 DST = ./bin
 NST = /usr/local/p
 
-.o:	$(SOURCE)/%.c
-	$(CC) -c $(CFLAGS) -I$(MISC) $<
+#.o:  $(SOURCE)/%.c
+#	$(CC) -c $(CFLAGS) -I$(MISC) $<
 
-.o:	$(MSC)/%.c
-	$(CC) -c $(CFLAGS) $<
+#.o:  $(MSC)/%.c
+#	$(CC) -c $(CFLAGS) $<
 
 ######## Define C programs ###########
 
