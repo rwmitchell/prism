@@ -38,6 +38,9 @@ all:                \
 	$(DST)/tk_helloworld \
 	$(DST)/tk_listbox \
 	$(DST)/tk_windows \
+	$(DST)/macperl    \
+	$(DST)/maclist    \
+	$(DST)/call       \
 
 install:            \
 	$(NST)/color      \
@@ -49,6 +52,9 @@ install:            \
 	$(NST)/tk_helloworld \
 	$(NST)/tk_listbox \
 	$(NST)/tk_windows \
+	$(NST)/macperl    \
+	$(NST)/maclist    \
+	$(NST)/call       \
 
 
 $(DST):
@@ -84,6 +90,15 @@ $(DST)/tk_listbox:	$(SRC)/tk_listbox.pl
 	$(INSTALL)
 
 $(DST)/tk_windows:	$(SRC)/tk_windows.pl
+	$(INSTALL)
+
+$(DST)/macperl:	$(SRC)/macperl.pl
+	$(INSTALL)
+
+$(DST)/maclist:	$(SRC)/maclist.pl
+	$(INSTALL)
+
+$(DST)/call:	$(SRC)/call.pl
 	$(INSTALL)
 
 ######## Describe how to Install #####
