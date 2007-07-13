@@ -13,17 +13,16 @@ MSC = ./misc
 DST = ./bin
 NST = /usr/local/p
 
-#.o:  $(SOURCE)/%.c
-#	$(CC) -c $(CFLAGS) -I$(MISC) $<
+%.o:  $(SRC)/%.c
+	$(CC) -c $(CFLAGS) -I$(MSC) $<
 
-#.o:  $(MSC)/%.c
-#	$(CC) -c $(CFLAGS) $<
+%.o:  $(MSC)/%.c
+	$(CC) -c $(CFLAGS) $<
 
 ######## Define C programs ###########
 
-# CPROG_SRC = CPROG.c
-
-# CPROG_OBJ = CPROG.o
+open_multiple_SRC= $(SRC)/open_multiple.c $(MSC)/io.c
+open_multiple_OBJ= $(SRC)/open_multiple.o $(MSC)/io.o
 
 ######## Identify what to Make #######
 
@@ -41,6 +40,7 @@ all:                \
 	$(DST)/macperl    \
 	$(DST)/maclist    \
 	$(DST)/call       \
+	$(DST)/open_multiple \
 
 install:            \
 	$(NST)/color      \
@@ -62,8 +62,8 @@ $(DST):
 
 ######## Describe how to Make ########
 
-# $(DST)/CPROG: $(CPROG_OBJ
-# 	$(CC) $(CFLAGS) -o $@ $(CPROG_OBJ) $(LIB)
+$(DST)/open_multiple: $(open_multiple_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(open_multiple_OBJ) $(LIB)
 
 $(DST)/color:	$(SRC)/color.pl
 	$(INSTALL)
@@ -110,4 +110,9 @@ $(NST)/SCRIPT:	$(DST)/SCRIPT
 	$(INSTALL)
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
+
+open_multiple.o:
+
+misc.o:
+
 
