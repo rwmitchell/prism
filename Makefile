@@ -24,7 +24,19 @@ NST = /usr/local/p
 open_multiple_SRC= $(SRC)/open_multiple.c $(MSC)/io.c
 open_multiple_OBJ= $(SRC)/open_multiple.o $(MSC)/io.o
 
+bd_OBJ=	$(SRC)/bd.c
+
+ifdef_OBJ=	$(SRC)/ifdef.c
+
+tbo_OBJ=	$(SRC)/testbyteorder.c
+
 ######## Identify what to Make #######
+
+var:
+	@ echo OSTYPE: $(OSTYPE)
+	@ echo MACHTYPE: $(MACHTYPE)
+	@ echo
+	@ echo "make all   to make the programs"
 
 all:                \
 	$(DST)            \
@@ -41,6 +53,11 @@ all:                \
 	$(DST)/maclist    \
 	$(DST)/call       \
 	$(DST)/open_multiple \
+	$(DST)/bd         \
+	$(DST)/ifdef      \
+	
+# 2007-08-22: does not compile
+#	$(DST)/testbyteorder \
 
 install:            \
 	$(NST)/color      \
@@ -55,6 +72,7 @@ install:            \
 	$(NST)/macperl    \
 	$(NST)/maclist    \
 	$(NST)/call       \
+	$(NST)/bd         \
 
 
 $(DST):
@@ -64,6 +82,15 @@ $(DST):
 
 $(DST)/open_multiple: $(open_multiple_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(open_multiple_OBJ) $(LIB)
+
+$(DST)/bd: $(bd_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(bd_OBJ) $(LIB)
+
+$(DST)/ifdef: $(ifdef_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(ifdef_OBJ) $(LIB)
+
+$(DST)/testbyteorder: $(testbyteorder_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(testbyteorder_OBJ) $(LIB)
 
 $(DST)/color:	$(SRC)/color.pl
 	$(INSTALL)
@@ -114,5 +141,4 @@ $(NST)/SCRIPT:	$(DST)/SCRIPT
 open_multiple.o:
 
 misc.o:
-
 
