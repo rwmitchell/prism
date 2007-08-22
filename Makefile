@@ -60,6 +60,11 @@ all:                \
 #	$(DST)/testbyteorder \
 
 install:            \
+	$(NST)/call       \
+	$(NST)/bd         \
+
+
+dont_install:
 	$(NST)/color      \
 	$(NST)/lockfile   \
 	$(NST)/readline   \
@@ -71,8 +76,6 @@ install:            \
 	$(NST)/tk_windows \
 	$(NST)/macperl    \
 	$(NST)/maclist    \
-	$(NST)/call       \
-	$(NST)/bd         \
 
 
 $(DST):
