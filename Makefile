@@ -133,10 +133,10 @@ $(DST)/call:	$(SRC)/call.pl
 
 ######## Describe how to Install #####
 
-# $(NST)/CPROG:	$(DST)/CPROG
-#		$(INSTALL)
+$(NST)/bd:	$(DST)/bd
+	$(INSTALL)
 
-$(NST)/SCRIPT:	$(DST)/SCRIPT
+$(NST)/call:	$(DST)/call
 	$(INSTALL)
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
