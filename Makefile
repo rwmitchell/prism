@@ -55,6 +55,7 @@ all:                \
 	$(DST)/open_multiple \
 	$(DST)/bd         \
 	$(DST)/ifdef      \
+	$(DST)/weather    \
 	
 # 2007-08-22: does not compile
 #	$(DST)/testbyteorder \
@@ -62,6 +63,7 @@ all:                \
 install:            \
 	$(NST)/call       \
 	$(NST)/bd         \
+	$(NST)/weather    \
 
 
 dont_install:
@@ -131,12 +133,18 @@ $(DST)/maclist:	$(SRC)/maclist.pl
 $(DST)/call:	$(SRC)/call.pl
 	$(INSTALL)
 
+$(DST)/weather:	$(SRC)/weather.pl
+	$(INSTALL)
+
 ######## Describe how to Install #####
 
 $(NST)/bd:	$(DST)/bd
 	$(INSTALL)
 
 $(NST)/call:	$(DST)/call
+	$(INSTALL)
+
+$(NST)/weather:	$(DST)/weather
 	$(INSTALL)
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
