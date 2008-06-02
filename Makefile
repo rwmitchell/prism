@@ -56,6 +56,8 @@ all:                \
 	$(DST)/bd         \
 	$(DST)/ifdef      \
 	$(DST)/weather    \
+	$(DST)/smooth     \
+	$(DST)/spline     \
 	
 # 2007-08-22: does not compile
 #	$(DST)/testbyteorder \
@@ -134,6 +136,12 @@ $(DST)/call:	$(SRC)/call.pl
 	$(INSTALL)
 
 $(DST)/weather:	$(SRC)/weather.pl
+	$(INSTALL)
+
+$(DST)/smooth:	$(SRC)/smooth.pl
+	$(INSTALL)
+
+$(DST)/spline:	$(SRC)/spline.pl
 	$(INSTALL)
 
 ######## Describe how to Install #####
