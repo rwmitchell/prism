@@ -9,26 +9,39 @@ include make.$(OSTYPE)
 # Change "CPROG" and "SCRIPT" to something more appropriate
 
 SRC = ./Source
+OBJ = ./obj
 MSC = ./misc
 DST = ./bin
 NST = /usr/local/p
 
-%.o:  $(SRC)/%.c
-	$(CC) -c $(CFLAGS) -I$(MSC) $<
+$(OBJ)/%.o:  $(SRC)/%.c
+	$(CC) -c $(CFLAGS) -I$(MSC) -o $@ $<
 
-%.o:  $(MSC)/%.c
-	$(CC) -c $(CFLAGS) $<
+$(OBJ)/%.o:  $(MSC)/%.c
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 ######## Define C programs ###########
 
 open_multiple_SRC= $(SRC)/open_multiple.c $(MSC)/io.c
-open_multiple_OBJ= $(SRC)/open_multiple.o $(MSC)/io.o
+open_multiple_OBJ := $(open_multiple_SRC:%.c=%.o)
+open_multiple_OBJ := $(open_multiple_OBJ:$(SRC)/%=$(OBJ)/%)
 
-bd_OBJ=	$(SRC)/bd.c
+bd_SRC=	$(SRC)/bd.c
+bd_OBJ :=	$(bd_SRC:%.c=%.o)
+bd_OBJ := $(bd_OBJ:$(SRC)/%=$(OBJ)/%)
 
-ifdef_OBJ=	$(SRC)/ifdef.c
+ifdef_SRC=	$(SRC)/ifdef.c
+ifdef_OBJ :=	$(ifdef_SRC:%.c=%.o)
+ifdef_OBJ := $(ifdef_OBJ:$(SRC)/%=$(OBJ)/%)
 
-tbo_OBJ=	$(SRC)/testbyteorder.c
+# this doesn't compile
+tbo_SRC=	$(SRC)/testbyteorder.c
+tbo_OBJ :=	$(tbo_SRC:%.c=%.o)
+tbo_OBJ := $(tbo_OBJ:$(SRC)/%=$(OBJ)/%)
+
+getopt_SRC=	$(SRC)/getopt_long.c
+getopt_OBJ :=	$(getopt_SRC:%.c=%.o)
+getopt_OBJ := $(getopt_OBJ:$(SRC)/%=$(OBJ)/%)
 
 ######## Identify what to Make #######
 
@@ -39,6 +52,7 @@ var:
 	@ echo "make all   to make the programs"
 
 all:                \
+	$(OBJ)            \
 	$(DST)            \
 	$(DST)/color      \
 	$(DST)/lockfile   \
@@ -55,6 +69,7 @@ all:                \
 	$(DST)/open_multiple \
 	$(DST)/bd         \
 	$(DST)/ifdef      \
+	$(DST)/getopt_long\
 	$(DST)/weather    \
 	$(DST)/smooth     \
 	$(DST)/spline     \
@@ -82,6 +97,9 @@ dont_install:
 	$(NST)/maclist    \
 
 
+$(OBJ):
+	mkdir $(OBJ)
+
 $(DST):
 	mkdir $(DST)
 
@@ -95,6 +113,9 @@ $(DST)/bd: $(bd_OBJ)
 
 $(DST)/ifdef: $(ifdef_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(ifdef_OBJ) $(LIB)
+
+$(DST)/getopt_long: $(getopt_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(getopt_OBJ) $(LIB)
 
 $(DST)/testbyteorder: $(testbyteorder_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(testbyteorder_OBJ) $(LIB)
