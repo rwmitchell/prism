@@ -30,6 +30,10 @@ bd_SRC=	$(SRC)/bd.c
 bd_OBJ :=	$(bd_SRC:%.c=%.o)
 bd_OBJ := $(bd_OBJ:$(SRC)/%=$(OBJ)/%)
 
+bittest_SRC=	$(SRC)/bittest.c
+bittest_OBJ :=	$(bittest_SRC:%.c=%.o)
+bittest_OBJ := $(bittest_OBJ:$(SRC)/%=$(OBJ)/%)
+
 ifdef_SRC=	$(SRC)/ifdef.c
 ifdef_OBJ :=	$(ifdef_SRC:%.c=%.o)
 ifdef_OBJ := $(ifdef_OBJ:$(SRC)/%=$(OBJ)/%)
@@ -57,22 +61,11 @@ all:                \
 	$(DST)/color      \
 	$(DST)/lockfile   \
 	$(DST)/readline   \
-	$(DST)/roman      \
-	$(DST)/tk_canvas  \
-	$(DST)/tk_frames  \
-	$(DST)/tk_helloworld \
-	$(DST)/tk_listbox \
-	$(DST)/tk_windows \
-	$(DST)/macperl    \
-	$(DST)/maclist    \
-	$(DST)/call       \
 	$(DST)/open_multiple \
 	$(DST)/bd         \
 	$(DST)/ifdef      \
 	$(DST)/getopt_long\
-	$(DST)/weather    \
-	$(DST)/smooth     \
-	$(DST)/spline     \
+	$(DST)/bittest    \
 	
 # 2007-08-22: does not compile
 #	$(DST)/testbyteorder \
@@ -80,7 +73,7 @@ all:                \
 install:            \
 	$(NST)/call       \
 	$(NST)/bd         \
-	$(NST)/weather    \
+	$(NST)/bittest    \
 
 
 dont_install:
@@ -110,6 +103,9 @@ $(DST)/open_multiple: $(open_multiple_OBJ)
 
 $(DST)/bd: $(bd_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(bd_OBJ) $(LIB)
+
+$(DST)/bittest: $(bittest_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(bittest_OBJ) $(LIB)
 
 $(DST)/ifdef: $(ifdef_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(ifdef_OBJ) $(LIB)
