@@ -9,110 +9,98 @@ include make.$(OSTYPE)
 CC_RELEASE_FLAGS = -O3
 CC_DEBUG_FLAGS   = -g DDEBUG_ALL
 
+RLS  = release
+DBG  = debug
+
 .PHONY: debug
 release: CCFLAGS += $(CC_RELEASE_FLAGS)
-release: all_release
+release: PTH    := $(RLS)
+release: make_it
 
 .PHONY: release
 debug: CCFLAGS += $(CC_DEBUG_FLAGS)
-debug: all_debug
+debug: PTH    := $(DBG)
+debug: make_it
 
 # Change "CPROG" and "SCRIPT" to something more appropriate
 
 DIR  = $(shell basename $(CURDIR))
 BAS  = $(HOME)/Build/$(DIR)
 BLD  = $(BAS)/$(MACHTYPE)
-OBJR = $(BLD)/obj
-OBJD = $(BLD)/objD
-DSTR = $(BLD)/bin
-DSTD = $(BLD)/binD
+DEP = $(BLD)/.dep
+
+DST = $(BLD)/$(PTH)/bin
+OBJ = $(BLD)/$(PTH)/obj
 
 SRC  = Source
 MSC  = misc
-DEP  = $(BLD)/.dep
 NST  = /usr/local/p
 
 # Additional object files used with other programs
-OBJR_FILES = \
-						$(OBJR)/io.o
+IO_FILES = \
+	$(OBJ)/io.o
 
-OBJD_FILES = \
-						$(OBJD)/io.o
+# Programs needing io.o
+IO_PROGS  = \
+						$(DST)/open_multiple \
 
-# All C programs
-DSTR_PROGS = \
-						$(DSTR)/open_multiple \
-						$(DSTR)/bd \
-						$(DSTR)/bittest \
-						$(DSTR)/ifdef \
+# Stand alone Programs
+DST_PROGS = \
+						$(DST)/bd            \
+						$(DST)/bittest       \
+						$(DST)/ifdef         \
+						$(DST)/getopt_long   \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
-						$(DSTR)/XXXSCRIPT1  \
+						$(DST)/XXXSCRIPT1  \
 
 DIRS = \
 			$(BAS) \
 			$(DEP) \
-			$(DSTR) \
-			$(DSTD) \
+			$(DST) \
 			$(NST)  \
-			$(OBJR) \
-			$(OBJD) \
+			$(OBJ) \
 
 $(DIRS):
 	mkdir -p $@
 
-$(DSTR)/%:	$(SRC)/%.pl
+$(DST)/%:	$(SRC)/%.pl
 	install -m ugo+rx $< $@
 
-$(DSTR)/%:	$(SRC)/%.sh
+$(DST)/%:	$(SRC)/%.sh
 	install -m ugo+rx $< $@
 
-$(NST)/%: $(DSTR)/%
+$(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
-$(OBJR)/%.o:	$(SRC)/%.c $(DEP)/%.d
-	$(CC) -c $(CFLAGS) -I$(SRC) -I$(MSC) -o $@ $<
+$(OBJ)/%.o:	$(SRC)/%.c
+	$(CC) -o $@ -c $(CFLAGS) $^
 
-$(OBJR)/%.o:	$(MSC)/%.c $(DEP)/%.d
-	$(CC) -c $(CFLAGS)                   -o $@ $<
+$(OBJ)/%.o:	$(MSC)/%.c
+	$(CC) -o $@ -c $(CFLAGS) $^
 
-$(OBJD)/%.o:	$(SRC)/%.c $(DEP)/%.d
-	$(CC) -c $(CFLAGS) -I$(SRC) -I$(MSC) -o $@ $<
-
-$(OBJD)/%.o:	$(MSC)/%.c $(DEP)/%.d
-	$(CC) -c $(CFLAGS)                   -o $@ $<
+$(DST)/%.c:	$(OBJ)/%.o
 
 ######## Define C programs ###########
 
-# open_multiple_SRC= $(SRC)/open_multiple.c $(MSC)/io.c
-# open_multiple_OBJ := $(open_multiple_SRC:%.c=%.o)
-# open_multiple_OBJ := $(open_multiple_OBJ:$(SRC)/%=$(OBJR)/%)
+# $(DST)/bd: $(OBJ)/bd.o
 
-# bd_SRC=	$(SRC)/bd.c
-# bd_OBJ :=	$(bd_SRC:%.c=%.o)
-# bd_OBJ := $(bd_OBJ:$(SRC)/%=$(OBJR)/%)
+# $(DST)/open_multiple: $(OBJ)/open_multiple.o $(OBJ)/io.o
 
-# bittest_SRC=	$(SRC)/bittest.c
-# bittest_OBJ :=	$(bittest_SRC:%.c=%.o)
-# bittest_OBJ := $(bittest_OBJ:$(SRC)/%=$(OBJR)/%)
+# $(DST)/bittest: $(OBJ)/bittest.o
 
-ifdef_SRC=	$(SRC)/ifdef.c
-ifdef_OBJ :=	$(ifdef_SRC:%.c=%.o)
-ifdef_OBJ := $(ifdef_OBJ:$(SRC)/%=$(OBJR)/%)
+# $(DST)/ifdef: $(OBJ)/ifdef.o
+
+# $(DST)/getopt_long: $(OBJ)/getopt_long.o
 
 # this doesn't compile
-tbo_SRC=	$(SRC)/testbyteorder.c
-tbo_OBJ :=	$(tbo_SRC:%.c=%.o)
-tbo_OBJ := $(tbo_OBJ:$(SRC)/%=$(OBJR)/%)
-
-getopt_SRC=	$(SRC)/getopt_long.c
-getopt_OBJ :=	$(getopt_SRC:%.c=%.o)
-getopt_OBJ := $(getopt_OBJ:$(SRC)/%=$(OBJR)/%)
+# $(DST)/testbyteorder: $(OBJ)/testbyteorder.o
 
 ######## Identify what to Make #######
 
 list:
+	@echo "debug release"
 	@echo "all install"
 	@echo "foo"
 	@echo "help help_install"
@@ -126,34 +114,16 @@ var:
 	@ echo
 	@ echo "make all   to make the programs"
 
-all_debug: \
-	$(DIRS)            \
-	$(OBJD)            \
-	$(DSTD)            \
-	$(DSTD_PROGS)      \
+all_make: \
+	$(DIRS)           \
+	$(OBJ)            \
+	$(DST)            \
+	$(DST_PROGS)      \
+	$(IO_PROGS)       \
 
-
-all_release: \
-	$(DIRS)            \
-	$(OBJR)            \
-	$(DSTR)            \
-	mylib              \
-	$(DSTR_PROGS)      \
-
-mylib:	\
-	$(OBJR_FILES) \
-
-#	$(DSTR)/color      \
-#	$(DSTR)/lockfile   \
-#	$(DSTR)/readline   \
-#	$(DSTR)/open_multiple \
-#	$(DSTR)/bd         \
-#	$(DSTR)/ifdef      \
-#	$(DSTR)/getopt_long\
-#	$(DSTR)/bittest    \
 
 # 2007-08-22: does not compile
-#	$(DSTR)/testbyteorder \
+#	$(DST)/testbyteorder \
 
 install:            \
 	$(NST)/bd         \
@@ -175,8 +145,17 @@ dont_install:
 	$(NST)/maclist    \
 
 
-$(DSTR_PROGS):	$(DSTR)/% : $(OBJR)/%.o $(OBJR_FILES) $(DEP)
-	$(CC) -o $@ $< $(LINKOPT) $(OBJR_FILES) -L$(LIB)
+$(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES) $(DEP)
+	$(CC) -o $@ $< $(LINKOPT) $(IO_FILES)
+
+$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEP)
+	$(CC) -o $@ $< $(LINKOPT)
+
+$(DST)/bd:	$(DST)/%:	$(OBJ)/bd.o $(OBJ)/io.o $(DEP)
+
+$(DST)/bittest:	$(DST)/%:	$(OBJ)/bittest.o $(OBJ)/io.o $(DEP)
+
+$(DST)/open_multiple:	$(DST)/%:	$(OBJ)/open_multiple.o $(OBJ)/io.o $(DEP)
 
 ##########################################################
 # Dependency code added here
@@ -197,93 +176,78 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 endif
 
 #This is the rule for creating the dependency files
-  # $(SRC)/%.h
-#$(LDP)/%.d: $(LRC)/%.c
-#	$(CC) $(CFLAGS) -I$(LRC) -MM -MT '$(patsubst $(LRC)/%,$(OBJR)/%, $(patsubst %.c,%.o,$<))' $< > $@
+$(DEP)/%.d: $(SRC)/%.c $(DEP)
+	$(CXX) $(CXXFLAGS) -I$(SHM) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
+# End of - Dependency code added here
 
 $(DEP)/%.d: $(SRC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(LRC) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJR)/%, $(patsubst %.c,%.o,$<))' $< > $@
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
 
 $(DEP)/%.d: $(MSC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(LRC) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(OBJR)/%, $(patsubst %.c,%.o,$<))' $< > $@
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
 
 # End of - Dependency code added here
 ##########################################################
 
 ######## Describe how to Make ########
 
-# $(DSTR)/open_multiple: $(open_multiple_OBJ)
-# 	$(CC) $(CFLAGS) -o $@ $(open_multiple_OBJ) $(LIB)
+# $(DST)/testbyteorder: $(testbyteorder_OBJ)
+# 	$(CC) $(CFLAGS) -o $@ $(testbyteorder_OBJ) $(LIB)
 
-#$(DSTR)/bd: $(bd_OBJ)
-#	$(CC) $(CFLAGS) -o $@ $(bd_OBJ) $(LIB)
-
-#$(DSTR)/bittest: $(bittest_OBJ)
-#	$(CC) $(CFLAGS) -o $@ $(bittest_OBJ) $(LIB)
-
-#$(DSTR)/ifdef: $(ifdef_OBJ)
-#	$(CC) $(CFLAGS) -o $@ $(ifdef_OBJ) $(LIB)
-
-$(DSTR)/getopt_long: $(getopt_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(getopt_OBJ) $(LIB)
-
-$(DSTR)/testbyteorder: $(testbyteorder_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(testbyteorder_OBJ) $(LIB)
-
-$(DSTR)/color:	$(SRC)/color.pl
+$(DST)/color:	$(SRC)/color.pl
 	$(INSTALL)
 
-$(DSTR)/lockfile:	$(SRC)/lockfile.pl
+$(DST)/lockfile:	$(SRC)/lockfile.pl
 	$(INSTALL)
 
-$(DSTR)/readline:	$(SRC)/readline.pl
+$(DST)/readline:	$(SRC)/readline.pl
 	$(INSTALL)
 
-$(DSTR)/roman:	$(SRC)/roman.pl
+$(DST)/roman:	$(SRC)/roman.pl
 	$(INSTALL)
 
-$(DSTR)/tk_canvas:	$(SRC)/tk_canvas.pl
+$(DST)/tk_canvas:	$(SRC)/tk_canvas.pl
 	$(INSTALL)
 
-$(DSTR)/tk_frames:	$(SRC)/tk_frames.pl
+$(DST)/tk_frames:	$(SRC)/tk_frames.pl
 	$(INSTALL)
 
-$(DSTR)/tk_helloworld:	$(SRC)/tk_helloworld.pl
+$(DST)/tk_helloworld:	$(SRC)/tk_helloworld.pl
 	$(INSTALL)
 
-$(DSTR)/tk_listbox:	$(SRC)/tk_listbox.pl
+$(DST)/tk_listbox:	$(SRC)/tk_listbox.pl
 	$(INSTALL)
 
-$(DSTR)/tk_windows:	$(SRC)/tk_windows.pl
+$(DST)/tk_windows:	$(SRC)/tk_windows.pl
 	$(INSTALL)
 
-$(DSTR)/macperl:	$(SRC)/macperl.pl
+$(DST)/macperl:	$(SRC)/macperl.pl
 	$(INSTALL)
 
-$(DSTR)/maclist:	$(SRC)/maclist.pl
+$(DST)/maclist:	$(SRC)/maclist.pl
 	$(INSTALL)
 
-$(DSTR)/call:	$(SRC)/call.pl
+$(DST)/call:	$(SRC)/call.pl
 	$(INSTALL)
 
-$(DSTR)/weather:	$(SRC)/weather.pl
+$(DST)/weather:	$(SRC)/weather.pl
 	$(INSTALL)
 
-$(DSTR)/smooth:	$(SRC)/smooth.pl
+$(DST)/smooth:	$(SRC)/smooth.pl
 	$(INSTALL)
 
-$(DSTR)/spline:	$(SRC)/spline.pl
+$(DST)/spline:	$(SRC)/spline.pl
 	$(INSTALL)
 
 ######## Describe how to Install #####
 
-$(NST)/bd:	$(DSTR)/bd
+$(NST)/bd:	$(DST)/bd
 	$(INSTALL)
 
-$(NST)/call:	$(DSTR)/call
+$(NST)/call:	$(DST)/call
 	$(INSTALL)
 
-$(NST)/weather:	$(DSTR)/weather
+$(NST)/weather:	$(DST)/weather
 	$(INSTALL)
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
@@ -292,3 +256,5 @@ open_multiple.o:
 
 misc.o:
 
+make_it:
+	make PTH=$(PTH) CFLAGS="$(CFLAGS)" all_make
