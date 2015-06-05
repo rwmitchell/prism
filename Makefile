@@ -12,12 +12,12 @@ CC_DEBUG_FLAGS   = -g DDEBUG_ALL
 RLS  = release
 DBG  = debug
 
-.PHONY: debug
+.PHONY: release
 release: CCFLAGS += $(CC_RELEASE_FLAGS)
 release: PTH    := $(RLS)
 release: make_it
 
-.PHONY: release
+.PHONY: debug
 debug: CCFLAGS += $(CC_DEBUG_FLAGS)
 debug: PTH    := $(DBG)
 debug: make_it
@@ -27,10 +27,12 @@ debug: make_it
 DIR  = $(shell basename $(CURDIR))
 BAS  = $(HOME)/Build/$(DIR)
 BLD  = $(BAS)/$(MACHTYPE)
-DEP = $(BLD)/.dep
+DEP  = $(BLD)/.dep
 
-DST = $(BLD)/$(PTH)/bin
-OBJ = $(BLD)/$(PTH)/obj
+DST  = $(BLD)/$(PTH)/bin
+OBJ  = $(BLD)/$(PTH)/obj
+DOBJ = $(BLD)/$(DBG)/obj
+ROBJ = $(BLD)/$(RLS)/obj
 
 SRC  = Source
 MSC  = misc
@@ -75,12 +77,12 @@ $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
 $(OBJ)/%.o:	$(SRC)/%.c
-	$(CC) -o $@ -c $(CFLAGS) $^
+	@echo "SRC DEPEND: $@ on $^"
+	$(CC) -o $@ -c $(CFLAGS) $<
 
-$(OBJ)/%.o:	$(MSC)/%.c
-	$(CC) -o $@ -c $(CFLAGS) $^
-
-$(DST)/%.c:	$(OBJ)/%.o
+$(OBJ)/%.o:	$(MSC)/%.c $(DEP)
+	@echo "MSC DEPEND: $@ on $^"
+	$(CC) -o $@ -c $(CFLAGS) $<
 
 ######## Define C programs ###########
 
@@ -145,17 +147,23 @@ dont_install:
 	$(NST)/maclist    \
 
 
-$(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES) $(DEP)
-	$(CC) -o $@ $< $(LINKOPT) $(IO_FILES)
+$(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
+	@echo "DEPF: $(DEPFILES)"
+	@echo "$@: $^"
+	$(CC) -o $@ $^ $(LINKOPT)
+	@echo
 
-$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEP)
+$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
+	@echo "DEPF: $(DEPFILES)"
+	@echo "$@: $^"
 	$(CC) -o $@ $< $(LINKOPT)
+	@echo
 
-$(DST)/bd:	$(DST)/%:	$(OBJ)/bd.o $(OBJ)/io.o $(DEP)
+# $(DST)/bd:	$(DST)/%:	$(OBJ)/bd.o $(OBJ)/io.o $(DEP)
 
-$(DST)/bittest:	$(DST)/%:	$(OBJ)/bittest.o $(OBJ)/io.o $(DEP)
+# $(DST)/bittest:	$(DST)/%:	$(OBJ)/bittest.o $(OBJ)/io.o $(DEP)
 
-$(DST)/open_multiple:	$(DST)/%:	$(OBJ)/open_multiple.o $(OBJ)/io.o $(DEP)
+# $(DST)/open_multiple:	$(DST)/%:	$(OBJ)/open_multiple.o $(OBJ)/io.o $(DEP)
 
 ##########################################################
 # Dependency code added here
@@ -163,8 +171,10 @@ SUFFIXES += .d
 
 #We don't need to clean up when we're making these targets
 NODEPS:=clean tags svn install
-#Find all the C++ files in the $(SRC)/ directory
-SOURCES:=$(shell find $(SRC)/ -name "*.c")
+
+#Find all the C files in the $(SRC)/ directory
+SOURCES:=$(shell find $(SRC) -name "*.c")
+
 #These are the dependency files, which make will clean up after it creates them
 DEPFILES:=$(patsubst %.c,%.d,$(patsubst $(SRC)/%,$(DEP)/%, $(SOURCES)))
 
@@ -176,68 +186,18 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 endif
 
 #This is the rule for creating the dependency files
-$(DEP)/%.d: $(SRC)/%.c $(DEP)
-	$(CXX) $(CXXFLAGS) -I$(SHM) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
-# End of - Dependency code added here
-
-$(DEP)/%.d: $(SRC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
+$(DEP)/%.d: $(SRC)/%.c
+	mkdir -p $(DEP)
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(ROBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 
 $(DEP)/%.d: $(MSC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
-
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(ROBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 # End of - Dependency code added here
+
 ##########################################################
 
-######## Describe how to Make ########
-
-# $(DST)/testbyteorder: $(testbyteorder_OBJ)
-# 	$(CC) $(CFLAGS) -o $@ $(testbyteorder_OBJ) $(LIB)
-
-$(DST)/color:	$(SRC)/color.pl
-	$(INSTALL)
-
-$(DST)/lockfile:	$(SRC)/lockfile.pl
-	$(INSTALL)
-
-$(DST)/readline:	$(SRC)/readline.pl
-	$(INSTALL)
-
-$(DST)/roman:	$(SRC)/roman.pl
-	$(INSTALL)
-
-$(DST)/tk_canvas:	$(SRC)/tk_canvas.pl
-	$(INSTALL)
-
-$(DST)/tk_frames:	$(SRC)/tk_frames.pl
-	$(INSTALL)
-
-$(DST)/tk_helloworld:	$(SRC)/tk_helloworld.pl
-	$(INSTALL)
-
-$(DST)/tk_listbox:	$(SRC)/tk_listbox.pl
-	$(INSTALL)
-
-$(DST)/tk_windows:	$(SRC)/tk_windows.pl
-	$(INSTALL)
-
-$(DST)/macperl:	$(SRC)/macperl.pl
-	$(INSTALL)
-
-$(DST)/maclist:	$(SRC)/maclist.pl
-	$(INSTALL)
-
-$(DST)/call:	$(SRC)/call.pl
-	$(INSTALL)
-
-$(DST)/weather:	$(SRC)/weather.pl
-	$(INSTALL)
-
-$(DST)/smooth:	$(SRC)/smooth.pl
-	$(INSTALL)
-
-$(DST)/spline:	$(SRC)/spline.pl
-	$(INSTALL)
+clean:
+	rm -rf $(DEP) $(ROBJ) $(DOBJ)
 
 ######## Describe how to Install #####
 
@@ -257,4 +217,10 @@ open_multiple.o:
 misc.o:
 
 make_it:
-	make PTH=$(PTH) CFLAGS="$(CFLAGS)" all_make
+	@ mkdir -p $(DEP)
+	@echo "Making $(PTH)"
+#	@echo "DEP: $(DEP)"
+#	@echo "DEPFILES: $(DEPFILES)"
+#	@echo
+	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" all_make
+
