@@ -11,6 +11,7 @@ CC_DEBUG_FLAGS   = -g DDEBUG_ALL
 
 RLS  = release
 DBG  = debug
+PTH  = $(RLS)
 
 .PHONY: release
 release: CCFLAGS += $(CC_RELEASE_FLAGS)
@@ -23,20 +24,25 @@ debug: PTH    := $(DBG)
 debug: make_it
 
 # Change "CPROG" and "SCRIPT" to something more appropriate
+#
+# Override this on the cmdline with: make prefix=/some/where/else
+prefix = $(BLD)
 
-DIR  = $(shell basename $(CURDIR))
-BAS  = $(HOME)/Build/$(DIR)
-BLD  = $(BAS)/$(MACHTYPE)
-DEP  = $(BLD)/.dep
+DIR = $(shell basename $(CURDIR))
+BLD = $(HOME)/Build
+MCH = $(BLD)/$(MACHTYPE)
+BAS = $(MCH)/$(PTH)/$(DIR)
+DEP = $(MCH)/.$(DIR)/.dep
+LDP = $(MCH)/.$(DIR)/.ldp
 
-DST  = $(BLD)/$(PTH)/bin
-OBJ  = $(BLD)/$(PTH)/obj
-DOBJ = $(BLD)/$(DBG)/obj
-ROBJ = $(BLD)/$(RLS)/obj
+DST = $(BAS)/bin
+OBJ = $(BAS)/obj
+LBJ = $(BAS)/lobj
+LIB = $(BAS)/lib
 
-SRC  = Source
-MSC  = misc
-NST  = /usr/local/p
+SRC = Source
+MSC = misc
+NST = $(prefix)/bin
 
 # Additional object files used with other programs
 IO_FILES = \
@@ -188,16 +194,16 @@ endif
 #This is the rule for creating the dependency files
 $(DEP)/%.d: $(SRC)/%.c
 	mkdir -p $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(ROBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 
 $(DEP)/%.d: $(MSC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(ROBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
+	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 # End of - Dependency code added here
 
 ##########################################################
 
 clean:
-	rm -rf $(DEP) $(ROBJ) $(DOBJ)
+	rm -rf $(DEP) $(OBJ)
 
 ######## Describe how to Install #####
 
