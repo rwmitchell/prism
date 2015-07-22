@@ -61,7 +61,12 @@ DST_PROGS = \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
-						$(DST)/XXXSCRIPT1  \
+						$(DST)/color          \
+						$(DST)/constants      \
+						$(DST)/lockfile       \
+						$(DST)/mkpath         \
+						$(DST)/oop            \
+						$(DST)/trap_handling  \
 
 DIRS = \
 			$(BAS) \
@@ -127,6 +132,7 @@ all_make: \
 	$(OBJ)            \
 	$(DST)            \
 	$(DST_PROGS)      \
+	$(DST_SCRPT)      \
 	$(IO_PROGS)       \
 
 
