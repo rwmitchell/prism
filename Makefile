@@ -58,6 +58,7 @@ DST_PROGS = \
 						$(DST)/bittest       \
 						$(DST)/ifdef         \
 						$(DST)/getopt_long   \
+						$(DST)/webserver     \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
