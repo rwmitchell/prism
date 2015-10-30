@@ -59,6 +59,7 @@ DST_PROGS = \
 						$(DST)/ifdef         \
 						$(DST)/getopt_long   \
 						$(DST)/webserver     \
+						$(DST)/secofweek     \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
