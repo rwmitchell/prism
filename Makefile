@@ -60,6 +60,7 @@ DST_PROGS = \
 						$(DST)/getopt_long   \
 						$(DST)/webserver     \
 						$(DST)/secofweek     \
+						$(DST)/myhash        \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
