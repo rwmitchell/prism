@@ -57,8 +57,10 @@ DST_PROGS = \
 						$(DST)/bd            \
 						$(DST)/bittest       \
 						$(DST)/ifdef         \
+						$(DST)/getopt        \
 						$(DST)/getopt_long   \
 						$(DST)/webserver     \
+						$(DST)/strtof        \
 						$(DST)/secofweek     \
 						$(DST)/myhash        \
 
