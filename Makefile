@@ -64,6 +64,7 @@ DST_PROGS = \
 						$(DST)/secofweek     \
 						$(DST)/myhash        \
 						$(DST)/mk_testfile   \
+						$(DST)/skip_bytes    \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
