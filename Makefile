@@ -54,6 +54,7 @@ IO_PROGS  = \
 
 # Stand alone Programs
 DST_PROGS = \
+						$(DST)/anonstruct    \
 						$(DST)/bd            \
 						$(DST)/bittest       \
 						$(DST)/ifdef         \
