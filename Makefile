@@ -67,6 +67,7 @@ DST_PROGS = \
 						$(DST)/mk_testfile   \
 						$(DST)/skip_bytes    \
 						$(DST)/parser        \
+						$(DST)/asot_term     \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
