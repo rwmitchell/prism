@@ -69,6 +69,7 @@ DST_PROGS = \
 						$(DST)/parser        \
 						$(DST)/asot_term     \
 						$(DST)/loadfile      \
+						$(DST)/testpath      \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
@@ -144,7 +145,7 @@ all_make: \
 	$(DST)            \
 	$(DST_PROGS)      \
 	$(DST_SCRPT)      \
-	$(IO_PROGS)       \
+#	$(IO_PROGS)       \
 
 
 # 2007-08-22: does not compile
@@ -235,7 +236,7 @@ $(NST)/weather:	$(DST)/weather
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
 
-open_multiple.o:
+# open_multiple.o:
 
 misc.o:
 
