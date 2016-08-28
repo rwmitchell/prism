@@ -54,11 +54,11 @@ int get_printable( char *str ) {
 
   return( cnt );
 }
-int asot_term( char *str, int cnt ) {
+int asot_term( FILE *myin, char *str, int cnt ) {
   int i=0,
       ch;
 
-  while ( (ch = fgetc( stdin )) != EOF ) {
+  while ( (ch = fgetc( myin )) != EOF ) {
     if ( strchr( str, ch ) ) {
 #ifdef DEBUG
       fprintf(stdout, "%c: ", ch );
@@ -167,15 +167,24 @@ int main(int argc, char *argv[]) {
 
   myascii_cnt = get_printable( myascii );
 
-  for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
-  }                                         // for optind
+  if ( optind < argc ) {
+    FILE *in;
+    for (; optind < argc; optind++) {         // use argv[optind]
 
-  BUGNUL( ">>>%s<<<\n", white );
-  BUGNUL( "%3d:\n###%s###\n", myascii_cnt, myascii );
+      if ( ( in = fopen(argv[optind], "r")) != NULL ) {
+        asot_term( in, myascii, myascii_cnt );
+        fclose( in );
+      } else {
+        BUGERR("Unable to fopen %s\n", argv[optind] );
+      }
+    }                                         // for optind
 
-  asot_term( myascii, myascii_cnt );
+  } else {
+    BUGNUL( ">>>%s<<<\n", white );
+    BUGNUL( "%3d:\n###%s###\n", myascii_cnt, myascii );
 
-
+    asot_term( stdin, myascii, myascii_cnt );
+  }
 
   exit(0);
 }
