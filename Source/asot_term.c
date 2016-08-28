@@ -20,8 +20,9 @@ typedef enum { False=0, True=1 } Bool;
 const char *TF[]= {"False", "True"};
 const char *white = " \t\n";
 
-char myarg[1024];
-int  debug =  0;
+char  myarg[1024];
+int   debug =  0;
+float msped =  1.0;
 
 Bool B_o = False;
 
@@ -56,7 +57,10 @@ int get_printable( char *str ) {
 }
 int asot_term( FILE *myin, char *str, int cnt ) {
   int i=0,
-      ch;
+      ch,
+      speed;
+
+  speed = (int) (1000 * msped);
 
   while ( (ch = fgetc( myin )) != EOF ) {
     if ( strchr( str, ch ) ) {
@@ -70,7 +74,7 @@ int asot_term( FILE *myin, char *str, int cnt ) {
         fprintf(stdout, "%c", str[i++] );
 #endif
         fflush(stdout);
-        usleep(1000);
+        usleep(speed);
         i = i % cnt;
       }
 #ifdef  DEBUG
@@ -98,7 +102,7 @@ int main(int argc, char *argv[]) {
       errflg=0,
       dinc=1;                // debug incrementor
   int c;
-  char *opts=":Xo:d:h";    // Leading : makes all :'s optional
+  char *opts=":Xo:s:d:h";    // Leading : makes all :'s optional
   extern int   optind;
   extern char *optarg;
 
@@ -131,7 +135,8 @@ int main(int argc, char *argv[]) {
         }
         break;
 
-      case 'X':      // your code goes here
+      case 's':     // set speed multiplier
+        msped = strtof( optarg, NULL );
         break;
 
       case 'o':
