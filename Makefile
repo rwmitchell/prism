@@ -60,6 +60,7 @@ DST_PROGS = \
 						$(DST)/ifdef         \
 						$(DST)/getopt        \
 						$(DST)/getopt_long   \
+						$(DST)/getopt_long_proto \
 						$(DST)/webserver     \
 						$(DST)/strtof        \
 						$(DST)/secofweek     \
