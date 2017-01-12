@@ -101,8 +101,8 @@ $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
 $(OBJ)/%.o:	$(SRC)/%.c
-	@echo "SRC DEPEND: $@ on $^"
 	$(CC) -o $@ -c $(CFLAGS) $<
+#	@echo "SRC DEPEND: $@ on $^"
 
 $(OBJ)/%.o:	$(MSC)/%.c $(DEP)
 	@echo "MSC DEPEND: $@ on $^"
@@ -173,16 +173,16 @@ dont_install:
 
 
 $(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
-	@echo "DEPF: $(DEPFILES)"
-	@echo "$@: $^"
 	$(CC) -o $@ $^ $(LINKOPT)
 	@echo
+#	@echo "DEPF: $(DEPFILES)"
+#	@echo "$@: $^"
 
 $(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
-	@echo "DEPF: $(DEPFILES)"
-	@echo "$@: $^"
 	$(CC) -o $@ $< $(LINKOPT)
 	@echo
+#	@echo "DEPF: $(DEPFILES)"
+#	@echo "$@: $^"
 
 # $(DST)/bd:	$(DST)/%:	$(OBJ)/bd.o $(OBJ)/io.o $(DEP)
 

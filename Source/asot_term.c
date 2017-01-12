@@ -14,6 +14,7 @@ char *cvsid = "$Id$";
 #include <string.h>  // strcpy()
 #include <getopt.h>
 #include <ctype.h>   // isprint()
+#include <sys/ioctl.h>
 
 typedef enum { False=0, True=1 } Bool;
 
@@ -23,6 +24,8 @@ const char *white = " \t\n";
 char  myarg[1024];
 int   debug =   0,
       speed =  10;
+struct winsize wsize;
+
 
 Bool B_o = False;
 
@@ -60,34 +63,45 @@ int get_printable( char *str ) {
 }
 int asot_term( FILE *myin, char *str, int cnt ) {
   int i=0,
-      ch;
+      ch,
+      col=1,
+      och;
 
   while ( (ch = fgetc( myin )) != EOF ) {
     if ( strchr( str, ch ) ) {
-#ifdef DEBUG
-      STDOUT( "%c: ", ch );
-#endif
       while (  !strchr( white, ch ) && ch != str[i] ) {
-#ifdef  DEBUG
-        STDOUT( "%c", str[i++] );
-#else
-        STDOUT( "%c", str[i++] );
-#endif
+        if ( col > 0 ) {
+          STDOUT( "%c", str[i++] );
+        } else {
+          STDOUT( "");
+          ++i;
+        }
         fflush(stdout);
         usleep(speed*100);
         i = i % cnt;
       }
-#ifdef  DEBUG
-      STDOUT( " *%c*\n", str[i] );
-#endif
     }
-    STDOUT( "%c", ch );
+
+    if ( !strchr( white, ch ) ) {
+      if (col >= wsize.ws_col-0 ) {
+        STDOUT("%c%c\n", och, ch);
+        col = 0;
+      } else {
+        STDOUT( "%c", ch );
+      }
+    } else {
+      col = 0;
+      STDOUT( "%c", ch );
+    }
+
+    ++col;
+    och = ch;
   }
   return( 0 );
 }
 // ############################################################
 
-void usage(struct option longopts[]) {
+void usage( const struct option longopts[] ) {
   int i;
 
   for (i=0; longopts[i].name != NULL; ++i ) {
@@ -100,7 +114,7 @@ void usage(struct option longopts[]) {
   STDOUT("\n");
   exit(0);
 }
-void help( char *progname, char *opt, struct option lopts[]) {
+void help( char *progname, const char *opt, const struct option lopts[]) {
   int i;
   STDERR( "%s %s\n", __DATE__, __TIME__ );
   STDERR( "%s\n\n", cvsid);
@@ -139,15 +153,13 @@ int main(int argc, char *argv[]) {
       dinc=1;                // debug incrementor
   int opt,
       longindex;
+  const
   char *opts=":o:s:d:hu";    // Leading : makes all :'s optional
-  extern int   optind;
   extern char *optarg;
-
   extern int   optind,
                optopt;
-  extern char *optarg;
 
-  static struct option longopts[] = {
+  const struct option longopts[] = {
     { "debug",   required_argument, NULL, 'd' },
     { "speed",   required_argument, NULL, 's' },
     { "help",    no_argument,       NULL, 'h' },
@@ -156,6 +168,10 @@ int main(int argc, char *argv[]) {
   };
 
   strcpy(myarg, "defval");
+
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsize );
+//BUGOUT("row: %d\n", wsize.ws_row );
+//BUGOUT("col: %d\n", wsize.ws_col );
 
   // parse command line options
   while ( ( opt=getopt_long_only(argc, argv, opts, longopts, &longindex )) != EOF ) {
@@ -214,7 +230,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (errflg) help(argv[0], opts, longopts);
+  if (errflg) help( argv[0], opts, longopts);
 
   char myascii[256];  // this will be a list of printable characters
   int  myascii_cnt;   // number of chars in myascii
