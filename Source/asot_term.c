@@ -21,8 +21,8 @@ const char *TF[]= {"False", "True"};
 const char *white = " \t\n";
 
 char  myarg[1024];
-int   debug =  0;
-float msped =  1.0;
+int   debug =   0,
+      speed =  10;
 
 Bool B_o = False;
 
@@ -38,6 +38,9 @@ Bool B_o = False;
 }                // Do nothing
 #define STDOUT( FMT, ... ) { \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
+}
+#define STDERR( FMT, ... ) { \
+  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
 }
 
 // ############################################################
@@ -57,43 +60,76 @@ int get_printable( char *str ) {
 }
 int asot_term( FILE *myin, char *str, int cnt ) {
   int i=0,
-      ch,
-      speed;
-
-  speed = (int) (1000 * msped);
+      ch;
 
   while ( (ch = fgetc( myin )) != EOF ) {
     if ( strchr( str, ch ) ) {
 #ifdef DEBUG
-      fprintf(stdout, "%c: ", ch );
+      STDOUT( "%c: ", ch );
 #endif
       while (  !strchr( white, ch ) && ch != str[i] ) {
 #ifdef  DEBUG
-        fprintf(stdout, "%c", str[i++] );
+        STDOUT( "%c", str[i++] );
 #else
-        fprintf(stdout, "%c", str[i++] );
+        STDOUT( "%c", str[i++] );
 #endif
         fflush(stdout);
-        usleep(speed);
+        usleep(speed*100);
         i = i % cnt;
       }
 #ifdef  DEBUG
-      fprintf(stdout, " *%c*\n", str[i] );
+      STDOUT( " *%c*\n", str[i] );
 #endif
     }
-    fprintf(stdout, "%c", ch );
+    STDOUT( "%c", ch );
   }
   return( 0 );
 }
 // ############################################################
 
-void usage( char *progname, char *opt) {
-  fprintf(stderr, "%s %s\n", __DATE__, __TIME__ );
-  fprintf(stderr, "%s\n\n", cvsid);
-  fprintf(stderr, "%s [-%s]\n", progname, opt);
-  fprintf(stderr, "-o STRING     (%s : %s)\n", TF[B_o], myarg );
-  fprintf(stderr, "-d INTEGER    (%d)\n", debug );
-  fprintf(stderr, "try again later\n");
+void usage(struct option longopts[]) {
+  int i;
+
+  for (i=0; longopts[i].name != NULL; ++i ) {
+    STDOUT("%s%c %c ",
+      longopts[i].name,
+      longopts[i].has_arg == optional_argument ? '=' : ' ',
+      isprint(longopts[i].val) ? longopts[i].val : ' '
+    );
+  }
+  STDOUT("\n");
+  exit(0);
+}
+void help( char *progname, char *opt, struct option lopts[]) {
+  int i;
+  STDERR( "%s %s\n", __DATE__, __TIME__ );
+  STDERR( "%s\n\n", cvsid);
+  STDERR( "%s [-%s]\n", progname, opt);
+  STDERR( "-s microseconds*100  (%d)\n", speed );
+  STDERR( "-d INTEGER    (%d)\n", debug );
+  STDERR( "try again later\n\n");
+
+  STDERR("%2s %-15s %4s %4s %c\n",
+      "  ",
+      "Name",
+      "arg",
+      "val",
+      '-' );
+
+  for (i=0; lopts[i].name != NULL; ++i ) {
+    STDERR("%2d %-15s %4d %4d %c",
+      i,
+      lopts[i].name,
+      lopts[i].has_arg,
+      lopts[i].val,
+      isprint(lopts[i].val) ? lopts[i].val : ' '
+    );
+    if ( lopts[i].flag != NULL ) {
+      STDERR(" Pointer: %d", *lopts[i].flag );
+    }
+    STDERR("\n");
+  }
+
   exit(-0);
 }
 
@@ -101,8 +137,9 @@ int main(int argc, char *argv[]) {
   int debug =0,
       errflg=0,
       dinc=1;                // debug incrementor
-  int c;
-  char *opts=":Xo:s:d:h";    // Leading : makes all :'s optional
+  int opt,
+      longindex;
+  char *opts=":o:s:d:hu";    // Leading : makes all :'s optional
   extern int   optind;
   extern char *optarg;
 
@@ -110,21 +147,29 @@ int main(int argc, char *argv[]) {
                optopt;
   extern char *optarg;
 
+  static struct option longopts[] = {
+    { "debug",   required_argument, NULL, 'd' },
+    { "speed",   required_argument, NULL, 's' },
+    { "help",    no_argument,       NULL, 'h' },
+    { "usage",   no_argument,       NULL, 'u' },
+    { NULL,      0,                 NULL,  0  }
+  };
+
   strcpy(myarg, "defval");
 
   // parse command line options
-  while (( c=getopt( argc, argv, opts)) != EOF) {
-    switch (c) {   // check only args with possible options
+  while ( ( opt=getopt_long_only(argc, argv, opts, longopts, &longindex )) != EOF ) {
+    switch (opt) {   // check only args with possible options
       case 'o':
       case 'd':
         if ( *optarg == '-' ) {
-          printf("Got hyphen for %c, rewinding\n", c );
+          printf("Got hyphen for %c, rewinding\n", opt );
           --optind;
         }
         break;
     }
 
-    switch (c) {
+    switch (opt) {
       case ':':     // check optopt for previous option
         printf("Got a Colon for: %c\n", optopt );
         switch( optopt ) {
@@ -135,8 +180,8 @@ int main(int argc, char *argv[]) {
         }
         break;
 
-      case 's':     // set speed multiplier
-        msped = strtof( optarg, NULL );
+      case 's':     // set speed
+        speed = strtol( optarg, NULL, 10 );
         break;
 
       case 'o':
@@ -158,6 +203,10 @@ int main(int argc, char *argv[]) {
         printf("debug level: %d\n", debug );
         break;
 
+      case 'u': // output opts with spaces
+        usage( longopts );
+        break;
+
       case 'h':
       default :
         ++errflg;
@@ -165,7 +214,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (errflg) usage(argv[0], opts);
+  if (errflg) help(argv[0], opts, longopts);
 
   char myascii[256];  // this will be a list of printable characters
   int  myascii_cnt;   // number of chars in myascii
