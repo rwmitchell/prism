@@ -82,7 +82,8 @@ int asot_term( FILE *myin, char *str, int cnt ) {
       }
     }
 
-    if ( !strchr( white, ch ) ) {
+//  if ( !strchr( white, ch ) ) {
+    if ( ch != '\n' ) {
       if (col >= wsize.ws_col-0 ) {
         STDOUT("%c%c\n", och, ch);
         col = 0;
