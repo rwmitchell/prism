@@ -71,6 +71,7 @@ DST_PROGS = \
 						$(DST)/asot_term     \
 						$(DST)/loadfile      \
 						$(DST)/testpath      \
+						$(DST)/trim          \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
