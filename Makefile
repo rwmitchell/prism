@@ -16,11 +16,13 @@ PTH  = $(RLS)
 .PHONY: release
 release: CFLAGS += $(CC_RELEASE_FLAGS)
 release: PTH    := $(RLS)
+release: DSYM   := @echo
 release: make_it
 
 .PHONY: debug
 debug: CFLAGS += $(CC_DEBUG_FLAGS)
 debug: PTH    := $(DBG)
+debug: DSYM   := dsymutil
 debug: make_it
 
 # Change "CPROG" and "SCRIPT" to something more appropriate
@@ -182,7 +184,7 @@ $(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
 
 $(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
 	$(CC) -o $@ $< $(LINKOPT)
-	dsymutil $@
+	$(DSYM) $@
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
 #	@echo "$@: $^"
@@ -250,5 +252,5 @@ make_it:
 #	@echo "DEP: $(DEP)"
 #	@echo "DEPFILES: $(DEPFILES)"
 #	@echo
-	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" all_make
+	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" all_make
 
