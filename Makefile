@@ -7,19 +7,19 @@
 include make.$(OSTYPE)
 
 CC_RELEASE_FLAGS = -O3
-CC_DEBUG_FLAGS   = -g DDEBUG_ALL
+CC_DEBUG_FLAGS   = -g -DDEBUG_ALL
 
 RLS  = release
 DBG  = debug
 PTH  = $(RLS)
 
 .PHONY: release
-release: CCFLAGS += $(CC_RELEASE_FLAGS)
+release: CFLAGS += $(CC_RELEASE_FLAGS)
 release: PTH    := $(RLS)
 release: make_it
 
 .PHONY: debug
-debug: CCFLAGS += $(CC_DEBUG_FLAGS)
+debug: CFLAGS += $(CC_DEBUG_FLAGS)
 debug: PTH    := $(DBG)
 debug: make_it
 
@@ -182,6 +182,7 @@ $(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
 
 $(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
 	$(CC) -o $@ $< $(LINKOPT)
+	dsymutil $@
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
 #	@echo "$@: $^"
