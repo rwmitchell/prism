@@ -75,6 +75,7 @@ DST_PROGS = \
 						$(DST)/testpath      \
 						$(DST)/trim          \
 						$(DST)/longcomsubstr \
+						$(DST)/digitlen      \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
