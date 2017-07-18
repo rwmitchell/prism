@@ -76,6 +76,7 @@ DST_PROGS = \
 						$(DST)/trim          \
 						$(DST)/longcomsubstr \
 						$(DST)/digitlen      \
+						$(DST)/stdarg        \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
