@@ -15,8 +15,8 @@ char *cvsid = "$Id$";
 #include <getopt.h>
 #include <ctype.h>   // isprint()
 #include <sys/ioctl.h>
-
-typedef enum { False=0, True=1 } Bool;
+#include <stdbool.h>
+#include "bugout.h"
 
 const char *TF[]= {"False", "True"};
 const char *white = " \t\n";
@@ -27,24 +27,7 @@ int   debug =   0,
 struct winsize wsize;
 
 
-Bool B_o = False;
-
-#define BUGOUT( FMT, ... ) { \
-  fprintf(stdout, "%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
-  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
-}
-#define BUGERR( FMT, ... ) { \
-  fprintf(stderr, "%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
-  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
-}
-#define BUGNUL( FMT, ... ) { \
-}                // Do nothing
-#define STDOUT( FMT, ... ) { \
-  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
-}
-#define STDERR( FMT, ... ) { \
-  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
-}
+bool B_o = false;
 
 // ############################################################
 int get_printable( char *str ) {
