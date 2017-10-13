@@ -107,6 +107,9 @@ $(DST)/%:	$(SRC)/%.sh
 $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
+# $(OBJ)/vcim_main.o:	$(SRC)/vcim_main.c
+# 	$(CC) -o $@ -c $(CFLAGS) -I$(MCH)/$(PTH)/aolc/include
+
 $(OBJ)/%.o:	$(SRC)/%.c
 	$(CC) -o $@ -c $(CFLAGS) $<
 #	@echo "SRC DEPEND: $@ on $^"
