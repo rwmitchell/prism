@@ -7,7 +7,7 @@
 include make.$(OSTYPE)
 
 CC_RELEASE_FLAGS = -O3
-CC_DEBUG_FLAGS   = -g -DDEBUG_ALL
+CC_DEBUG_FLAGS   = -g3 -DDEBUG_ALL
 
 RLS  = release
 DBG  = debug
@@ -78,6 +78,7 @@ DST_PROGS = \
 						$(DST)/digitlen      \
 						$(DST)/stdarg        \
 						$(DST)/dimtest       \
+						$(DST)/leak_check    \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
