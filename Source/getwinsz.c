@@ -28,7 +28,8 @@ int  debug =  0;
 bool B_o       = false,
      B_verbose = false,
      B_left    = false,
-     B_right   = false;
+     B_right   = false,
+     B_top     = false;
 
 void setpos( int row, int col ) {
   printf("[%d;%dH", row, col);
@@ -127,12 +128,13 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:lrvd:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:lrtvd:uh";     // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
     { "left",    no_argument,       NULL, 'l' },
     { "right",   no_argument,       NULL, 'r' },
+    { "top",     no_argument,       NULL, 't' },
     { "verbose", no_argument,       NULL, 'v' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
@@ -227,6 +229,7 @@ int main(int argc, char *argv[]) {
 
       case 'l': B_left    = !B_left   ; break;
       case 'r': B_right   = !B_right  ; break;
+      case 't': B_top     = !B_top    ; break;
       case 'v': B_verbose = !B_verbose; break;
 
       case 'd':                      // set debug level
@@ -268,12 +271,17 @@ int main(int argc, char *argv[]) {
     printf ( "lines %d\n", w.ws_row );
     printf ( "columns %d\n", w.ws_col );
   } else {
-    if ( !B_left && !B_right )
+    if ( ! ( B_left || B_right || B_top) )
       printf( "%d %d\n", w.ws_row, w.ws_col );
     else {
+      if ( B_top ) {
+        for (i=10; i<w.ws_col; i+= 10 )
+          printf("[%d;%dH%2d", 0, i, i/10 );
+      }
+
       for ( i=1; i<w.ws_row; ++i ) {
-        if ( B_left ) printf("[%d;%dH%2d", i, 0, i );
-        if ( B_right) printf("[%d;%dH%2d", i, w.ws_col-2, i );
+        if ( B_left ) printf("[%d;%dH%2d", i, 0, i-1 );
+        if ( B_right) printf("[%d;%dH%2d", i, w.ws_col-2, i-1 );
       }
 //    setpos( w.ws_row-1, 0 );
       setpos( row-1, 0 );
