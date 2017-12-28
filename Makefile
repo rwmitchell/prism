@@ -80,6 +80,7 @@ DST_PROGS = \
 						$(DST)/dimtest       \
 						$(DST)/leak_check    \
 						$(DST)/getwinsz      \
+						$(DST)/shuffle       \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
