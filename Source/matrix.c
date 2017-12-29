@@ -25,7 +25,8 @@ char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0,
      start =  0,
-     end   = 60;
+     end   = 60,
+     nap   =  0;
 
 bool B_o = false;
 
@@ -191,6 +192,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("-o=STRING     (%s : %s)\n", TF[B_o], myopt );
   STDERR("-s %4d: start value\n", start );
   STDERR("-e %4d: end   value\n", end   );
+  STDERR("-w %4d: seconds to pause at end\n", nap );
   STDERR("-d INTEGER    (%d)\n", debug );
   STDERR("try again later\n");
 
@@ -236,12 +238,13 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:s:e:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:s:e:w:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
     { "start",   required_argument, NULL, 's' },
     { "end",     required_argument, NULL, 'e' },
+    { "wait",    required_argument, NULL, 'w' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -337,6 +340,7 @@ int main(int argc, char *argv[]) {
 
       case 's': start = strtol( optarg, NULL, 10 ); break;
       case 'e': end   = strtol( optarg, NULL, 10 ); break;
+      case 'w': nap   = strtol( optarg, NULL, 10 ); break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -368,7 +372,6 @@ int main(int argc, char *argv[]) {
   for (; optind < argc; optind++) {
 
     data = loadfile( argv[optind], (off_t *) &f_sz );
-    BUGOUT("Read %d bytes\n", f_sz );
     rc   = str2arr( data, "\n", &arr, f_sz );
 
     memset(screen, ' ', scr_sz );
@@ -404,14 +407,17 @@ int main(int argc, char *argv[]) {
   for ( i=0; i<scr_sz; ++i ) {
     row = array[1][i] / w.ws_col;
     col = array[1][i] % w.ws_col;
-    setpos( row+2, col+1 );
+    setpos( row+1, col+1 );
     printf("%c", screen[row*w.ws_col + col]); fflush(stdout);
     usleep(500);
   }
 
-  setpos( 33, 0 );
-  STDOUT("%s\n", screen);
-  setpos( sr-1, 0 );
+  if ( nap == 0 )
+    setpos( sr-1, 0 );
+  else
+    setpos( sr-0, 0 );
+
+  sleep(nap);
 
   exit(0);
 }
