@@ -156,27 +156,25 @@ int main(int argc, char *argv[]) {
   };
 
   int scr_sz,
-      lin_sz,
      *array[5],
       sr, sc;    // start row, column
   char *screen;
 
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);    // Get window size
-  lin_sz = w.ws_col;
-  scr_sz = w.ws_col * w.ws_row;
+  scr_sz = w.ws_col * 20; // w.ws_row;
 
   getpos( &sr, &sc );
 
-  screen = (char *) malloc( sizeof(char) * lin_sz );
-  memset(screen, ' ', lin_sz );
+  screen = (char *) malloc( sizeof(char) * scr_sz );
+  memset(screen, ' ', scr_sz );
 
   // Create a dummy test string
-  for ( i=0; i<lin_sz; ++i ) screen[i] = '0' + i%10;
-  setpos( 1, 0 );
-  STDOUT("%s\n", screen);
+  for ( i=0; i<scr_sz; ++i ) screen[i] = '0' + i%10;
+//setpos( 1, 0 );
+//STDOUT("%s\n", screen);
 
-  for ( i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * lin_sz );
+  for ( i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
   strcpy(myopt, "defval");
 
@@ -285,27 +283,27 @@ int main(int argc, char *argv[]) {
   if ( end >= 2048 ) {
     BUGERR("end (%d) is beyond bounds (%d), exiting\n", end, 2048 );
   }
-  int len = lin_sz;
 
-  for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * len );
+  for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
-  for (i=0; i<len; ++i ) array[0][i] = i+start;
+  for (i=0; i<scr_sz; ++i ) array[0][i] = i+start;
 
   int j;
   for (j=1; j<5; ++j ) {
-    memcpy( array[j], array[j-1], sizeof(int) * len );
-    shuffle( array[j], len );
+    memcpy( array[j], array[j-1], sizeof(int) * scr_sz );
+    shuffle( array[j], scr_sz );
   }
 
-  int col;
-  for ( i=0; i<lin_sz; ++i ) {
-    col = array[1][i];
-    setpos( 2, col+1 );
-    printf("%c", screen[col]); fflush(stdout);
-    usleep(50000);
+  int row, col;
+  for ( i=0; i<scr_sz; ++i ) {
+    row = array[1][i] / w.ws_col;
+    col = array[1][i] % w.ws_col;
+    setpos( row+2, col+1 );
+    printf("%c", screen[row*w.ws_col + col]); fflush(stdout);
+    usleep(5000);
   }
 
-  setpos( 3, 0 );
+  setpos( 33, 0 );
   STDOUT("%s\n", screen);
   setpos( sr-1, 0 );
 
