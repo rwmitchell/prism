@@ -2,12 +2,18 @@
 #include <stdlib.h>
 #include <unistd.h>     // usleep()
 #include <sys/ioctl.h>  // ioctl()
+#include <sys/stat.h>   // fsize() / stat()
+#include <fcntl.h>      // open()
+#include <sys/types.h>  // read()
+#include <sys/uio.h>    // read()
+#include <unistd.h>     // read()
 #include <termios.h>    // winsize
 #include <string.h>     // strcpy()
 #include <getopt.h>
 #include <ctype.h>      // isdigit()
 #include <stdbool.h>    // bool
 #include <sys/time.h>   // gettimeofday()
+#include <sys/param.h>  // str2arr(), INT_MAX, MIN()
 #include "bugout.h"
 
 const
@@ -80,6 +86,88 @@ bool getpos( int *row, int *col ) {
     return success;
 }
 
+int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
+  char *ch;
+  int i, cnt, pos;
+
+  if ( lim < 0 ) lim = INT_MAX;
+
+  // count the number of FS in the string
+  for (cnt=0, ch=mlstr; *ch != '\0' && cnt <= lim; ++ch )
+    if ( strchr( FS, *ch ) != NULL ) cnt++;
+  cnt++;
+
+//BUGOUT("cnt: %d lim: %d\n", cnt, lim );
+
+  if ( cnt > lim ) cnt = lim;
+
+  *arr = (char **) malloc( sizeof(char *) * cnt );   // alloc space for array of pointers
+
+  ch = mlstr;
+  for (i=0, cnt=0, pos=0; *ch != '\0' && cnt < lim-1; ++i, ++ch ) {
+    if ( strchr( FS, *ch ) != NULL ) {
+      *ch = '\0';
+//    BUGOUT("%2d: >%s<\n", cnt, &mlstr[pos] );
+      (*arr)[cnt++] = &mlstr[pos];
+      pos = i+1;
+    }
+  }
+  (*arr)[cnt++] = &mlstr[pos];   // save the last one
+//BUGOUT("cnt: %d lim: %d\n", cnt, lim );
+
+#ifdef __APPLE__off
+  BUGOUT("malloc_size(*arr) = %lu\n", malloc_size( *arr ) );
+#endif
+
+  return( cnt );
+}
+off_t fsize( char *name ) {
+  off_t size = -1L;
+  struct stat sbuf;
+
+  if (stat(name,&sbuf) == 0)
+    if ( (sbuf.st_mode & S_IFMT) == S_IFREG)
+      size=sbuf.st_size;
+
+  return(size);
+}
+char *loadfile( char *fname, off_t *f_sz ) {
+  off_t   f_limit = 32 * 2<<19;            // ~ 32MB, arbitrary
+  ssize_t rc;
+  int     fd;
+  static
+  char *data = NULL;
+
+  *f_sz = fsize( fname )+1;                // get file size
+  if ( debug & 0x0001 )
+    BUGOUT( "%12llu file size\n", *f_sz );
+
+  if ( *f_sz > 0 && *f_sz < f_limit ) {    // is file size in bounds?
+    data = (char *) malloc( *f_sz );       // allocate space for file
+    memset(data, '\0', *f_sz );
+
+    if ( debug & 0x0001 )
+    BUGOUT( "%p data: bytes: %llu\n", data, *f_sz );
+
+    if ( (fd=open( fname, O_RDONLY )) > 0 ) {
+      rc = read( fd, data, *f_sz );        // put entire file into data
+      close( fd );
+    } else {
+      BUGERR( "Unable to open %s, %d\n", fname, fd );
+    }
+  } else {
+    BUGERR( "file size: %llu   limit = %llu\n", *f_sz, f_limit );  // size out of bounds
+  }
+
+  if ( debug & 0x0002 ) {
+    BUGOUT( "File Contents\n" );
+    STDOUT( "--------------\n" );
+    STDOUT( "%s", data );
+    STDOUT( "--------------\n" );
+  }
+
+  return( data );
+}
 void usage(struct option longopts[]) {
   int i;
 
@@ -135,7 +223,12 @@ int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt, i,
+      rc,
+      f_sz = 0,
       longindex;
+
+  char *data,
+       **arr;
 
   bool B_have_arg = true;
   extern int   optind,
@@ -162,7 +255,7 @@ int main(int argc, char *argv[]) {
 
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);    // Get window size
-  scr_sz = w.ws_col * 20; // w.ws_row;
+  scr_sz = w.ws_col * (w.ws_row-2);
 
   getpos( &sr, &sc );
 
@@ -272,8 +365,21 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
-    BUGOUT("%2d: %s\n", optind, argv[optind] );
+  for (; optind < argc; optind++) {
+
+    data = loadfile( argv[optind], (off_t *) &f_sz );
+    BUGOUT("Read %d bytes\n", f_sz );
+    rc   = str2arr( data, "\n", &arr, f_sz );
+
+    memset(screen, ' ', scr_sz );
+
+    int j;
+    for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
+      strcpy( &screen[i*w.ws_col], arr[i] );
+      for (j=0; j<w.ws_col; ++j ) {
+        if ( screen[i*w.ws_col+j] == '\0' ) screen[i*w.ws_col+j] = ' ';
+      }
+    }
   }                                         // for optind
 
   if ( start >= end ) {
@@ -300,7 +406,7 @@ int main(int argc, char *argv[]) {
     col = array[1][i] % w.ws_col;
     setpos( row+2, col+1 );
     printf("%c", screen[row*w.ws_col + col]); fflush(stdout);
-    usleep(5000);
+    usleep(500);
   }
 
   setpos( 33, 0 );
