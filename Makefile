@@ -169,6 +169,7 @@ all_make: \
 install:            \
 	$(NST)/bd         \
 	$(NST)/bittest    \
+	$(NST)/matrix     \
 
 
 dont_install:

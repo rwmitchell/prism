@@ -26,7 +26,9 @@ char myarg[1024],   // temporary optarg value
 int  debug =  0,
      start =  0,
      end   = 60,
-     nap   =  0;
+     nap   =  0,
+     dly   =  0,
+     speed = 10000;
 
 bool B_o = false;
 
@@ -238,11 +240,12 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:s:e:w:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:S:s:e:w:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
     { "start",   required_argument, NULL, 's' },
+    { "speed",   required_argument, NULL, 'S' },
     { "end",     required_argument, NULL, 'e' },
     { "wait",    required_argument, NULL, 'w' },
     { "debug",   optional_argument, NULL, 'd' },
@@ -338,6 +341,10 @@ int main(int argc, char *argv[]) {
         BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
         break;
 
+      case 'S': speed = strtol( optarg, NULL, 10 );
+                speed *= 1000;
+                break;
+
       case 's': start = strtol( optarg, NULL, 10 ); break;
       case 'e': end   = strtol( optarg, NULL, 10 ); break;
       case 'w': nap   = strtol( optarg, NULL, 10 ); break;
@@ -368,6 +375,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (errflg) help(argv[0], opts, longopts);
+
+  dly    = speed / ( scr_sz / 100.0);
 
   for (; optind < argc; optind++) {
 
@@ -404,19 +413,23 @@ int main(int argc, char *argv[]) {
   }
 
   int row, col,
-      clr=0;    // color
+      clr=0,    // color
+      stl=0;    // style
   for ( i=0; i<scr_sz; ++i ) {
-    clr++;
+    clr++; stl++;
     clr %= 7;
+    stl %= 7;
     row = array[1][i] / w.ws_col;
     col = array[1][i] % w.ws_col;
     setpos( row+1, col+1 );
-    printf("[00;%dm", clr+31);
+    printf("[%d;%dm", stl, clr+31);
     printf("%c", screen[row*w.ws_col + col]);
     printf("[m");
     fflush(stdout);
-    usleep(500);
+    usleep(dly);
   }
+  printf("[01;%dm", 32);
+  dly /= 2;
   for ( i=0; i<scr_sz; ++i ) {
     row = array[2][i] / w.ws_col;
     col = array[2][i] % w.ws_col;
@@ -425,8 +438,9 @@ int main(int argc, char *argv[]) {
     printf("%c", screen[row*w.ws_col + col]);
 //  printf("[m");
     fflush(stdout);
-    usleep(200);
+    usleep(dly);
   }
+    printf("[m");
 
   if ( nap == 0 )
     setpos( sr-1, 0 );
@@ -434,6 +448,7 @@ int main(int argc, char *argv[]) {
     setpos( sr-0, 0 );
 
   sleep(nap);
+  printf("\nDLY: %d\n\n", dly );
 
   exit(0);
 }
