@@ -1,3 +1,4 @@
+const
 char *cvsid = "$Id$";
 /* asot_term: As Seen On Tv TERMinal output
  * reads a char from stdin

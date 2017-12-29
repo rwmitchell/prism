@@ -81,6 +81,7 @@ DST_PROGS = \
 						$(DST)/leak_check    \
 						$(DST)/getwinsz      \
 						$(DST)/shuffle       \
+						$(DST)/matrix        \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
