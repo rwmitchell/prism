@@ -403,13 +403,29 @@ int main(int argc, char *argv[]) {
     shuffle( array[j], scr_sz );
   }
 
-  int row, col;
+  int row, col,
+      clr=0;    // color
   for ( i=0; i<scr_sz; ++i ) {
+    clr++;
+    clr %= 7;
     row = array[1][i] / w.ws_col;
     col = array[1][i] % w.ws_col;
     setpos( row+1, col+1 );
-    printf("%c", screen[row*w.ws_col + col]); fflush(stdout);
+    printf("[00;%dm", clr+31);
+    printf("%c", screen[row*w.ws_col + col]);
+    printf("[m");
+    fflush(stdout);
     usleep(500);
+  }
+  for ( i=0; i<scr_sz; ++i ) {
+    row = array[2][i] / w.ws_col;
+    col = array[2][i] % w.ws_col;
+    setpos( row+1, col+1 );
+//  printf("[00;%dm", clr+31);
+    printf("%c", screen[row*w.ws_col + col]);
+//  printf("[m");
+    fflush(stdout);
+    usleep(200);
   }
 
   if ( nap == 0 )
