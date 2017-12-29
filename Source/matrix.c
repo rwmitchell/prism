@@ -448,7 +448,7 @@ int main(int argc, char *argv[]) {
     setpos( sr-0, 0 );
 
   sleep(nap);
-  printf("\nDLY: %d\n\n", dly );
+//printf("\nDLY: %d\n\n", dly );
 
   exit(0);
 }
