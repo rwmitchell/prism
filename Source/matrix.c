@@ -26,7 +26,8 @@ const char *TF[]= {"False", "True"};
 char myarg[1024];   // temporary optarg value
 int  debug =  0,
      nap   =  0,
-     dly   =  0,
+     dly1  =  0,
+     dly2  =  0,
      speed = 10000;
 wint_t
      wch   =  0;
@@ -235,13 +236,14 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
-      opt, i,
+      opt,
+      i, j,
       rc   = 0,
       f_sz = 0,
       longindex;
 
-  char *data,
-       **arr;
+  char *data = NULL,
+       **arr = NULL;
 
   bool B_have_arg = true;
   extern int   optind,
@@ -382,84 +384,87 @@ int main(int argc, char *argv[]) {
 
   setlocale(LC_ALL, "" );
 
-  dly    = speed / ( scr_sz / 100.0);
+  dly1    = speed / ( scr_sz / 100.0);
+  dly2    = dly1 / 1.5;                      // speed up output a little
+
+  // This allows us to use charset to find an interesting starting value,
+  // and then adjust it for printable characters
+  if ( wch > ' ' ) wch -= ' ';
 
   for (; optind < argc; optind++) {
+
+    if ( data ) {
+      free( data);
+      free( arr );
+    }
 
     data = loadfile( argv[optind], (off_t *) &f_sz );
     rc   = str2arr( data, "\n", &arr, f_sz );
 
     memset(screen, ' ', scr_sz );
 
-    int j;
     for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
       strcpy( &screen[i*w.ws_col], arr[i] );
       for (j=0; j<w.ws_col; ++j ) {
         if ( screen[i*w.ws_col+j] == '\0' ) screen[i*w.ws_col+j] = ' ';
       }
     }
+
+    for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
+
+    for (i=0; i<scr_sz; ++i ) array[0][i] = i;
+
+    for (j=1; j<5; ++j ) {
+      memcpy( array[j], array[j-1], sizeof(int) * scr_sz );
+      shuffle( array[j], scr_sz );
+    }
+
+    wint_t ch;
+    int row, col,
+        clr=0,    // color
+        stl=0;    // style
+    for ( i=0; i<scr_sz; ++i ) {     // print text in random colors/symbols
+      clr++; clr %= 7;
+
+      if ( B_style ) { stl++; stl %= 7; }
+
+      row = array[1][i] / w.ws_col;
+      col = array[1][i] % w.ws_col;
+      setpos( row+1, col+1 );
+      printf("[%d;%dm", stl, clr+31);
+
+      ch = screen[row*w.ws_col + col ];
+      if ( ch != ' ' ) ch += wch;
+      printf("%lc", ch );
+      printf("[m");
+      fflush(stdout);
+      usleep(dly1);
+    }
+    usleep(10000);
+
+    printf("[01;%dm", 32);         // change text to normal;green
+
+    if ( B_ctext )                   // optionally -v
+    for ( i=0; i<scr_sz; ++i ) {     // print clear text
+      row = array[2][i] / w.ws_col;
+      col = array[2][i] % w.ws_col;
+      setpos( row+1, col+1 );
+
+      printf("%c", screen[row*w.ws_col + col]);
+
+      fflush(stdout);
+      usleep(dly2);
+    }
+    printf("[m");
+
+    sleep(nap);
   }                                         // for optind
 
-  for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
-  for (i=0; i<scr_sz; ++i ) array[0][i] = i;
-
-  int j;
-  for (j=1; j<5; ++j ) {
-    memcpy( array[j], array[j-1], sizeof(int) * scr_sz );
-    shuffle( array[j], scr_sz );
-  }
-
-  // This allows us to use charset to find an interesting starting value,
-  // and then adjust it for printable characters
-  if ( wch > ' ' ) wch -= ' ';
-
-  wint_t ch;
-  int row, col,
-      clr=0,    // color
-      stl=0;    // style
-  for ( i=0; i<scr_sz; ++i ) {     // print text in random colors/symbols
-    clr++; clr %= 7;
-
-    if ( B_style ) { stl++; stl %= 7; }
-
-    row = array[1][i] / w.ws_col;
-    col = array[1][i] % w.ws_col;
-    setpos( row+1, col+1 );
-    printf("[%d;%dm", stl, clr+31);
-
-    ch = screen[row*w.ws_col + col ];
-    if ( ch != ' ' ) ch += wch;
-    printf("%lc", ch );
-    printf("[m");
-    fflush(stdout);
-    usleep(dly);
-  }
-  usleep(10000);
-
-  printf("[01;%dm", 32);         // change text to normal;green
-
-  dly /= 1.5;                      // speed up output a little
-  if ( B_ctext )                   // optionally -v
-  for ( i=0; i<scr_sz; ++i ) {     // print clear text
-    row = array[2][i] / w.ws_col;
-    col = array[2][i] % w.ws_col;
-    setpos( row+1, col+1 );
-
-    printf("%c", screen[row*w.ws_col + col]);
-
-    fflush(stdout);
-    usleep(dly);
-  }
-  printf("[m");
-
-  if ( nap == 0 )
+  if ( nap == 0 || argc > 1 )
     setpos( sr-1, 0 );
   else
     setpos( sr-0, 0 );
-
-  sleep(nap);
-//printf("\nDLY: %d\n\n", dly );
 
   exit(0);
 }
