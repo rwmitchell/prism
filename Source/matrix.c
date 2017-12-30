@@ -14,6 +14,8 @@
 #include <stdbool.h>    // bool
 #include <sys/time.h>   // gettimeofday()
 #include <sys/param.h>  // str2arr(), INT_MAX, MIN()
+#include <locale.h>
+#include <wchar.h>
 #include "bugout.h"
 
 const
@@ -24,13 +26,14 @@ const char *TF[]= {"False", "True"};
 char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0,
-     start =  0,
-     end   = 60,
      nap   =  0,
      dly   =  0,
      speed = 10000;
+wint_t
+     wch   =  0;
 
-bool B_o = false;
+bool B_o     = false,
+     B_style = false;
 
 // basically copied from:
 // https://stackoverflow.com/questions/6127503/shuffle-array-in-c
@@ -192,9 +195,8 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("%s\n\n", cvsid);
   STDERR("%s [-%s]\n", progname, opt);
   STDERR("-o=STRING     (%s : %s)\n", TF[B_o], myopt );
-  STDERR("-s %4d: start value\n", start );
-  STDERR("-e %4d: end   value\n", end   );
   STDERR("-w %4d: seconds to pause at end\n", nap );
+  STDERR("-W %4X: wide characters\n", wch );
   STDERR("-d INTEGER    (%d)\n", debug );
   STDERR("try again later\n");
 
@@ -240,14 +242,14 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:S:s:e:w:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:sS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
-    { "start",   required_argument, NULL, 's' },
+    { "style",   no_argument,       NULL, 's' },
     { "speed",   required_argument, NULL, 'S' },
-    { "end",     required_argument, NULL, 'e' },
     { "wait",    required_argument, NULL, 'w' },
+    { "wide",    optional_argument, NULL, 'W' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -290,41 +292,40 @@ int main(int argc, char *argv[]) {
     }
 
     // Pre-Check
-    if ( optarg ) {                // only check if not null
-      switch (opt) {               // check only args with possible STRING options
-        case 'o':
-        case 'd':
-          if ( *optarg == '\0' ) {
-            BUGOUT("optarg is empty\n");
-            if ( argv[optind] == NULL ) {
-              BUGOUT("next arg is also NULL\n");
-              B_have_arg = false;
-            } else {
-              BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
-              strcpy(myarg, argv[optind++]);
-            }
-          } else if ( *optarg == '-' ) {  // optarg is actually the next option
-            BUGOUT("optarg is: %s, probably next option\n", optarg);
-            --optind;
+    switch (opt) {               // check only args with possible STRING options
+      case 'o':
+      case 'W':
+      case 'd':
+        if ( !optarg  ) {
+//        BUGOUT("optarg is empty\n");
+          if ( argv[optind] == NULL ) {
+//          BUGOUT("next arg is also NULL\n");
             B_have_arg = false;
           } else {
-            BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
-
-            strcpy(myarg, optarg);
-            BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
+//          BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
+            strcpy(myarg, argv[optind++]);
           }
-          break;
-      }
-    } else
-      B_have_arg = false;          // optarg was null
+        } else if ( *optarg == '-' ) {  // optarg is actually the next option
+//        BUGOUT("optarg is: %s, probably next option\n", optarg);
+          --optind;
+          B_have_arg = false;
+        } else {
+//        BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
+
+          strcpy(myarg, optarg);
+//        BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
+        }
+        break;
+    }
 
     // Normal Check
     switch (opt) {
       case ':':              // check optopt for previous option
-        BUGOUT("Got a Colon for: %c\n", optopt );
+//      BUGOUT("Got a Colon for: %c\n", optopt );
         B_have_arg = false;
         switch( optopt ) {
           case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
+          case 'W': wch = 0x400; break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
           default : BUGOUT("No arg for %c\n", optopt ); break;
         }
@@ -341,13 +342,23 @@ int main(int argc, char *argv[]) {
         BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
         break;
 
+      case 's': B_style = !B_style; break;
+
       case 'S': speed = strtol( optarg, NULL, 10 );
                 speed *= 1000;
                 break;
 
-      case 's': start = strtol( optarg, NULL, 10 ); break;
-      case 'e': end   = strtol( optarg, NULL, 10 ); break;
       case 'w': nap   = strtol( optarg, NULL, 10 ); break;
+
+      case 'W': if ( B_have_arg )      // -wide
+                     wch = strtol(myarg, NULL, 16 );
+//              BUGOUT("WCH: %0X %s : %s\n", wch, TF[B_have_arg], myarg )
+//              sleep(5);
+                if ( wch == 0 ) {      // did not get a number
+                  --optind;
+                  wch = 0x400;
+                }
+                break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -376,6 +387,8 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+  setlocale(LC_ALL, "" );
+
   dly    = speed / ( scr_sz / 100.0);
 
   for (; optind < argc; optind++) {
@@ -394,17 +407,9 @@ int main(int argc, char *argv[]) {
     }
   }                                         // for optind
 
-  if ( start >= end ) {
-    BUGERR("start (%d) must be less than end (%d), exiting\n", start, end );
-    exit( -__LINE__ );
-  }
-  if ( end >= 2048 ) {
-    BUGERR("end (%d) is beyond bounds (%d), exiting\n", end, 2048 );
-  }
-
   for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
-  for (i=0; i<scr_sz; ++i ) array[0][i] = i+start;
+  for (i=0; i<scr_sz; ++i ) array[0][i] = i;
 
   int j;
   for (j=1; j<5; ++j ) {
@@ -412,35 +417,45 @@ int main(int argc, char *argv[]) {
     shuffle( array[j], scr_sz );
   }
 
+  // This allows us to use charset to find an interesting starting value,
+  // and then adjust it for printable characters
+  if ( wch > ' ' ) wch -= ' ';
+
+  wint_t ch;
   int row, col,
       clr=0,    // color
       stl=0;    // style
-  for ( i=0; i<scr_sz; ++i ) {
-    clr++; stl++;
-    clr %= 7;
-    stl %= 7;
+  for ( i=0; i<scr_sz; ++i ) {     // print text in random colors/symbols
+    clr++; clr %= 7;
+
+    if ( B_style ) { stl++; stl %= 7; }
+
     row = array[1][i] / w.ws_col;
     col = array[1][i] % w.ws_col;
     setpos( row+1, col+1 );
     printf("[%d;%dm", stl, clr+31);
-    printf("%c", screen[row*w.ws_col + col]);
+
+    ch = screen[row*w.ws_col + col ];
+    if ( ch != ' ' ) ch += wch;
+    printf("%lc", ch );
     printf("[m");
     fflush(stdout);
     usleep(dly);
   }
-  printf("[01;%dm", 32);
-  dly /= 2;
-  for ( i=0; i<scr_sz; ++i ) {
+  printf("[01;%dm", 32);         // change text to normal;green
+
+  dly /= 1.5;
+  for ( i=0; i<scr_sz; ++i ) {     // print clear text
     row = array[2][i] / w.ws_col;
     col = array[2][i] % w.ws_col;
     setpos( row+1, col+1 );
-//  printf("[00;%dm", clr+31);
+
     printf("%c", screen[row*w.ws_col + col]);
-//  printf("[m");
+
     fflush(stdout);
     usleep(dly);
   }
-    printf("[m");
+  printf("[m");
 
   if ( nap == 0 )
     setpos( sr-1, 0 );
