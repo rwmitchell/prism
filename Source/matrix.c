@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
   memset(screen, ' ', scr_sz );
 
   // Create a dummy test string
-  for ( i=0; i<scr_sz; ++i ) screen[i] = '0' + i%10;
+  for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40;
 //setpos( 1, 0 );
 //STDOUT("%s\n", screen);
 
@@ -443,6 +443,7 @@ int main(int argc, char *argv[]) {
     usleep(dly);
   }
   printf("[01;%dm", 32);         // change text to normal;green
+    usleep(10000);
 
   dly /= 1.5;
   for ( i=0; i<scr_sz; ++i ) {     // print clear text
