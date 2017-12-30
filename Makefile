@@ -82,6 +82,7 @@ DST_PROGS = \
 						$(DST)/getwinsz      \
 						$(DST)/shuffle       \
 						$(DST)/matrix        \
+						$(DST)/charset       \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
