@@ -23,8 +23,7 @@ char *cvsid = "$Id$";
 
 const char *TF[]= {"False", "True"};
 
-char myarg[1024],   // temporary optarg value
-     myopt[1024];   // example optional argument
+char myarg[1024];   // temporary optarg value
 int  debug =  0,
      nap   =  0,
      dly   =  0,
@@ -33,7 +32,8 @@ wint_t
      wch   =  0;
 
 bool B_o     = false,
-     B_style = false;
+     B_style = false,
+     B_ctext = true;
 
 // basically copied from:
 // https://stackoverflow.com/questions/6127503/shuffle-array-in-c
@@ -193,12 +193,19 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
-  STDERR("%s [-%s]\n", progname, opt);
-  STDERR("-o=STRING     (%s : %s)\n", TF[B_o], myopt );
-  STDERR("-w %4d: seconds to pause at end\n", nap );
-  STDERR("-W %4X: wide characters\n", wch );
-  STDERR("-d INTEGER    (%d)\n", debug );
-  STDERR("try again later\n");
+  STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
+  STDERR("  -c: toggle displaying clear text  [%s]\n", TF[B_ctext] );
+  STDERR("  -s: toggle cycling text styles    [%s]\n", TF[B_style] );
+  STDERR("  -S SPEED: set delay between chars [%d]\n", speed/1000 );
+  STDERR("  -w %4d: seconds to pause at end\n", nap );
+  STDERR("  -W %4X: wide characters\n", wch );
+  STDERR("  -d INTEGER    [%d]\n", debug );
+  STDERR("\n");
+  STDERR("Reveal a screen of text by first writing an obfuscated\n");
+  STDERR("version of the text, then rewrite with the clear text\n");
+  STDERR("Get text to display from FILE or fill screen with\n");
+  STDERR("printable characters\n");
+  STDERR("\n");
 
   if ( debug ) {
     STDERR("\n");
@@ -229,7 +236,7 @@ int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt, i,
-      rc,
+      rc   = 0,
       f_sz = 0,
       longindex;
 
@@ -242,10 +249,9 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:sS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":csS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
-    { "example", no_argument,       NULL, 'X' },
-    { "myopt",   optional_argument, NULL, 'o' },
+    { "clear",   no_argument,       NULL, 'c' },
     { "style",   no_argument,       NULL, 's' },
     { "speed",   required_argument, NULL, 'S' },
     { "wait",    required_argument, NULL, 'w' },
@@ -277,8 +283,6 @@ int main(int argc, char *argv[]) {
 
   for ( i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
-  strcpy(myopt, "defval");
-
   // parse command line options
   while ( ( opt=getopt_long_only(argc, argv, opts, longopts, &longindex )) != EOF ) {
 
@@ -293,7 +297,6 @@ int main(int argc, char *argv[]) {
 
     // Pre-Check
     switch (opt) {               // check only args with possible STRING options
-      case 'o':
       case 'W':
       case 'd':
         if ( !optarg  ) {
@@ -331,17 +334,7 @@ int main(int argc, char *argv[]) {
         }
         break;
 
-      case 'X':      // your code goes here
-        break;
-
-      case 'o':
-        B_o = !B_o;
-        BUGOUT("B_have_arg = %s\n", TF[B_have_arg]);
-        BUGOUT("myarg = %s\n", myarg);
-        if ( myarg[0] != '\0' ) strcpy(myopt, myarg);
-        BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
-        break;
-
+      case 'c': B_ctext = !B_ctext; break;
       case 's': B_style = !B_style; break;
 
       case 'S': speed = strtol( optarg, NULL, 10 );
@@ -442,10 +435,12 @@ int main(int argc, char *argv[]) {
     fflush(stdout);
     usleep(dly);
   }
-  printf("[01;%dm", 32);         // change text to normal;green
-    usleep(10000);
+  usleep(10000);
 
-  dly /= 1.5;
+  printf("[01;%dm", 32);         // change text to normal;green
+
+  dly /= 1.5;                      // speed up output a little
+  if ( B_ctext )                   // optionally -v
   for ( i=0; i<scr_sz; ++i ) {     // print clear text
     row = array[2][i] / w.ws_col;
     col = array[2][i] % w.ws_col;
