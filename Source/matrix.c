@@ -28,7 +28,9 @@ int  debug =  0,
      nap   =  0,
      dly1  =  0,
      dly2  =  0,
+     dly3  = 500000,
      speed = 10000;
+
 wint_t
      wch   =  0;
 
@@ -196,6 +198,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("%s\n\n", cvsid);
   STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
   STDERR("  -c: toggle displaying clear text  [%s]\n", TF[B_ctext] );
+  STDERR("  -p delay: set delay between pages [%d]\n", dly3/100000 );
   STDERR("  -s: toggle cycling text styles    [%s]\n", TF[B_style] );
   STDERR("  -S SPEED: set delay between chars [%d]\n", speed/1000 );
   STDERR("  -w %4d: seconds to pause at end\n", nap );
@@ -251,9 +254,10 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":csS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":cp:sS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "clear",   no_argument,       NULL, 'c' },
+    { "pause",   required_argument, NULL, 'p' },
     { "style",   no_argument,       NULL, 's' },
     { "speed",   required_argument, NULL, 'S' },
     { "wait",    required_argument, NULL, 'w' },
@@ -338,6 +342,10 @@ int main(int argc, char *argv[]) {
 
       case 'c': B_ctext = !B_ctext; break;
       case 's': B_style = !B_style; break;
+
+      case 'p': dly3  = strtol( optarg, NULL, 10 );
+                dly3  *=  100000;
+                break;
 
       case 'S': speed = strtol( optarg, NULL, 10 );
                 speed *= 1000;
@@ -440,7 +448,7 @@ int main(int argc, char *argv[]) {
       fflush(stdout);
       usleep(dly1);
     }
-    usleep(10000);
+    usleep(dly3);
 
     printf("[01;%dm", 32);         // change text to normal;green
 
