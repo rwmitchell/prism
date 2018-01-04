@@ -399,6 +399,10 @@ int main(int argc, char *argv[]) {
   // and then adjust it for printable characters
   if ( wch > ' ' ) wch -= ' ';
 
+  // ^[]1337;HighlightCursorLine=boolean^G
+  printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
+  printf("]1337;CursorShape=1");          // set vertical cursor
+
   for (; optind < argc; optind++) {
 
     if ( data ) {
@@ -473,6 +477,8 @@ int main(int argc, char *argv[]) {
     setpos( sr-1, 0 );
   else
     setpos( sr-0, 0 );
+  printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
+  printf("]1337;CursorShape=0");           // set block cursor
 
   exit(0);
 }
