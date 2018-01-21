@@ -401,9 +401,13 @@ int main(int argc, char *argv[]) {
   printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
   printf("]1337;CursorShape=1");          // set vertical cursor
 
-  if ( optind == argc ) {
+  if ( optind >= argc ) {
     setpos( 1, 0 );
-    STDOUT("%s\n", screen);
+    if ( wch > 0 ) {
+      for ( i=0; i<scr_sz; ++i ) printf("%lc", screen[i] + wch );
+      printf("[m");
+    } else
+      STDOUT("%s\n", screen);
   }
 
   for (; optind < argc; optind++) {
