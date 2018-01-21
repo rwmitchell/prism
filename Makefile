@@ -83,6 +83,7 @@ DST_PROGS = \
 						$(DST)/shuffle       \
 						$(DST)/matrix        \
 						$(DST)/charset       \
+						$(DST)/traveler      \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
