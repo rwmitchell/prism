@@ -284,8 +284,6 @@ int main(int argc, char *argv[]) {
 
   // Create a dummy test string
   for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40;
-//setpos( 1, 0 );
-//STDOUT("%s\n", screen);
 
   for ( i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
@@ -403,6 +401,11 @@ int main(int argc, char *argv[]) {
   printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
   printf("]1337;CursorShape=1");          // set vertical cursor
 
+  if ( optind == argc ) {
+    setpos( 1, 0 );
+    STDOUT("%s\n", screen);
+  }
+
   for (; optind < argc; optind++) {
 
     if ( data ) {
@@ -414,6 +417,21 @@ int main(int argc, char *argv[]) {
     rc   = str2arr( data, "\n", &arr, f_sz );
 
     memset(screen, ' ', scr_sz );
+
+#define FASTDEMO_no
+#ifdef  FASTDEMO
+    setpos( 1, 1 );
+    printf("%s\n", screen); fflush(stdout);    // XYZZY
+    setpos( 1, 1 );
+    for(i=0; i<MIN(rc, w.ws_row-1); ++i) printf("%s\n", arr[i-0]);
+    sleep(1);
+    setpos( 1, 1 );
+    printf("%s\n", screen); fflush(stdout);    // XYZZY
+    setpos( 1, 1 );
+    for(i=MIN(rc, w.ws_row-1); i>0; --i) printf("%s\n", arr[i-1]);
+
+    sleep(1);
+#endif
 
     for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
       strcpy( &screen[i*w.ws_col], arr[i] );
