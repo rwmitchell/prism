@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
   int scr_sz,
      *array[5],
       sr, sc;    // start row, column
-  char *screen;
+  wchar_t *screen;
 
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);    // Get window size
@@ -279,11 +279,8 @@ int main(int argc, char *argv[]) {
 
   getpos( &sr, &sc );
 
-  screen = (char *) malloc( sizeof(char) * scr_sz );
+  screen = (wchar_t *) malloc( sizeof(wchar_t) * scr_sz );
   memset(screen, ' ', scr_sz );
-
-  // Create a dummy test string
-  for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40;
 
   for ( i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
 
@@ -401,13 +398,17 @@ int main(int argc, char *argv[]) {
   printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
   printf("]1337;CursorShape=1");          // set vertical cursor
 
+  // Create a dummy test string
+  for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40 + wch;
+
+
   if ( optind >= argc ) {
     setpos( 1, 0 );
-    if ( wch > 0 ) {
-      for ( i=0; i<scr_sz; ++i ) printf("%lc", screen[i] + wch );
-      printf("[m");
-    } else
-      STDOUT("%s\n", screen);
+//  if ( wch > 0 ) {
+//    for ( i=0; i<scr_sz; ++i ) printf("%lc", screen[i] + wch );
+//    printf("[m");
+//  } else
+      STDOUT("%ls\n", screen);
   }
 
   for (; optind < argc; optind++) {
@@ -438,10 +439,8 @@ int main(int argc, char *argv[]) {
 #endif
 
     for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
-      strcpy( &screen[i*w.ws_col], arr[i] );
-      for (j=0; j<w.ws_col; ++j ) {
-        if ( screen[i*w.ws_col+j] == '\0' ) screen[i*w.ws_col+j] = ' ';
-      }
+      for (j=0; *(arr[i]+j) != '\0'; ++j ) screen[i*w.ws_col + j] = *(arr[i]+j);
+      for (   ; j<w.ws_col; ++j ) screen[i*w.ws_col+j] = ' ';
     }
 
     for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
