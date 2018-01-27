@@ -104,6 +104,23 @@ bool getpos( int *row, int *col ) {
     return success;
 }
 
+int shftarr( int row, int col, wchar_t **arr ) {
+  int r, c;
+  wchar_t ch, *pch;
+  static int x=0;
+
+  if ( x>1) x = -2;
+  else ++x;
+
+  for ( r=0; r<row-1; ++r ) {
+     ch = *arr[r];
+    pch =  arr[r];
+    for ( c=0; c<col-2; ++c, ++pch ) *pch = *(pch+1)+x;
+    *(pch+0) = ch + x;
+    *(pch+1) = '\0';
+  }
+  return(0);
+}
 int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
   int r, c;
   wchar_t ch,
@@ -126,7 +143,12 @@ int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
     (*arr)[r] = (wchar_t *) pbg;                           // assign arr to start of row
 
     for ( c=0; c<col-1; ++c ) {
+#define RANDOM
+#ifdef  RANDOM
       ch = (wchar_t) ( (unsigned int) (drand48()*40 + ' ') + wch );  // gen random chars
+#else
+      ch = 'F';
+#endif
       *pbg = ch;
       ++pbg;
 //    fputc( ch, stdout );
@@ -466,25 +488,16 @@ int main(int argc, char *argv[]) {
     data = loadfile( argv[optind], (off_t *) &f_sz );
 #define RNDGEN
 #ifdef  RNDGEN
-    wchar_t ch0,
-           *ch1, *ch2;
-
     rc = w.ws_row;
     rnd2arr(w.ws_row, w.ws_col, wch, &arr );
     printf("-------------------\n");
     sleep(1);
-    for (j=0; j<w.ws_col-1; ++j ) {
+    for ( j=0; j<w.ws_col-1; ++j ) {
       setpos( 1, 1 );
-      for(i=0; i<w.ws_row-1; ++ i ) {
-        printf("%ls\n", arr[i] );
+      for( i=0; i<w.ws_row-1; ++i ) printf("%ls\n", arr[i] );
 
-        ch0 = *arr[i];
-        ch1 =  arr[i];
-        ch2 =  arr[i]+1;
-        wcpcpy( ch1, ch2 );
-        *(arr[i]+w.ws_col-2) = ch0;
-        *(arr[i]+w.ws_col-1) = '\0';
-      }
+      shftarr( w.ws_row, w.ws_col, arr );
+
       fflush(stdout);
       usleep( 200000 );
     }
