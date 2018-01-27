@@ -9,6 +9,7 @@
 #include <unistd.h>     // read()
 #include <termios.h>    // winsize
 #include <string.h>     // strcpy()
+#include <wchar.h>      // wclscpy()
 #include <getopt.h>
 #include <ctype.h>      // isdigit()
 #include <stdbool.h>    // bool
@@ -465,12 +466,29 @@ int main(int argc, char *argv[]) {
     data = loadfile( argv[optind], (off_t *) &f_sz );
 #define RNDGEN
 #ifdef  RNDGEN
+    wchar_t ch0,
+           *ch1, *ch2;
+
     rc = w.ws_row;
     rnd2arr(w.ws_row, w.ws_col, wch, &arr );
     printf("-------------------\n");
     sleep(1);
-    for(i=0; i<w.ws_row-1; ++ i )
-      printf("%ls\n", arr[i] );
+    for (j=0; j<w.ws_col-1; ++j ) {
+      setpos( 1, 1 );
+      for(i=0; i<w.ws_row-1; ++ i ) {
+        printf("%ls\n", arr[i] );
+
+        ch0 = *arr[i];
+        ch1 =  arr[i];
+        ch2 =  arr[i]+1;
+        wcpcpy( ch1, ch2 );
+        *(arr[i]+w.ws_col-2) = ch0;
+        *(arr[i]+w.ws_col-1) = '\0';
+      }
+      fflush(stdout);
+      usleep( 200000 );
+    }
+
     exit(0);
 #else
     rc   = str2arr( data, "\n", &arr, f_sz );
