@@ -40,11 +40,19 @@ bool B_o     = false,
 
 // basically copied from:
 // https://stackoverflow.com/questions/6127503/shuffle-array-in-c
-void shuffle( int *array, size_t n ) {
+void init_rndgen() {
+  static bool done = false;
   struct timeval tv;
-  gettimeofday( &tv, NULL );
-  int usec = tv.tv_usec;
-  srand48(usec);
+
+  if ( !done ) {
+    gettimeofday( &tv, NULL );
+    int usec = tv.tv_usec;
+    srand48(usec);
+    done = true;
+  }
+}
+void shuffle( int *array, size_t n ) {
+  init_rndgen();
 
   if ( n > 1 ) {
     size_t i;
@@ -95,8 +103,44 @@ bool getpos( int *row, int *col ) {
     return success;
 }
 
-int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
-  char *ch;
+int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
+  int r, c;
+  wchar_t ch,
+         *big, *pbg;
+
+  row -= 1;
+  BUGOUT("ROW: %d  COL: %d\n", row, col );
+
+  big  = (wchar_t *)  malloc( sizeof( wchar_t *) * (row*col+1));
+  *arr = (wchar_t **) malloc( sizeof(wchar_t *) * row );   // alloc space for array of pointers
+
+  BUGOUT("malloc( %p : %p : %p)\n", *arr, *arr, arr );
+
+  init_rndgen();
+  BUGOUT("init_rndgen()\n");
+
+  pbg  = big;
+  for( r=0; r<row; ++r ) {
+
+    (*arr)[r] = (wchar_t *) pbg;                           // assign arr to start of row
+
+    for ( c=0; c<col-1; ++c ) {
+      ch = (wchar_t) ( (unsigned int) (drand48()*40 + ' ') + wch );  // gen random chars
+      *pbg = ch;
+      ++pbg;
+//    fputc( ch, stdout );
+    }
+//  fputc( '\n', stdout );
+
+    *pbg = '\0';
+    ++pbg;
+  }
+//printf("%ls", big );
+
+  return(0);
+}
+int str2arr( char *mlstr, const char *FS, wchar_t ***arr, int lim ) {
+  char    *ch;
   int i, cnt, pos;
 
   if ( lim < 0 ) lim = INT_MAX;
@@ -110,18 +154,18 @@ int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
 
   if ( cnt > lim ) cnt = lim;
 
-  *arr = (char **) malloc( sizeof(char *) * cnt );   // alloc space for array of pointers
+  *arr = (wchar_t **) malloc( sizeof(wchar_t *) * cnt );   // alloc space for array of pointers
 
   ch = mlstr;
   for (i=0, cnt=0, pos=0; *ch != '\0' && cnt < lim-1; ++i, ++ch ) {
     if ( strchr( FS, *ch ) != NULL ) {
       *ch = '\0';
 //    BUGOUT("%2d: >%s<\n", cnt, &mlstr[pos] );
-      (*arr)[cnt++] = &mlstr[pos];
+      (*arr)[cnt++] = (wchar_t *) &mlstr[pos];
       pos = i+1;
     }
   }
-  (*arr)[cnt++] = &mlstr[pos];   // save the last one
+  (*arr)[cnt++] = (wchar_t *) &mlstr[pos];   // save the last one
 //BUGOUT("cnt: %d lim: %d\n", cnt, lim );
 
 #ifdef __APPLE__off
@@ -245,8 +289,8 @@ int main(int argc, char *argv[]) {
       f_sz = 0,
       longindex;
 
-  char *data = NULL,
-       **arr = NULL;
+  char    *data = NULL;
+  wchar_t **arr = NULL;
 
   bool B_have_arg = true;
   extern int   optind,
@@ -419,23 +463,36 @@ int main(int argc, char *argv[]) {
     }
 
     data = loadfile( argv[optind], (off_t *) &f_sz );
+#define RNDGEN
+#ifdef  RNDGEN
+    rc = w.ws_row;
+    rnd2arr(w.ws_row, w.ws_col, wch, &arr );
+    printf("-------------------\n");
+    sleep(1);
+    for(i=0; i<w.ws_row-1; ++ i )
+      printf("%ls\n", arr[i] );
+    exit(0);
+#else
     rc   = str2arr( data, "\n", &arr, f_sz );
+#endif
 
     memset(screen, ' ', scr_sz );
 
-#define FASTDEMO_no
+#define FASTDEMO
 #ifdef  FASTDEMO
     setpos( 1, 1 );
-    printf("%s\n", screen); fflush(stdout);    // XYZZY
+//  printf("%ls\n", screen); fflush(stdout);    // XYZZY
     setpos( 1, 1 );
-    for(i=0; i<MIN(rc, w.ws_row-1); ++i) printf("%s\n", arr[i-0]);
+    for(i=0; i<MIN(rc, w.ws_row-1); ++i) printf("%ls\n", arr[i-0]);
     sleep(1);
     setpos( 1, 1 );
-    printf("%s\n", screen); fflush(stdout);    // XYZZY
+//  printf("%ls\n", screen); fflush(stdout);    // XYZZY
     setpos( 1, 1 );
-    for(i=MIN(rc, w.ws_row-1); i>0; --i) printf("%s\n", arr[i-1]);
+    for(i=MIN(rc, w.ws_row-1); i>0; --i) printf("%ls\n", arr[i-1]);
+    fflush(stdout);
 
     sleep(1);
+    exit(0);
 #endif
 
     for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
