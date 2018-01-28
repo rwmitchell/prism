@@ -124,10 +124,12 @@ int shftarr( int row, int col, wchar_t **arr ) {
 wchar_t *add_msg( int llen, int mlen, wchar_t *line, const char *msg ) {
   static
   wchar_t str[2048];
+  static
+  int offset = -20;
   int i, j,
       spos;
 
-  spos = (llen-mlen)/2;
+  spos = (llen-mlen)/2 + offset++;
   for( i=0, j=0; i<llen; ++i ) {
     str[i] = line[i];
     if ( i >= spos & j<mlen) str[i] = msg[j++];
@@ -506,11 +508,14 @@ int main(int argc, char *argv[]) {
     const
     char *msg = ">This is TOP Secret.  Tell No One.<";
     bool show=false;
+    int start, stop;
+    start = w.ws_col * .25;
+    stop  = start * 3;
 
     for ( j=0; j<w.ws_col-1; ++j ) {
       setpos( 1, 1 );
 
-      if ( j>15 && j<65 ) {
+      if ( j>start && j<stop && j%4) {
         foo = add_msg( w.ws_col-1, 35, arr[10], msg );
         show=true;
       } else show = false;
