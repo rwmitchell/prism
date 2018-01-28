@@ -481,140 +481,39 @@ int main(int argc, char *argv[]) {
   // Create a dummy test string
   for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40 + wch;
 
+  rc = w.ws_row;
+  rnd2arr(w.ws_row, w.ws_col, wch, &arr );
 
-  if ( optind >= argc ) {
-    setpos( 1, 0 );
-//  if ( wch > 0 ) {
-//    for ( i=0; i<scr_sz; ++i ) printf("%lc", screen[i] + wch );
-//    printf("[m");
-//  } else
-      STDOUT("%ls\n", screen);
+  wchar_t *foo;
+  const
+  char *msg = ">This is TOP Secret.  Tell No One.<";
+  bool show=false;
+  int start, stop;
+  start = w.ws_col * .25;
+  stop  = start * 3;
+
+  for ( j=0; j<w.ws_col-1; ++j ) {
+    setpos( 1, 1 );
+
+    if ( j>start && j<stop && j%4) {
+      foo = add_msg( w.ws_col-1, 35, arr[10], msg );
+      show=true;
+    } else show = false;
+
+    for( i=0; i<w.ws_row-1; ++i ) {
+      if ( !show || i != 10 ) printf("%ls\n", arr[i] );
+      else                    printf("%ls\n", foo );
+    }
+
+    shftarr( w.ws_row, w.ws_col, arr );
+
+    fflush(stdout);
+    usleep( 200000 );
   }
 
-  for (; optind < argc; optind++) {
+  printf("[m");
 
-    if ( data ) {
-      free( data);
-      free( arr );
-    }
-
-    data = loadfile( argv[optind], (off_t *) &f_sz );
-#define RNDGEN
-#ifdef  RNDGEN
-    rc = w.ws_row;
-    rnd2arr(w.ws_row, w.ws_col, wch, &arr );
-
-    wchar_t *foo;
-    const
-    char *msg = ">This is TOP Secret.  Tell No One.<";
-    bool show=false;
-    int start, stop;
-    start = w.ws_col * .25;
-    stop  = start * 3;
-
-    for ( j=0; j<w.ws_col-1; ++j ) {
-      setpos( 1, 1 );
-
-      if ( j>start && j<stop && j%4) {
-        foo = add_msg( w.ws_col-1, 35, arr[10], msg );
-        show=true;
-      } else show = false;
-
-      for( i=0; i<w.ws_row-1; ++i ) {
-        if ( !show || i != 10 ) printf("%ls\n", arr[i] );
-        else                    printf("%ls\n", foo );
-      }
-
-      shftarr( w.ws_row, w.ws_col, arr );
-
-      fflush(stdout);
-      usleep( 200000 );
-    }
-
-    exit(0);
-#else
-    rc   = str2arr( data, "\n", &arr, f_sz );
-#endif
-
-    memset(screen, ' ', scr_sz );
-
-#define FASTDEMO
-#ifdef  FASTDEMO
-    setpos( 1, 1 );
-//  printf("%ls\n", screen); fflush(stdout);    // XYZZY
-    setpos( 1, 1 );
-    for(i=0; i<MIN(rc, w.ws_row-1); ++i) printf("%ls\n", arr[i-0]);
-    sleep(1);
-    setpos( 1, 1 );
-//  printf("%ls\n", screen); fflush(stdout);    // XYZZY
-    setpos( 1, 1 );
-    for(i=MIN(rc, w.ws_row-1); i>0; --i) printf("%ls\n", arr[i-1]);
-    fflush(stdout);
-
-    sleep(1);
-    exit(0);
-#endif
-
-    for ( i=0; i < MIN(rc, w.ws_row-1); ++i ) {
-      for (j=0; *(arr[i]+j) != '\0'; ++j ) screen[i*w.ws_col + j] = *(arr[i]+j);
-      for (   ; j<w.ws_col; ++j ) screen[i*w.ws_col+j] = ' ';
-    }
-
-    for (i=0; i<5; ++i ) array[i] = (int *) malloc( sizeof(int) * scr_sz );
-
-    for (i=0; i<scr_sz; ++i ) array[0][i] = i;
-
-    for (j=1; j<5; ++j ) {
-      memcpy( array[j], array[j-1], sizeof(int) * scr_sz );
-      shuffle( array[j], scr_sz );
-    }
-
-    wint_t ch;
-    int row, col,
-        clr=0,    // color
-        stl=0;    // style
-    for ( i=0; i<scr_sz; ++i ) {     // print text in random colors/symbols
-      clr++; clr %= 7;
-
-      if ( B_style ) { stl++; stl %= 7; }
-
-      row = array[1][i] / w.ws_col;
-      col = array[1][i] % w.ws_col;
-      setpos( row+1, col+1 );
-      printf("[%d;%dm", stl, clr+31);
-
-      ch = screen[row*w.ws_col + col ];
-      if ( ch != ' ' ) ch += wch;
-      printf("%lc", ch );
-      printf("[m");
-      fflush(stdout);
-      usleep(dly1);
-    }
-    usleep(dly3);
-
-    printf("[01;%dm", 32);         // change text to normal;green
-
-    if ( B_ctext )                   // optionally -v
-    for ( i=0; i<scr_sz; ++i ) {     // print clear text
-      row = array[2][i] / w.ws_col;
-      col = array[2][i] % w.ws_col;
-      setpos( row+1, col+1 );
-
-      printf("%c", screen[row*w.ws_col + col]);
-
-      fflush(stdout);
-      usleep(dly2);
-    }
-    printf("[m");
-
-    sleep(nap);
-  }                                         // for optind
-
-
-  if ( nap == 0 || argc > 1 )
-    setpos( sr-1, 0 );
-  else
-    setpos( sr-0, 0 );
+  setpos( sr-0, 0 );
   printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
   printf("]1337;CursorShape=0");           // set block cursor
 
