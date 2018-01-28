@@ -121,21 +121,32 @@ int shftarr( int row, int col, wchar_t **arr ) {
   }
   return(0);
 }
+wchar_t *add_msg( int llen, int mlen, wchar_t *line, const char *msg ) {
+  static
+  wchar_t str[2048];
+  int i, j,
+      spos;
+
+  spos = (llen-mlen)/2;
+  for( i=0, j=0; i<llen; ++i ) {
+    str[i] = line[i];
+    if ( i >= spos & j<mlen) str[i] = msg[j++];
+  }
+  str[llen] = '\0';
+
+  return(str);
+}
 int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
   int r, c;
   wchar_t ch,
          *big, *pbg;
 
   row -= 1;
-  BUGOUT("ROW: %d  COL: %d\n", row, col );
 
   big  = (wchar_t *)  malloc( sizeof( wchar_t *) * (row*col+1));
   *arr = (wchar_t **) malloc( sizeof(wchar_t *) * row );   // alloc space for array of pointers
 
-  BUGOUT("malloc( %p : %p : %p)\n", *arr, *arr, arr );
-
   init_rndgen();
-  BUGOUT("init_rndgen()\n");
 
   pbg  = big;
   for( r=0; r<row; ++r ) {
@@ -490,11 +501,24 @@ int main(int argc, char *argv[]) {
 #ifdef  RNDGEN
     rc = w.ws_row;
     rnd2arr(w.ws_row, w.ws_col, wch, &arr );
-    printf("-------------------\n");
-    sleep(1);
+
+    wchar_t *foo;
+    const
+    char *msg = ">This is TOP Secret.  Tell No One.<";
+    bool show=false;
+
     for ( j=0; j<w.ws_col-1; ++j ) {
       setpos( 1, 1 );
-      for( i=0; i<w.ws_row-1; ++i ) printf("%ls\n", arr[i] );
+
+      if ( j>15 && j<65 ) {
+        foo = add_msg( w.ws_col-1, 35, arr[10], msg );
+        show=true;
+      } else show = false;
+
+      for( i=0; i<w.ws_row-1; ++i ) {
+        if ( !show || i != 10 ) printf("%ls\n", arr[i] );
+        else                    printf("%ls\n", foo );
+      }
 
       shftarr( w.ws_row, w.ws_col, arr );
 
