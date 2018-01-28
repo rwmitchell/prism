@@ -322,10 +322,8 @@ int main(int argc, char *argv[]) {
       opt,
       i, j,
       rc   = 0,
-      f_sz = 0,
       longindex;
 
-  char    *data = NULL;
   wchar_t **arr = NULL;
 
   bool B_have_arg = true;
@@ -381,23 +379,17 @@ int main(int argc, char *argv[]) {
       case 'W':
       case 'd':
         if ( !optarg  ) {
-//        BUGOUT("optarg is empty\n");
           if ( argv[optind] == NULL ) {
-//          BUGOUT("next arg is also NULL\n");
             B_have_arg = false;
           } else {
-//          BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
             strcpy(myarg, argv[optind++]);
           }
         } else if ( *optarg == '-' ) {  // optarg is actually the next option
-//        BUGOUT("optarg is: %s, probably next option\n", optarg);
           --optind;
           B_have_arg = false;
         } else {
-//        BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
 
           strcpy(myarg, optarg);
-//        BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
         }
         break;
     }
@@ -405,7 +397,6 @@ int main(int argc, char *argv[]) {
     // Normal Check
     switch (opt) {
       case ':':              // check optopt for previous option
-//      BUGOUT("Got a Colon for: %c\n", optopt );
         B_have_arg = false;
         switch( optopt ) {
           case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
@@ -430,8 +421,6 @@ int main(int argc, char *argv[]) {
 
       case 'W': if ( B_have_arg )      // -wide
                      wch = strtol(myarg, NULL, 16 );
-//              BUGOUT("WCH: %0X %s : %s\n", wch, TF[B_have_arg], myarg )
-//              sleep(5);
                 if ( wch == 0 ) {      // did not get a number
                   --optind;
                   wch = 0x400;
