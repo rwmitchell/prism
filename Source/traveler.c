@@ -30,7 +30,8 @@ int  debug =  0,
      dly1  =  0,
      dly2  =  0,
      dly3  = 500000,
-     speed = 10000;
+     speed = 10000,
+     lskp  =  1;
 
 wint_t
      wch   =  0;
@@ -121,20 +122,20 @@ int shftarr( int row, int col, wchar_t **arr ) {
   }
   return(0);
 }
-wchar_t *add_msg( int llen, int mlen, wchar_t *line, const char *msg ) {
-  static
-  wchar_t str[2048];
+wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, wchar_t *str ) {
   static
   int offset = -20;
   int i, j,
       spos;
 
-  spos = (llen-mlen)/2 + offset++;
+  spos = (llen-mlen)/2 + offset;
   for( i=0, j=0; i<llen; ++i ) {
     str[i] = line[i];
     if ( i >= spos & j<mlen) str[i] = msg[j++];
   }
   str[llen] = '\0';
+
+  if ( !flag ) ++offset;
 
   return(str);
 }
@@ -332,9 +333,10 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":cp:sS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":cl:p:sS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "clear",   no_argument,       NULL, 'c' },
+    { "lskip",   required_argument, NULL, 'l' },
     { "pause",   required_argument, NULL, 'p' },
     { "style",   no_argument,       NULL, 's' },
     { "speed",   required_argument, NULL, 'S' },
@@ -409,6 +411,9 @@ int main(int argc, char *argv[]) {
       case 'c': B_ctext = !B_ctext; break;
       case 's': B_style = !B_style; break;
 
+      case 'l': lskp  = strtol( optarg, NULL, 10 );
+                break;
+
       case 'p': dly3  = strtol( optarg, NULL, 10 );
                 dly3  *=  100000;
                 break;
@@ -473,25 +478,41 @@ int main(int argc, char *argv[]) {
   rc = w.ws_row;
   rnd2arr(w.ws_row, w.ws_col, wch, &arr );
 
-  wchar_t *foo;
+  wchar_t *foo[32],
+          *rndmsg;
   const
-  char *msg = ">This is TOP Secret.  Tell No One.<";
+  char *msg[] = {
+    "> This is TOP Secret.  Tell No One. <",
+    "> Proceed to the next location. <",
+    "> Activate the package. <",
+  };
   bool show=false;
-  int start, stop;
+  int start, stop,
+      mi, msg_cnt;
   start = w.ws_col * .25;
   stop  = start * 3;
+
+  msg_cnt = sizeof(msg) / sizeof(char *);
+
+
+  // allocate space for all the msgs
+  rndmsg = (wchar_t *) malloc( sizeof(wchar_t) * w.ws_col * msg_cnt + 1);
+  for ( mi=0; mi<msg_cnt; ++mi )
+    foo[mi] = &rndmsg[mi * w.ws_col];
 
   for ( j=0; j<w.ws_col-1; ++j ) {
     setpos( 1, 1 );
 
     if ( j>start && j<stop && j%4) {
-      foo = add_msg( w.ws_col-1, 35, arr[10], msg );
+      for ( mi=0; mi<msg_cnt; ++mi )
+        add_msg( mi, w.ws_col-1, strlen(msg[mi]), arr[10+(mi*lskp)], msg[mi], foo[mi] );
       show=true;
+
     } else show = false;
 
-    for( i=0; i<w.ws_row-1; ++i ) {
-      if ( !show || i != 10 ) printf("%ls\n", arr[i] );
-      else                    printf("%ls\n", foo );
+    for( i=0, mi=0; i<w.ws_row-1; ++i ) {
+      if ( show && mi<msg_cnt && i == 10+(mi*lskp)) printf("%ls\n", foo[mi++] );
+      else                                          printf("%ls\n", arr[i]    );
     }
 
     shftarr( w.ws_row, w.ws_col, arr );
