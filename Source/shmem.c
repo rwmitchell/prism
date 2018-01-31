@@ -34,34 +34,14 @@ const char *udp_names[] = {
 
 // **********************************************
 
-char logbuf[LOGLEN] = { '\0' };
-
 extern int errno;
-void alert( const char *s ) {  // like fail, but don't exit
-
-  puts(logbuf);
-  puts(s);
-  perror(s);
-}
 
 void fail( const char *s ) {
 
-  puts(logbuf);
   puts(s);
   perror(s);
 
   exit(1);
-}
-
-// *** store the log messages, but only display on fail()
-void blog (char *s) {
-  if ( strlen(s)+1 > sizeof(logbuf) - strlen(logbuf) ) {
-    fail("\nblog: string to long\n");
-    fail(s);
-  }
-
-  else
-    strncat(logbuf, s, sizeof(s) - strlen(s) - 1 );
 }
 
 static int get_size( key_t key ) {
@@ -94,20 +74,11 @@ bool  check_shmem( key_t key, int *id ) {
 
 // *** Open generic shared memory segment
 char  *setup_shmem( bool create, key_t key, size_t size, int *id ) {
-  char *pmem, buf[bufsz];
-
-  snprintf(buf, bufsz, "shmem setup: %s %d bytes for %0x\n",
-    create ? "Allocate" : "Attach",
-    (int) size,
-    key
-  );
-  blog(buf);
+  char *pmem;
 
   *id = shmget(key, size, 0666);
 
   if ( create && *id < 0 ) {    // Doesn't exist, create it.
-    snprintf(buf, bufsz, "Creating shmem: %0x\n", key);
-    blog(buf);
     *id = shmget(key, size, IPC_CREAT | 0666);
     if (*id < 0 ) {
        fail("\ncan't allocate shared memory");
@@ -125,15 +96,3 @@ char  *setup_shmem( bool create, key_t key, size_t size, int *id ) {
 
   return( pmem );
 }
-
-// **********************************************************************
-// These are not directly shmem routines, but are usually used at the
-// same time.  Instead of creating a separate file and always compiling
-// with both shmem.o and the new file, we're just using this.
-// **********************************************************************
-
-void diep( const char *s ) {
-  perror(s);
-  exit(1);
-}
-
