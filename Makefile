@@ -54,6 +54,14 @@ IO_FILES = \
 IO_PROGS  = \
 						$(DST)/open_multiple \
 
+SM_FILES = \
+	$(OBJ)/shmem.o \
+	$(OBJ)/now.o   \
+
+SM_PROGS  = \
+						$(DST)/traveler   \
+						$(DST)/trvlr_send \
+
 # Stand alone Programs
 DST_PROGS = \
 						$(DST)/anonstruct    \
@@ -83,7 +91,6 @@ DST_PROGS = \
 						$(DST)/shuffle       \
 						$(DST)/matrix        \
 						$(DST)/charset       \
-						$(DST)/traveler      \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
@@ -162,6 +169,7 @@ all_make: \
 	$(DST)            \
 	$(DST_PROGS)      \
 	$(DST_SCRPT)      \
+	$(SM_PROGS)       \
 #	$(IO_PROGS)       \
 
 
@@ -190,6 +198,12 @@ dont_install:
 
 
 $(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
+	$(CC) -o $@ $^ $(LINKOPT)
+	@echo
+#	@echo "DEPF: $(DEPFILES)"
+#	@echo "$@: $^"
+
+$(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES)
 	$(CC) -o $@ $^ $(LINKOPT)
 	@echo
 #	@echo "DEPF: $(DEPFILES)"

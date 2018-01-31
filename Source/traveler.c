@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>     // usleep()
 #include <sys/ioctl.h>  // ioctl()
-#include <sys/stat.h>   // fsize() / stat()
-#include <fcntl.h>      // open()
 #include <sys/types.h>  // read()
 #include <sys/uio.h>    // read()
 #include <unistd.h>     // read()
@@ -18,6 +16,9 @@
 #include <locale.h>
 #include <wchar.h>
 #include "bugout.h"
+#include "shmem.h"
+#include "traveler.h"
+#include "now.h"
 
 const
 char *cvsid = "$Id$";
@@ -176,7 +177,7 @@ int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
 
   return(0);
 }
-int str2arr( char *mlstr, const char *FS, wchar_t ***arr, int lim ) {
+int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
   char    *ch;
   int i, cnt, pos;
 
@@ -191,18 +192,18 @@ int str2arr( char *mlstr, const char *FS, wchar_t ***arr, int lim ) {
 
   if ( cnt > lim ) cnt = lim;
 
-  *arr = (wchar_t **) malloc( sizeof(wchar_t *) * cnt );   // alloc space for array of pointers
+  *arr = (char **) malloc( sizeof(char *) * cnt );   // alloc space for array of pointers
 
   ch = mlstr;
   for (i=0, cnt=0, pos=0; *ch != '\0' && cnt < lim-1; ++i, ++ch ) {
     if ( strchr( FS, *ch ) != NULL ) {
       *ch = '\0';
 //    BUGOUT("%2d: >%s<\n", cnt, &mlstr[pos] );
-      (*arr)[cnt++] = (wchar_t *) &mlstr[pos];
+      (*arr)[cnt++] = (char *) &mlstr[pos];
       pos = i+1;
     }
   }
-  (*arr)[cnt++] = (wchar_t *) &mlstr[pos];   // save the last one
+  (*arr)[cnt++] = (char *) &mlstr[pos];   // save the last one
 //BUGOUT("cnt: %d lim: %d\n", cnt, lim );
 
 #ifdef __APPLE__off
@@ -211,53 +212,7 @@ int str2arr( char *mlstr, const char *FS, wchar_t ***arr, int lim ) {
 
   return( cnt );
 }
-off_t fsize( char *name ) {
-  off_t size = -1L;
-  struct stat sbuf;
 
-  if (stat(name,&sbuf) == 0)
-    if ( (sbuf.st_mode & S_IFMT) == S_IFREG)
-      size=sbuf.st_size;
-
-  return(size);
-}
-char *loadfile( char *fname, off_t *f_sz ) {
-  off_t   f_limit = 32 * 2<<19;            // ~ 32MB, arbitrary
-  ssize_t rc;
-  int     fd;
-  static
-  char *data = NULL;
-
-  *f_sz = fsize( fname )+1;                // get file size
-  if ( debug & 0x0001 )
-    BUGOUT( "%12llu file size\n", *f_sz );
-
-  if ( *f_sz > 0 && *f_sz < f_limit ) {    // is file size in bounds?
-    data = (char *) malloc( *f_sz );       // allocate space for file
-    memset(data, '\0', *f_sz );
-
-    if ( debug & 0x0001 )
-    BUGOUT( "%p data: bytes: %llu\n", data, *f_sz );
-
-    if ( (fd=open( fname, O_RDONLY )) > 0 ) {
-      rc = read( fd, data, *f_sz );        // put entire file into data
-      close( fd );
-    } else {
-      BUGERR( "Unable to open %s, %d\n", fname, fd );
-    }
-  } else {
-    BUGERR( "file size: %llu   limit = %llu\n", *f_sz, f_limit );  // size out of bounds
-  }
-
-  if ( debug & 0x0002 ) {
-    BUGOUT( "File Contents\n" );
-    STDOUT( "--------------\n" );
-    STDOUT( "%s", data );
-    STDOUT( "--------------\n" );
-  }
-
-  return( data );
-}
 void usage(struct option longopts[]) {
   int i;
 
@@ -315,7 +270,6 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 
   exit(-0);
 }
-
 
 int main(int argc, char *argv[]) {
   int errflg = 0,
@@ -459,6 +413,37 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+  // Setup SHMEM
+#define DO_SHMEM
+#ifdef  DO_SHMEM
+  bool shm_exists = false;
+  int  shmid_secret;
+  TRAVELER_h *block;
+  size_t      block_sz;
+  char        data[MAX_SECRET],
+            **msg;
+  int         msg_cnt;
+
+  block_sz = sizeof( TRAVELER_h );
+  block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
+
+  shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
+  printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+
+    STDOUT("%lu\n", block_sz);
+    STDOUT("%lf\n", block->time );
+    STDOUT("%s\n",  block->text );
+
+    memcpy(data, block->text, MAX_SECRET );
+    msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );
+
+    STDOUT("%d\n", msg_cnt );
+    STDOUT("%lf\n", block->time );
+    for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
+    sleep( 5 );
+#endif
+
+
   setlocale(LC_ALL, "" );
 
   dly1    = speed / ( scr_sz / 100.0);
@@ -480,19 +465,22 @@ int main(int argc, char *argv[]) {
 
   wchar_t *foo[32],
           *rndmsg;
+#ifndef DO_SHMEM
   const
   char *msg[] = {
     "> This is TOP Secret.  Tell No One. <",
     "> Proceed to the next location. <",
     "> Activate the package. <",
   };
+  int msg_cnt;
+  msg_cnt = sizeof(msg) / sizeof(char *);
+
+#endif
   bool show=false;
   int start, stop,
-      mi, msg_cnt;
+      mi;
   start = w.ws_col * .25;
   stop  = start * 3;
-
-  msg_cnt = sizeof(msg) / sizeof(char *);
 
 
   // allocate space for all the msgs
