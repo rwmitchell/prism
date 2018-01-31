@@ -22,7 +22,8 @@ const char *TF[]= {"False", "True"};
 
 char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
-int  debug =  0;
+int  debug =  0,
+     wsec  =  0;
 
 bool B_o = false;
 
@@ -137,10 +138,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:w:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
+    { "wait",    required_argument, NULL, 'w' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -213,6 +215,9 @@ int main(int argc, char *argv[]) {
         BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
         break;
 
+      case 'w': wsec  = strtol( optarg, NULL, 10 );
+                break;
+
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
@@ -240,13 +245,6 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  BUGOUT("Args already processed:\n");
-  for ( i=0; i<optind; ++i )
-    BUGOUT("%d: %s\n", i, argv[i] );
-
-  BUGOUT("debug level: %d\n", debug );
-  BUGOUT("      myopt: %s\n", myopt );
-
   // Setup SHMEM
 #define DO_SHMEM
 #ifdef  DO_SHMEM
@@ -261,19 +259,17 @@ int main(int argc, char *argv[]) {
   block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
-  BUGOUT("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+//BUGOUT("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
 #endif
 
 //for (; optind < argc; optind++) {}        // process remainder of cmdline using argv[optind]
 
-    BUGOUT("%2d: %s\n", optind, argv[optind] );
+//  BUGOUT("%2d: %s\n", optind, argv[optind] );
     data = loadfile( argv[optind], &f_sz );
-    BUGOUT("f_sz: %lld\n", f_sz );
-    STDOUT("%s\n", data );
+//  BUGOUT("f_sz: %lld\n", f_sz );
     memset( block->text, ' ', MAX_SECRET );
     memcpy( block->text, data, MAX_SECRET);
-    block->time = NOW();
-    STDOUT("-------\n" );
+    block->time = NOW() + wsec;
     STDOUT("%lf\n", block->time );
     STDOUT("%s\n",  block->text );
 

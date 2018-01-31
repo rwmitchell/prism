@@ -428,19 +428,24 @@ int main(int argc, char *argv[]) {
   block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
-  printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+//printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
 
-    STDOUT("%lu\n", block_sz);
-    STDOUT("%lf\n", block->time );
-    STDOUT("%s\n",  block->text );
+//STDOUT("%lf\n", block->time );
+//STDOUT("%s\n",  block->text );
 
-    memcpy(data, block->text, MAX_SECRET );
-    msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );
+  if ( block->time <= 1.0 ) exit(0);
 
-    STDOUT("%d\n", msg_cnt );
-    STDOUT("%lf\n", block->time );
-    for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
-    sleep( 5 );
+  sleep( (int) (block->time - NOW()) );
+
+  STDOUT("Incoming\n")
+
+  memcpy(data, block->text, MAX_SECRET );
+  msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );
+
+  STDOUT("%d\n", msg_cnt );
+  STDOUT("%lf : %lf\n", block->time, NOW() - block->time );
+//for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
+  sleep( 5 );
 #endif
 
 
@@ -514,6 +519,8 @@ int main(int argc, char *argv[]) {
   setpos( sr-0, 0 );
   printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
   printf("]1337;CursorShape=0");           // set block cursor
+
+  block->time = 0.0;
 
   exit(0);
 }
