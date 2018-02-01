@@ -39,7 +39,8 @@ wint_t
 
 bool B_o     = false,
      B_style = false,
-     B_ctext = true;
+     B_ctext = true,
+     B_rmid  = false;
 
 // basically copied from:
 // https://stackoverflow.com/questions/6127503/shuffle-array-in-c
@@ -287,11 +288,12 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":cl:p:sS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":cl:p:RsS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "clear",   no_argument,       NULL, 'c' },
     { "lskip",   required_argument, NULL, 'l' },
     { "pause",   required_argument, NULL, 'p' },
+    { "reset",   no_argument,       NULL, 'R' },
     { "style",   no_argument,       NULL, 's' },
     { "speed",   required_argument, NULL, 'S' },
     { "wait",    required_argument, NULL, 'w' },
@@ -364,6 +366,7 @@ int main(int argc, char *argv[]) {
 
       case 'c': B_ctext = !B_ctext; break;
       case 's': B_style = !B_style; break;
+      case 'R': B_rmid  = !B_rmid ; break;
 
       case 'l': lskp  = strtol( optarg, NULL, 10 );
                 break;
@@ -424,11 +427,18 @@ int main(int argc, char *argv[]) {
             **msg;
   int         msg_cnt;
 
+  shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
+//printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+
   block_sz = sizeof( TRAVELER_h );
   block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
-  shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
-//printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+  if ( B_rmid ) {
+    BUGOUT( "Releasing shared memory");
+    shmctl(shmid_secret, IPC_RMID, (struct shmid_ds *) block);
+    STDOUT( " - shared memory has been released\n");
+    exit(0);
+  }
 
 //STDOUT("%lf\n", block->time );
 //STDOUT("%s\n",  block->text );
@@ -437,12 +447,11 @@ int main(int argc, char *argv[]) {
 
   sleep( (int) (block->time - NOW()) );
 
-  STDOUT("Incoming\n")
 
   memcpy(data, block->text, MAX_SECRET );
   msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );
 
-  STDOUT("%d\n", msg_cnt );
+  STDOUT("Incoming: %d\n", msg_cnt )
   STDOUT("%lf : %lf\n", block->time, NOW() - block->time );
 //for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
   sleep( 5 );

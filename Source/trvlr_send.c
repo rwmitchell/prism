@@ -25,7 +25,8 @@ char myarg[1024],   // temporary optarg value
 int  debug =  0,
      wsec  =  0;
 
-bool B_o = false;
+bool B_o    = false,
+     B_rmid = false;
 
 /*
 "@(#)$Id$";
@@ -130,7 +131,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
-      opt, i,
+      opt,
       longindex;
   bool B_have_arg = true;
   extern int   optind,
@@ -138,11 +139,12 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:w:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xo:Rw:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
     { "wait",    required_argument, NULL, 'w' },
+    { "reset",   no_argument,       NULL, 'R' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -218,6 +220,8 @@ int main(int argc, char *argv[]) {
       case 'w': wsec  = strtol( optarg, NULL, 10 );
                 break;
 
+      case 'R': B_rmid = !B_rmid; break;
+
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
@@ -245,6 +249,7 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+
   // Setup SHMEM
 #define DO_SHMEM
 #ifdef  DO_SHMEM
@@ -255,11 +260,20 @@ int main(int argc, char *argv[]) {
   char       *data;
   off_t       f_sz;
 
-  block_sz = sizeof( TRAVELER_h );
-  block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
 //BUGOUT("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
+
+  block_sz = sizeof( TRAVELER_h );
+  block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
+
+  if ( B_rmid ) {
+    BUGOUT( "Releasing shared memory");
+    shmctl(shmid_secret, IPC_RMID, (struct shmid_ds *) block);
+    STDOUT( " - shared memory has been released\n");
+    exit(0);
+  }
+
 #endif
 
 //for (; optind < argc; optind++) {}        // process remainder of cmdline using argv[optind]
