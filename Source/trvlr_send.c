@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
     block->time = NOW() + wsec;
     block->lskp = lskp;
     STDOUT("%lf\n", block->time );
-    STDOUT("%s\n",  block->text );
+//  STDOUT("%s\n",  block->text );
 
     free( data );
 
