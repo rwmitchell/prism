@@ -416,9 +416,7 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  // Setup SHMEM
-#define DO_SHMEM
-#ifdef  DO_SHMEM
+  // ***** Setup SHMEM ******
   bool shm_exists = false;
   int  shmid_secret;
   TRAVELER_h *block;
@@ -440,23 +438,18 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-//STDOUT("%lf\n", block->time );
-//STDOUT("%s\n",  block->text );
-
   if ( block->time <= 1.0 ) exit(0);
 
   sleep( (int) (block->time - NOW()) );
 
-
-  memcpy(data, block->text, MAX_SECRET );
-  msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );
+  memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
+  msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
 
   STDOUT("Incoming: %d\n", msg_cnt )
   STDOUT("%lf : %lf\n", block->time, NOW() - block->time );
 //for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
   sleep( 5 );
-#endif
-
+  // ***** Setup SHMEM end **
 
   setlocale(LC_ALL, "" );
 
@@ -467,7 +460,6 @@ int main(int argc, char *argv[]) {
   // and then adjust it for printable characters
   if ( wch > ' ' ) wch -= ' ';
 
-  // ^[]1337;HighlightCursorLine=boolean^G
   printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
   printf("]1337;CursorShape=1");          // set vertical cursor
 
@@ -479,17 +471,6 @@ int main(int argc, char *argv[]) {
 
   wchar_t *foo[32],
           *rndmsg;
-#ifndef DO_SHMEM
-  const
-  char *msg[] = {
-    "> This is TOP Secret.  Tell No One. <",
-    "> Proceed to the next location. <",
-    "> Activate the package. <",
-  };
-  int msg_cnt;
-  msg_cnt = sizeof(msg) / sizeof(char *);
-
-#endif
   bool show=false;
   int start, stop,
       mi;
