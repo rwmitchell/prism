@@ -23,6 +23,7 @@ const char *TF[]= {"False", "True"};
 char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0,
+     lskp  =  1,
      wsec  =  0;
 
 bool B_o    = false,
@@ -139,10 +140,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:Rw:d:uh";      // Leading : makes all :'s optional
+  char *opts=":Xl:o:Rw:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
+    { "lskip",   required_argument, NULL, 'l' },
     { "wait",    required_argument, NULL, 'w' },
     { "reset",   no_argument,       NULL, 'R' },
     { "debug",   optional_argument, NULL, 'd' },
@@ -217,6 +219,9 @@ int main(int argc, char *argv[]) {
         BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
         break;
 
+      case 'l': lskp  = strtol( optarg, NULL, 10 );
+                break;
+
       case 'w': wsec  = strtol( optarg, NULL, 10 );
                 break;
 
@@ -284,6 +289,7 @@ int main(int argc, char *argv[]) {
     memset( block->text, ' ', MAX_SECRET );
     memcpy( block->text, data, MAX_SECRET);
     block->time = NOW() + wsec;
+    block->lskp = lskp;
     STDOUT("%lf\n", block->time );
     STDOUT("%s\n",  block->text );
 

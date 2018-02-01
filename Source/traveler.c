@@ -368,9 +368,6 @@ int main(int argc, char *argv[]) {
       case 's': B_style = !B_style; break;
       case 'R': B_rmid  = !B_rmid ; break;
 
-      case 'l': lskp  = strtol( optarg, NULL, 10 );
-                break;
-
       case 'p': dly3  = strtol( optarg, NULL, 10 );
                 dly3  *=  100000;
                 break;
@@ -444,6 +441,7 @@ int main(int argc, char *argv[]) {
 
   memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
   msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
+  lskp = block->lskp;
 
   STDOUT("Incoming: %d\n", msg_cnt )
   STDOUT("%lf : %lf\n", block->time, NOW() - block->time );
