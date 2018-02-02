@@ -40,6 +40,7 @@ wint_t
 bool B_o     = false,
      B_style = false,
      B_ctext = true,
+     B_std   = true,
      B_rmid  = false;
 
 // basically copied from:
@@ -288,10 +289,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":cl:p:RsS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":cl:mp:RsS:w:W:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "clear",   no_argument,       NULL, 'c' },
     { "lskip",   required_argument, NULL, 'l' },
+    { "manual",  no_argument,       NULL, 'm' },
     { "pause",   required_argument, NULL, 'p' },
     { "reset",   no_argument,       NULL, 'R' },
     { "style",   no_argument,       NULL, 's' },
@@ -364,9 +366,10 @@ int main(int argc, char *argv[]) {
         }
         break;
 
-      case 'c': B_ctext = !B_ctext; break;
-      case 's': B_style = !B_style; break;
-      case 'R': B_rmid  = !B_rmid ; break;
+      case 'c': B_ctext  = !B_ctext; break;
+      case 'm': B_std    = !B_std;   break;
+      case 's': B_style  = !B_style; break;
+      case 'R': B_rmid   = !B_rmid ; break;
 
       case 'p': dly3  = strtol( optarg, NULL, 10 );
                 dly3  *=  100000;
@@ -435,9 +438,9 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-  if ( block->time <= 1.0 ) exit(0);
+  if ( B_std && block->time <= 1.0 ) exit(0);
 
-  sleep( (int) (block->time - NOW()) );
+  if ( B_std ) sleep( (int) (block->time - NOW()) );
 
   memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
   msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
