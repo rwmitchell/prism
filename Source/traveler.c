@@ -4,7 +4,6 @@
 #include <sys/ioctl.h>  // ioctl()
 #include <sys/types.h>  // read()
 #include <sys/uio.h>    // read()
-#include <unistd.h>     // read()
 #include <termios.h>    // winsize
 #include <string.h>     // strcpy()
 #include <wchar.h>      // wclscpy()
@@ -27,20 +26,12 @@ const char *TF[]= {"False", "True"};
 
 char myarg[1024];   // temporary optarg value
 int  debug =  0,
-     nap   =  0,
-     dly1  =  0,
-     dly2  =  0,
-     dly3  = 500000,
-     speed = 10000,
      lskp  =  1;
 
 wint_t
      wch   =  0;
 
-bool B_o     = false,
-     B_style = false,
-     B_ctext = true,
-     B_std   = true,
+bool B_std   = true,
      B_rmid  = false;
 
 // basically copied from:
@@ -234,19 +225,11 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
-  STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
-  STDERR("  -c: toggle displaying clear text  [%s]\n", TF[B_ctext] );
-  STDERR("  -p delay: set delay between pages [%d]\n", dly3/100000 );
-  STDERR("  -s: toggle cycling text styles    [%s]\n", TF[B_style] );
-  STDERR("  -S SPEED: set delay between chars [%d]\n", speed/1000 );
-  STDERR("  -w %4d: seconds to pause at end\n", nap );
+  STDERR("usage: %s [-%s]\n", progname, opt);
   STDERR("  -W %4X: wide characters\n", wch );
   STDERR("  -d INTEGER    [%d]\n", debug );
   STDERR("\n");
-  STDERR("Reveal a screen of text by first writing an obfuscated\n");
-  STDERR("version of the text, then rewrite with the clear text\n");
-  STDERR("Get text to display from FILE or fill screen with\n");
-  STDERR("printable characters\n");
+  STDERR("Get messages from the future\n");
   STDERR("\n");
 
   if ( debug ) {
@@ -289,16 +272,10 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":cl:mp:RsS:w:W:d:uh";      // Leading : makes all :'s optional
+  char *opts=":mRW:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
-    { "clear",   no_argument,       NULL, 'c' },
-    { "lskip",   required_argument, NULL, 'l' },
     { "manual",  no_argument,       NULL, 'm' },
-    { "pause",   required_argument, NULL, 'p' },
     { "reset",   no_argument,       NULL, 'R' },
-    { "style",   no_argument,       NULL, 's' },
-    { "speed",   required_argument, NULL, 'S' },
-    { "wait",    required_argument, NULL, 'w' },
     { "wide",    optional_argument, NULL, 'W' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
@@ -359,27 +336,14 @@ int main(int argc, char *argv[]) {
       case ':':              // check optopt for previous option
         B_have_arg = false;
         switch( optopt ) {
-          case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
           case 'W': wch = 0x400; break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
           default : BUGOUT("No arg for %c\n", optopt ); break;
         }
         break;
 
-      case 'c': B_ctext  = !B_ctext; break;
       case 'm': B_std    = !B_std;   break;
-      case 's': B_style  = !B_style; break;
       case 'R': B_rmid   = !B_rmid ; break;
-
-      case 'p': dly3  = strtol( optarg, NULL, 10 );
-                dly3  *=  100000;
-                break;
-
-      case 'S': speed = strtol( optarg, NULL, 10 );
-                speed *= 1000;
-                break;
-
-      case 'w': nap   = strtol( optarg, NULL, 10 ); break;
 
       case 'W': if ( B_have_arg )      // -wide
                      wch = strtol(myarg, NULL, 16 );
@@ -453,9 +417,6 @@ int main(int argc, char *argv[]) {
   // ***** Setup SHMEM end **
 
   setlocale(LC_ALL, "" );
-
-  dly1    = speed / ( scr_sz / 100.0);
-  dly2    = dly1 / 1.5;                      // speed up output a little
 
   // This allows us to use charset to find an interesting starting value,
   // and then adjust it for printable characters
