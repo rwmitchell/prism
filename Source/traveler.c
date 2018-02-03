@@ -412,6 +412,7 @@ int main(int argc, char *argv[]) {
 
   if ( B_std && block->time <= 1.0 ) exit(0);
 
+  STDOUT("....waiting for incoming msg....\n");
   if ( B_std ) sleep( (int) (block->time - NOW()) );
 
   memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
@@ -419,7 +420,6 @@ int main(int argc, char *argv[]) {
   lskp = block->lskp;
 
   STDOUT("Incoming: %d\n", msg_cnt )
-  STDOUT("%lf : %lf\n", block->time, NOW() - block->time );
 //for( i=0; i<msg_cnt; ++i ) STDOUT("%s\n",  msg[i] );
   sleep( 5 );
   // ***** Setup SHMEM end **
