@@ -43,6 +43,10 @@ off_t fsize( char *name ) {
 
   return(size);
 }
+int file_exists( char *filename ) {
+  struct stat buf;
+  return( stat(filename, &buf) == 0 );
+}
 char *loadfile( char *fname, off_t *f_sz ) {
   off_t   f_limit = 32 * 2<<19;            // ~ 32MB, arbitrary
   ssize_t rc;
@@ -281,19 +285,17 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-//for (; optind < argc; optind++) {}        // process remainder of cmdline using argv[optind]
-
-//  BUGOUT("%2d: %s\n", optind, argv[optind] );
-    data = loadfile( argv[optind], &f_sz );
-//  BUGOUT("f_sz: %lld\n", f_sz );
-    memset( block->text, ' ', MAX_SECRET );
-    memcpy( block->text, data, MAX_SECRET);
-    block->time = NOW() + wsec;
-    block->lskp = lskp;
-    STDOUT("%lf\n", block->time );
-//  STDOUT("%s\n",  block->text );
-
-    free( data );
+  if ( optind+1 == argc ) {
+    if ( file_exists( argv[optind])) {
+      data = loadfile( argv[optind], &f_sz );
+      memset( block->text, ' ', MAX_SECRET );
+      memcpy( block->text, data, MAX_SECRET);
+      block->time = NOW() + wsec;
+      block->lskp = lskp;
+      STDOUT("%lf\n", block->time );
+      free( data );
+    }
+  }
 
   exit(0);
 }
