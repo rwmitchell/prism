@@ -43,7 +43,6 @@ LBJ = $(BAS)/lobj
 LIB = $(BAS)/lib
 
 SRC = Source
-MSC = misc
 NST = $(prefix)/bin
 
 # Additional object files used with other programs
@@ -52,7 +51,7 @@ IO_FILES = \
 
 # Programs needing io.o
 IO_PROGS  = \
-						$(DST)/open_multiple \
+#					$(DST)/open_multiple \
 
 SM_FILES = \
 	$(OBJ)/shmem.o \
@@ -64,42 +63,13 @@ SM_PROGS  = \
 
 # Stand alone Programs
 DST_PROGS = \
-						$(DST)/anonstruct    \
-						$(DST)/bd            \
-						$(DST)/bittest       \
-						$(DST)/ifdef         \
-						$(DST)/getopt        \
-						$(DST)/getopt_long   \
-						$(DST)/getopt_long_proto \
-						$(DST)/webserver     \
-						$(DST)/strtof        \
-						$(DST)/secofweek     \
-						$(DST)/myhash        \
-						$(DST)/mk_testfile   \
-						$(DST)/skip_bytes    \
-						$(DST)/parser        \
 						$(DST)/asot_term     \
-						$(DST)/loadfile      \
-						$(DST)/testpath      \
-						$(DST)/trim          \
-						$(DST)/longcomsubstr \
-						$(DST)/digitlen      \
-						$(DST)/stdarg        \
-						$(DST)/dimtest       \
-						$(DST)/leak_check    \
 						$(DST)/getwinsz      \
-						$(DST)/shuffle       \
 						$(DST)/matrix        \
-						$(DST)/charset       \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
-						$(DST)/color          \
-						$(DST)/constants      \
-						$(DST)/lockfile       \
-						$(DST)/mkpath         \
-						$(DST)/oop            \
-						$(DST)/trap_handling  \
+#						$(DST)/color          \
 
 DIRS = \
 			$(BAS) \
@@ -120,31 +90,11 @@ $(DST)/%:	$(SRC)/%.sh
 $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
-# $(OBJ)/vcim_main.o:	$(SRC)/vcim_main.c
-# 	$(CC) -o $@ -c $(CFLAGS) -I$(MCH)/$(PTH)/aolc/include
-
 $(OBJ)/%.o:	$(SRC)/%.c
 	$(CC) -o $@ -c $(CFLAGS) $<
 #	@echo "SRC DEPEND: $@ on $^"
 
-$(OBJ)/%.o:	$(MSC)/%.c $(DEP)
-	@echo "MSC DEPEND: $@ on $^"
-	$(CC) -o $@ -c $(CFLAGS) $<
-
 ######## Define C programs ###########
-
-# $(DST)/bd: $(OBJ)/bd.o
-
-# $(DST)/open_multiple: $(OBJ)/open_multiple.o $(OBJ)/io.o
-
-# $(DST)/bittest: $(OBJ)/bittest.o
-
-# $(DST)/ifdef: $(OBJ)/ifdef.o
-
-# $(DST)/getopt_long: $(OBJ)/getopt_long.o
-
-# this doesn't compile
-# $(DST)/testbyteorder: $(OBJ)/testbyteorder.o
 
 ######## Identify what to Make #######
 
@@ -177,24 +127,9 @@ all_make: \
 #	$(DST)/testbyteorder \
 
 install:            \
-	$(NST)/bd         \
-	$(NST)/bittest    \
 	$(NST)/matrix     \
 
 
-dont_install:
-	$(NST)/call       \
-	$(NST)/color      \
-	$(NST)/lockfile   \
-	$(NST)/readline   \
-	$(NST)/roman      \
-	$(NST)/tk_canvas  \
-	$(NST)/tk_frames  \
-	$(NST)/tk_helloworld \
-	$(NST)/tk_listbox \
-	$(NST)/tk_windows \
-	$(NST)/macperl    \
-	$(NST)/maclist    \
 
 
 $(IO_PROGS):	$(DST)/% : $(OBJ)/%.o $(IO_FILES)
@@ -215,12 +150,6 @@ $(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
 #	@echo "$@: $^"
-
-# $(DST)/bd:	$(DST)/%:	$(OBJ)/bd.o $(OBJ)/io.o $(DEP)
-
-# $(DST)/bittest:	$(DST)/%:	$(OBJ)/bittest.o $(OBJ)/io.o $(DEP)
-
-# $(DST)/open_multiple:	$(DST)/%:	$(OBJ)/open_multiple.o $(OBJ)/io.o $(DEP)
 
 ##########################################################
 # Dependency code added here
@@ -247,8 +176,6 @@ $(DEP)/%.d: $(SRC)/%.c
 	mkdir -p $(DEP)
 	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 
-$(DEP)/%.d: $(MSC)/%.c $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(MSC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
 # End of - Dependency code added here
 
 ##########################################################
