@@ -463,10 +463,26 @@ int main(int argc, char *argv[]) {
 
     } else show = false;
 
+    printf("[%d;%dm", 0, 1+31);
+#ifdef  NORMAL
     for( i=0, mi=0; i<w.ws_row-1; ++i ) {
       if ( show && mi<msg_cnt && i == 10+(mi*lskp)) printf("%ls\n", foo[mi++] );
       else                                          printf("%ls\n", arr[i]    );
     }
+#else
+    int st;
+    for( i=0, mi=0; i<w.ws_row-1; ++i ) {
+      st = ( (int) (drand48()*16 ) );  // gen random bold/normal
+      if ( st%3 ) printf("[%d;%dm", 0, 1+31);
+      else       printf("[%d;%dm", 1, 1+31);
+      if ( show && mi<msg_cnt && i == 10+(mi*lskp)) {
+        printf("%ls\n", foo[mi++] );
+      } else {
+        printf("%ls\n", arr[i]    );
+      }
+    }
+#endif
+    printf("[%d;%dm", 1, 1+31);
 
     shftarr( w.ws_row, w.ws_col, arr );
 
