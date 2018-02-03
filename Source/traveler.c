@@ -32,7 +32,8 @@ wint_t
      wch   =  0;
 
 bool B_std   = true,
-     B_rmid  = false;
+     B_time  = false,     // show time until next message
+     B_rmid  = false;     // removed shmem
 
 // basically copied from:
 // https://stackoverflow.com/questions/6127503/shuffle-array-in-c
@@ -272,10 +273,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":mRW:d:uh";      // Leading : makes all :'s optional
+  char *opts=":mRtW:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "manual",  no_argument,       NULL, 'm' },
     { "reset",   no_argument,       NULL, 'R' },
+    { "time",    no_argument,       NULL, 't' },
     { "wide",    optional_argument, NULL, 'W' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
@@ -344,6 +346,7 @@ int main(int argc, char *argv[]) {
 
       case 'm': B_std    = !B_std;   break;
       case 'R': B_rmid   = !B_rmid ; break;
+      case 't': B_time   = !B_time ; break;
 
       case 'W': if ( B_have_arg )      // -wide
                      wch = strtol(myarg, NULL, 16 );
@@ -399,6 +402,11 @@ int main(int argc, char *argv[]) {
     BUGOUT( "Releasing shared memory");
     shmctl(shmid_secret, IPC_RMID, (struct shmid_ds *) block);
     STDOUT( " - shared memory has been released\n");
+    exit(0);
+  }
+
+  if ( B_time ) {
+    if ( block->time > 1.0 ) STDOUT("%d\n", (int)(block->time-NOW()));
     exit(0);
   }
 
