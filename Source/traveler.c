@@ -117,9 +117,10 @@ int shftarr( int row, int col, wchar_t **arr ) {
   }
   return(0);
 }
-int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab ) {
+int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab, bool show, int cnt, wchar_t **msg ) {
   int r,  c,
       ln, lb,
+      mi = 0,
       rd;
   wchar_t *pch,
           *pnb;
@@ -132,17 +133,20 @@ int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab ) {
   pnb = nab;
 
   for ( r=0; r<row-1; ++r ) {
-    pch =  arr[r];
-    for ( c=0; c<col-0; ++c, ++pch ) {
-      rd = ( (int) (drand48()*16 ) );  // gen random to select bold/normal
 
-      // This does not work because byte-order is wrong  wchar_t is 4 byte
-      if ( rd%3 ) { memcpy( (char *) pnb, bold, lb*4); pnb += lb; }
+    if ( show && mi<cnt && r == 10+(mi*lskp)) pch = msg[mi++];
+    else                                      pch = arr[r];
+
+    for ( c=0; c<col-1; ++c ) {
+      rd = ( (int) (drand48()*20 ) );  // gen random to select bold/normal
+
+      if ( ! rd%5 ) { memcpy( (char *) pnb, bold, lb*4); pnb += lb; }
       *pnb++ = *pch++;
-      if ( rd%3 ) { memcpy( (char *) pnb, nrml, ln*4); pnb += ln; }
+      if ( ! rd%5 ) { memcpy( (char *) pnb, nrml, ln*4); pnb += ln; }
     }
+    *pnb++ = ' ';
   }
-  *(pnb+1) = '\0';
+  *pnb++ = '\0';
   return(0);
 }
 wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, wchar_t *str ) {
@@ -476,7 +480,7 @@ int main(int argc, char *argv[]) {
   start = w.ws_col * .25;
   stop  = start * 3;
 
-  nab  = (wchar_t *)  malloc( sizeof( wchar_t *) * (w.ws_row*w.ws_col*8+1));
+  nab  = (wchar_t *)  malloc( sizeof( wchar_t *) * (w.ws_row*w.ws_col*17+1));
 
   // allocate space for all the msgs
   rndmsg = (wchar_t *) malloc( sizeof(wchar_t) * w.ws_col * msg_cnt + 1);
@@ -503,8 +507,9 @@ int main(int argc, char *argv[]) {
       else                                          printf("%ls\n", arr[i]    );
     }
 #else    // Normal/Bold
-    arr2nab( w.ws_row, w.ws_col, arr, nab );     // xyzzy - need to pass foo and msg_cnt
-    printf(">>%ls<<\n", nab );
+    arr2nab( w.ws_row, w.ws_col, arr, nab, show, msg_cnt, foo );
+    printf("%ls\n", nab );
+    fflush(stdout);
 #endif
 #else
     int st;
