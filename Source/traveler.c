@@ -121,7 +121,8 @@ int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab, bool show, int cnt, 
   int r,  c,
       ln, lb,
       mi = 0,
-      rd;
+      rds, rdc,      // random style, color
+      stl, clr;
   wchar_t *pch,
           *pnb;
   wchar_t nrml[16],
@@ -138,11 +139,17 @@ int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab, bool show, int cnt, 
     else                                      pch = arr[r];
 
     for ( c=0; c<col-1; ++c ) {
-      rd = ( (int) (drand48()*20 ) );  // gen random to select bold/normal
+      rds = ( (int) (drand48()*20 ) );  // gen random to select bold/normal
+      rdc = ( (int) (drand48()*20 ) );  // gen random to select color
 
-      if ( ! rd%5 ) { memcpy( (char *) pnb, bold, lb*4); pnb += lb; }
+      stl = (rds%20 == 0);
+      clr = (rdc%3  == 0);
+
+      lb = swprintf(bold, 16, L"[%d;%dm", stl, 31+clr);  // bold    green
+
+      if (   stl||clr ) { memcpy( (char *) pnb, bold, lb*4); pnb += lb; }
       *pnb++ = *pch++;
-      if ( ! rd%5 ) { memcpy( (char *) pnb, nrml, ln*4); pnb += ln; }
+      if (   stl||clr )  { memcpy( (char *) pnb, nrml, ln*4); pnb += ln; }
     }
     *pnb++ = ' ';
   }
