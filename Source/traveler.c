@@ -117,6 +117,34 @@ int shftarr( int row, int col, wchar_t **arr ) {
   }
   return(0);
 }
+int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab ) {
+  int r,  c,
+      ln, lb,
+      rd;
+  wchar_t *pch,
+          *pnb;
+  wchar_t nrml[16],
+          bold[16];
+
+  ln = swprintf(nrml, 16, L"[%d;%dm", 0, 1+31);  // normal  green
+  lb = swprintf(bold, 16, L"[%d;%dm", 1, 1+31);  // bold    green
+
+  pnb = nab;
+
+  for ( r=0; r<row-1; ++r ) {
+    pch =  arr[r];
+    for ( c=0; c<col-0; ++c, ++pch ) {
+      rd = ( (int) (drand48()*16 ) );  // gen random to select bold/normal
+
+      // This does not work because byte-order is wrong  wchar_t is 4 byte
+      if ( rd%3 ) { memcpy( (char *) pnb, bold, lb*4); pnb += lb; }
+      *pnb++ = *pch++;
+      if ( rd%3 ) { memcpy( (char *) pnb, nrml, ln*4); pnb += ln; }
+    }
+  }
+  *(pnb+1) = '\0';
+  return(0);
+}
 wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, wchar_t *str ) {
   static
   int offset = -20;
@@ -265,7 +293,8 @@ int main(int argc, char *argv[]) {
       rc   = 0,
       longindex;
 
-  wchar_t **arr = NULL;
+  wchar_t **arr = NULL,
+           *nab = NULL;          // normal and bold text
 
   bool B_have_arg = true;
   extern int   optind,
@@ -447,6 +476,7 @@ int main(int argc, char *argv[]) {
   start = w.ws_col * .25;
   stop  = start * 3;
 
+  nab  = (wchar_t *)  malloc( sizeof( wchar_t *) * (w.ws_row*w.ws_col*8+1));
 
   // allocate space for all the msgs
   rndmsg = (wchar_t *) malloc( sizeof(wchar_t) * w.ws_col * msg_cnt + 1);
@@ -464,11 +494,18 @@ int main(int argc, char *argv[]) {
     } else show = false;
 
     printf("[%d;%dm", 0, 1+31);
+#define NORMAL
 #ifdef  NORMAL
+#define PLAIN_no
+#ifdef  PLAIN
     for( i=0, mi=0; i<w.ws_row-1; ++i ) {
       if ( show && mi<msg_cnt && i == 10+(mi*lskp)) printf("%ls\n", foo[mi++] );
       else                                          printf("%ls\n", arr[i]    );
     }
+#else    // Normal/Bold
+    arr2nab( w.ws_row, w.ws_col, arr, nab );     // xyzzy - need to pass foo and msg_cnt
+    printf(">>%ls<<\n", nab );
+#endif
 #else
     int st;
     for( i=0, mi=0; i<w.ws_row-1; ++i ) {
