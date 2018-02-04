@@ -536,7 +536,7 @@ int main(int argc, char *argv[]) {
     shftarr( w.ws_row, w.ws_col, arr );
 
     fflush(stdout);
-    usleep( 200000 );
+    usleep( 300000 );
   }
 
   printf("[m");
