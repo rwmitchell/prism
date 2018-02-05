@@ -1,0 +1,5 @@
+Traveler Notes
+
+= W values =
+  -   60 : lower case letters
+  - 2800 : braile
