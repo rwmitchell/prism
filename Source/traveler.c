@@ -32,6 +32,7 @@ wint_t
      wch   =  0;
 
 bool B_std   = true,
+     B_shift = true,      // shift text
      B_time  = false,     // show time until next message
      B_rmid  = false;     // removed shmem
 
@@ -162,6 +163,15 @@ wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, 
   int i, j,
       spos;
 
+  /*
+   * flag: 0 - msg_cnt
+   * llen: screen width
+   * mlen: msg length
+   * line: random text line
+   * msg : secret message
+   * str : output string
+   */
+
   spos = (llen-mlen)/2 + offset;
   for( i=0, j=0; i<llen; ++i ) {
     str[i] = line[i];
@@ -170,6 +180,50 @@ wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, 
   str[llen] = '\0';
 
   if ( !flag ) ++offset;
+
+  return(str);
+}
+wchar_t *dslv_msg( int cnt, int llen, int mlen, wchar_t *line, const char *msg, wchar_t *str ) {
+  static bool B_init = false;    // false disables shfl code
+  static int *shfl,
+              len;
+  int i, j,
+      spos;
+
+  /* This is all wrong
+   * cnt is the number of iterations this will be called
+   * llen is the width the window
+   * mlen is the length of a single msg line
+   * line is the current line of random text
+   * msg  is the current msg line
+   *
+   * we need to malloc space for llen * number of msg lines, which this doesn't know
+   *
+   * the goal is to:
+   * - shuffle an array the size of the secret message
+   * - on each call, copy the next n-shuffled chars of msg to output
+   *   to allow the secret message to dissolve onto the screen
+   */
+
+  if ( B_init ) {
+
+    B_init = false;
+    len = llen * mlen;
+    shfl = (int *) malloc( sizeof(int) * len + 1 );
+    for( i=0; i<len; ++i ) shfl[i] = i;
+    shuffle( shfl, len );
+
+    BUGOUT("CNT: %d : %d\n", cnt, len );
+    BUGOUT("MARK"); sleep( 2 );
+    exit(0);
+  }
+
+  spos = (llen-mlen)/2;
+  for( i=0, j=0; i<llen; ++i ) {
+    str[i] = line[i];
+    if ( i >= spos & j<mlen) str[i] = msg[j++];
+  }
+  str[llen] = '\0';
 
   return(str);
 }
@@ -313,10 +367,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":mRtW:d:uh";      // Leading : makes all :'s optional
+  char *opts=":mRstW:d:uh";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "manual",  no_argument,       NULL, 'm' },
     { "reset",   no_argument,       NULL, 'R' },
+    { "still",   no_argument,       NULL, 's' },
     { "time",    no_argument,       NULL, 't' },
     { "wide",    optional_argument, NULL, 'W' },
     { "debug",   optional_argument, NULL, 'd' },
@@ -386,6 +441,7 @@ int main(int argc, char *argv[]) {
 
       case 'm': B_std    = !B_std;   break;
       case 'R': B_rmid   = !B_rmid ; break;
+      case 's': B_shift  = !B_shift; break;
       case 't': B_time   = !B_time ; break;
 
       case 'W': if ( B_have_arg )      // -wide
@@ -453,7 +509,7 @@ int main(int argc, char *argv[]) {
   if ( B_std && block->time <= 1.0 ) exit(0);
 
   STDOUT("....waiting for incoming msg....\n");
-  if ( B_std ) sleep( (int) (block->time - NOW()) );
+  if ( B_std && block->time > NOW() ) sleep( (int) (block->time - NOW()) );
 
   memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
   msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
@@ -494,26 +550,35 @@ int main(int argc, char *argv[]) {
   for ( mi=0; mi<msg_cnt; ++mi )
     foo[mi] = &rndmsg[mi * w.ws_col];
 
-  for ( j=0; j<w.ws_col-1; ++j ) {
-    setpos( 1, 1 );
+  for ( j=0; j<w.ws_col-1; ++j ) {       // loop on columns
+    setpos( 1, 1 );                      // reset cursor to home
 
-    if ( j>start && j<stop && j%4) {
-      for ( mi=0; mi<msg_cnt; ++mi )
-        add_msg( mi, w.ws_col-1, strlen(msg[mi]), arr[10+(mi*lskp)], msg[mi], foo[mi] );
-      show=true;
+    if ( B_shift ) {                     // defaults to true, shift text to left
+      if ( j>start && j<stop && j%4) {   // show secret msg
+        for ( mi=0; mi<msg_cnt; ++mi )   // loop on msg lines
+          add_msg ( mi, w.ws_col-1, strlen(msg[mi]), arr[10+(mi*lskp)], msg[mi], foo[mi] );
+        show=true;                       // show special lines with msg
 
-    } else show = false;
+      } else show = false;               // or not
+    } else {                             // don't shift text
+      if ( j>start && j<stop ) {         // show secret msg
+        for ( mi=0; mi<msg_cnt; ++mi )   // loop on msg lines
+          dslv_msg( stop-start, w.ws_col-1, strlen(msg[mi]), arr[10+(mi*lskp)], msg[mi], foo[mi] );
+        show=true;                       // show special lines with msg
 
-    printf("[%d;%dm", 0, 1+31);
+      } else show = false;
+    }
+
+    printf("[%d;%dm", 0, 1+31);        // set text to normal, green
 #define NORMAL
 #ifdef  NORMAL
 #define PLAIN_no
 #ifdef  PLAIN
-    for( i=0, mi=0; i<w.ws_row-1; ++i ) {
+    for( i=0, mi=0; i<w.ws_row-1; ++i ) {   // show plain text
       if ( show && mi<msg_cnt && i == 10+(mi*lskp)) printf("%ls\n", foo[mi++] );
       else                                          printf("%ls\n", arr[i]    );
     }
-#else    // Normal/Bold
+#else                                       // generate Normal/Bold in single string
     arr2nab( w.ws_row, w.ws_col, arr, nab, show, msg_cnt, foo );
     printf("%ls\n", nab );
     fflush(stdout);
@@ -521,7 +586,7 @@ int main(int argc, char *argv[]) {
 #else
     int st;
     for( i=0, mi=0; i<w.ws_row-1; ++i ) {
-      st = ( (int) (drand48()*16 ) );  // gen random bold/normal
+      st = ( (int) (drand48()*16 ) );       // gen random bold/normal
       if ( st%3 ) printf("[%d;%dm", 0, 1+31);
       else       printf("[%d;%dm", 1, 1+31);
       if ( show && mi<msg_cnt && i == 10+(mi*lskp)) {
@@ -531,9 +596,10 @@ int main(int argc, char *argv[]) {
       }
     }
 #endif
-    printf("[%d;%dm", 1, 1+31);
+    printf("[%d;%dm", 1, 1+31);        // reset text to bold, green
 
-    shftarr( w.ws_row, w.ws_col, arr );
+
+    if ( B_shift ) shftarr( w.ws_row, w.ws_col, arr );
 
     fflush(stdout);
     usleep( 300000 );
