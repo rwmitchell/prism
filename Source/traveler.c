@@ -179,23 +179,24 @@ wchar_t *add_msg( int flag, int llen, int mlen, wchar_t *line, const char *msg, 
   }
   str[llen] = '\0';
 
-  if ( !flag ) ++offset;
+  if ( !flag ) ++offset;    // only shift after one complete set of msg lines
 
   return(str);
 }
-wchar_t *dslv_msg( int cnt, int llen, int mlen, wchar_t *line, const char *msg, wchar_t *str ) {
-  static bool B_init = false;    // false disables shfl code
-  static int *shfl,
-              len;
+wchar_t *dslv_msg( int cnt, int mi, int llen, int mcnt, wchar_t *line, const char *msg, wchar_t *str ) {
+  static bool B_init = true;    // false disables shfl code
+  static int **shfl;
   int i, j,
-      spos;
+      spos,
+      mlen;
 
-  /* This is all wrong
-   * cnt is the number of iterations this will be called
+  /*
+   * cnt  is the column number
    * llen is the width the window
-   * mlen is the length of a single msg line
+   * mcnt is the number of message lines
    * line is the current line of random text
    * msg  is the current msg line
+   * str  is the new output
    *
    * we need to malloc space for llen * number of msg lines, which this doesn't know
    *
@@ -205,25 +206,29 @@ wchar_t *dslv_msg( int cnt, int llen, int mlen, wchar_t *line, const char *msg, 
    *   to allow the secret message to dissolve onto the screen
    */
 
-  if ( B_init ) {
+  if ( B_init ) {         // generate shuffled list of numbers for each msg line
 
     B_init = false;
-    len = llen * mlen;
-    shfl = (int *) malloc( sizeof(int) * len + 1 );
-    for( i=0; i<len; ++i ) shfl[i] = i;
-    shuffle( shfl, len );
-
-    BUGOUT("CNT: %d : %d\n", cnt, len );
-    BUGOUT("MARK"); sleep( 2 );
-    exit(0);
+    shfl  = (int **) malloc( sizeof(int *) * mcnt );
+    for( j=0; j<mcnt; ++j ) {
+      shfl[j] = (int *) malloc( sizeof(int) * llen + 1 );
+      for( i=0; i<llen; ++i ) shfl[j][i] = i;
+      shuffle( shfl[j], llen );
+    }
+    printf(""); fflush(stdout);
   }
 
-  spos = (llen-mlen)/2;
-  for( i=0, j=0; i<llen; ++i ) {
-    str[i] = line[i];
-    if ( i >= spos & j<mlen) str[i] = msg[j++];
+  mlen = strlen( msg );
+
+  spos = (llen-mlen)/2;                            // compute starting position
+  for( i=0, j=0; i<llen; ++i ) {                   // loop through each letter in line
+    str[i] = line[i];                              // copy input to output
+    if ( i >= spos & j<mlen) str[i] = msg[j++];    // overwrite output with msg
   }
   str[llen] = '\0';
+
+  cnt = (cnt*2>llen) ? llen : cnt*2;
+  for( i=cnt; i<llen; ++i ) str[ shfl[mi][i] ] = line[ shfl[mi][i] ]; // rewrite output with input
 
   return(str);
 }
@@ -553,6 +558,7 @@ int main(int argc, char *argv[]) {
   for ( j=0; j<w.ws_col-1; ++j ) {       // loop on columns
     setpos( 1, 1 );                      // reset cursor to home
 
+    // Generate lines for output
     if ( B_shift ) {                     // defaults to true, shift text to left
       if ( j>start && j<stop && j%4) {   // show secret msg
         for ( mi=0; mi<msg_cnt; ++mi )   // loop on msg lines
@@ -563,7 +569,8 @@ int main(int argc, char *argv[]) {
     } else {                             // don't shift text
       if ( j>start && j<stop ) {         // show secret msg
         for ( mi=0; mi<msg_cnt; ++mi )   // loop on msg lines
-          dslv_msg( stop-start, w.ws_col-1, strlen(msg[mi]), arr[10+(mi*lskp)], msg[mi], foo[mi] );
+//        dslv_msg( stop-start, w.ws_col-1, msg_cnt, arr[10+(mi*lskp)], msg[mi], foo[mi] );
+          dslv_msg( j, mi, w.ws_col-1, msg_cnt, arr[10+(mi*lskp)], msg[mi], foo[mi] );
         show=true;                       // show special lines with msg
 
       } else show = false;
@@ -574,6 +581,7 @@ int main(int argc, char *argv[]) {
 #ifdef  NORMAL
 #define PLAIN_no
 #ifdef  PLAIN
+    // display output
     for( i=0, mi=0; i<w.ws_row-1; ++i ) {   // show plain text
       if ( show && mi<msg_cnt && i == 10+(mi*lskp)) printf("%ls\n", foo[mi++] );
       else                                          printf("%ls\n", arr[i]    );
