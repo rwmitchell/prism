@@ -215,7 +215,7 @@ wchar_t *dslv_msg( int cnt, int mi, int llen, int mcnt, wchar_t *line, const cha
       for( i=0; i<llen; ++i ) shfl[j][i] = i;
       shuffle( shfl[j], llen );
     }
-    printf(""); fflush(stdout);
+//  printf(""); fflush(stdout);
   }
 
   mlen = strlen( msg );
