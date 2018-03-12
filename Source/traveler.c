@@ -487,7 +487,7 @@ int main(int argc, char *argv[]) {
   // ***** Setup SHMEM ******
   bool shm_exists = false;
   int  shmid_secret;
-  TRAVELER_h *block;
+  TRAVELER_t *block;
   size_t      block_sz;
   char        data[MAX_SECRET],
             **msg;
@@ -496,8 +496,8 @@ int main(int argc, char *argv[]) {
   shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
 //printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
 
-  block_sz = sizeof( TRAVELER_h );
-  block    = (TRAVELER_h *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
+  block_sz = sizeof( TRAVELER_t );
+  block    = (TRAVELER_t *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   if ( B_rmid ) {
     BUGOUT( "Releasing shared memory");
