@@ -128,6 +128,8 @@ show_install        \
 
 install:            \
 	$(NST)/matrix     \
+	$(NST)/traveler   \
+	$(NST)/trvlr_send \
 
 $(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES)
 	$(CC) -o $@ $^ $(LINKOPT)

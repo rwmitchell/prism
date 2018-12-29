@@ -266,7 +266,8 @@ int main(int argc, char *argv[]) {
   int  shmid_secret;
   TRAVELER_t *block;
   size_t      block_sz;
-  char       *data;
+  char       *data,
+             *pt;
   off_t       f_sz;
 
 
@@ -285,17 +286,40 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-  if ( optind+1 == argc ) {
-    if ( file_exists( argv[optind])) {
-      data = loadfile( argv[optind], &f_sz );
+  if ( optind+1 == argc && file_exists( argv[optind] ) ) {
+    data = loadfile( argv[optind], &f_sz );
+  } else {
+
+//if ( optind+1 < argc ) {     // if multiple args, assume it is the message
+    int i;
+
+    f_sz = argc+4;
+    for ( i=optind; i<argc; ++i ) f_sz += strlen( argv[i] );
+    data = (char *) malloc( f_sz );
+    strcat( data, "| " );
+    for ( i=optind; i<argc; ++i ) {
+      strcat( data, argv[i] );
+      strcat( data, " " );
+    }
+    strcat( data, "|\n" );
+  }
+
+
+  if ( block->time == 0.0 ) {
       memset( block->text, ' ', MAX_SECRET );
-      memcpy( block->text, data, MAX_SECRET);
+      pt = block->text;
+  } else {
+    pt = strrchr( block->text, '\n' );
+    pt++;
+  }
+  if ( pt - block->text + f_sz < MAX_SECRET ) {
+      memcpy( pt, data, MAX_SECRET);
       block->time = NOW() + wsec;
       block->lskp = lskp;
-      STDOUT("%lf\n", block->time );
-      free( data );
-    }
   }
+  STDOUT("%lf\n", block->time );
+  STDOUT("%s\n", block->text );
+  free( data );
 
   exit(0);
 }
