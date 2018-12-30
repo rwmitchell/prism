@@ -10,6 +10,7 @@
 #include "shmem.h"
 #include "traveler.h"
 #include "now.h"
+#include "helpd.h"
 
 // Load 1K of text into shmem
 // This will be read by traveler.c
@@ -84,22 +85,7 @@ char *loadfile( char *fname, off_t *f_sz ) {
 
   return( data );
 }
-void usage(struct option longopts[]) {
-  int i;
-
-  for (i=0; longopts[i].name != NULL; ++i ) {
-    STDOUT("%s%c %c ",
-      longopts[i].name,
-      longopts[i].has_arg == optional_argument ? '=' : ' ',
-      isprint(longopts[i].val) ? longopts[i].val : ' '
-    );
-  }
-  STDOUT("\n");
-  exit(0);
-}
 void help( char *progname, const char *opt, struct option lopts[] ) {
-  int i;
-  const char *args[] = {"None", "Required", "Optional"};
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
@@ -109,26 +95,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("try again later\n");
   STDERR("\n");
 
-  if ( debug ) {
-    STDERR("\n");
-    STDERR("%2s %-15s %-9s %4s\n",
-        "  ",
-        "Name",
-        "arg",
-        "opt" );
-    for (i=0; lopts[i].name != NULL; ++i ) {
-      STDERR("%2d %-15s %-9s   %c",
-        i,
-        lopts[i].name,
-        args[lopts[i].has_arg],
-        isprint(lopts[i].val) ? lopts[i].val : ' '
-      );
-      if ( lopts[i].flag != NULL ) {
-        STDERR(" Pointer: %d", *lopts[i].flag );
-      }
-      STDERR("\n");
-    }
-  }
+  if ( debug ) helpd( lopts );
 
   exit(-0);
 }

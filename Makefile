@@ -45,12 +45,13 @@ SRC = Source
 NST = $(prefix)/bin
 
 # Additional object files used with other programs
-IO_FILES = \
-	$(OBJ)/io.o
+LB_FILES = \
+	$(OBJ)/helpd.o \
 
 SM_FILES = \
 	$(OBJ)/shmem.o \
 	$(OBJ)/now.o   \
+	$(OBJ)/helpd.o \
 
 SM_PROGS  = \
 						$(DST)/traveler   \
@@ -131,14 +132,14 @@ install:            \
 	$(NST)/traveler   \
 	$(NST)/trvlr_send \
 
-$(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES)
+$(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES) $(LB_FILES)
 	$(CC) -o $@ $^ $(LINKOPT)
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
 #	@echo "$@: $^"
 
-$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
-	$(CC) -o $@ $< $(LINKOPT)
+$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES) $(LB_FILES)
+	$(CC) -o $@ $^ $(LINKOPT)
 	$(DSYM) $@
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
