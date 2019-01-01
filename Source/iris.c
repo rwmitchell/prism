@@ -180,13 +180,6 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  BUGOUT("Args already processed:\n");
-  for ( i=0; i<optind; ++i )
-    BUGOUT("%d: %s\n", i, argv[i] );
-
-  BUGOUT("debug level: %d\n", debug );
-  BUGOUT("      myopt: %s\n", myopt );
-
   off_t  f_sz = 0;
   char *buf   = NULL,
        *pch;
@@ -196,20 +189,24 @@ int main(int argc, char *argv[]) {
 
   set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
+
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
 
     if ( ! f_sz )
     buf   = (char *) loadfile ( argv[optind], &f_sz );
 
     pch = buf;
-    while ( pch ) {
-      printf("%c", *pch++ );
+    while ( f_sz-- ) {
       set_color( stl, clr );
+      printf("%c", *pch );
 //    ++stl; stl %= 7;
       ++clr; clr %= 7;
       if ( *pch == '\n' ) clr = 0;
+      ++pch;
     }
 
+    f_sz = 0;
+    if ( buf  ) { free( buf  ); buf = NULL; }
   }                                         // for optind
 
   set_cursor( true  );
