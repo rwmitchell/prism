@@ -46,7 +46,10 @@ NST = $(prefix)/bin
 
 # Additional object files used with other programs
 LB_FILES = \
-	$(OBJ)/helpd.o \
+	$(OBJ)/strings.o  \
+	$(OBJ)/io.o       \
+	$(OBJ)/loadfile.o \
+	$(OBJ)/helpd.o    \
 
 SM_FILES = \
 	$(OBJ)/shmem.o \
@@ -62,6 +65,7 @@ DST_PROGS = \
 						$(DST)/asot_term     \
 						$(DST)/getwinsz      \
 						$(DST)/matrix        \
+						$(DST)/iris          \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \

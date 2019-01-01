@@ -16,6 +16,7 @@
 #include <sys/param.h>  // str2arr(), INT_MAX, MIN()
 #include <locale.h>
 #include <wchar.h>
+#include "loadfile.h"
 #include "bugout.h"
 #include "helpd.h"
 
@@ -96,6 +97,7 @@ bool getpos( int *row, int *col ) {
     return success;
 }
 
+#ifdef  NO_loadfile
 int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
   char *ch;
   int i, cnt, pos;
@@ -178,6 +180,7 @@ char *loadfile( char *fname, off_t *f_sz ) {
 
   return( data );
 }
+#endif
 void help( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
@@ -384,7 +387,7 @@ int main(int argc, char *argv[]) {
       free( arr );
     }
 
-    data = loadfile( argv[optind], (off_t *) &f_sz );
+    data = (char *) loadfile( argv[optind], (off_t *) &f_sz );
     rc   = str2arr( data, "\n", &arr, f_sz );
 
     memset(screen, ' ', scr_sz );

@@ -9,6 +9,7 @@
 #include "bugout.h"
 #include "shmem.h"
 #include "traveler.h"
+#include "loadfile.h"
 #include "now.h"
 #include "helpd.h"
 
@@ -34,6 +35,7 @@ bool B_o    = false,
 "@(#)$Id$";
 */
 
+#ifdef  NO_loadfile
 off_t fsize( char *name ) {
   off_t size = -1L;
   struct stat sbuf;
@@ -43,10 +45,6 @@ off_t fsize( char *name ) {
       size=sbuf.st_size;
 
   return(size);
-}
-int file_exists( char *filename ) {
-  struct stat buf;
-  return( stat(filename, &buf) == 0 );
 }
 char *loadfile( char *fname, off_t *f_sz ) {
   off_t   f_limit = 32 * 2<<19;            // ~ 32MB, arbitrary
@@ -84,6 +82,11 @@ char *loadfile( char *fname, off_t *f_sz ) {
   }
 
   return( data );
+}
+#endif
+int file_exists( char *filename ) {
+  struct stat buf;
+  return( stat(filename, &buf) == 0 );
 }
 void help( char *progname, const char *opt, struct option lopts[] ) {
 
@@ -254,7 +257,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   if ( optind+1 == argc && file_exists( argv[optind] ) ) {
-    data = loadfile( argv[optind], &f_sz );
+    data = (char *) loadfile( argv[optind], &f_sz );
   } else {
 
 //if ( optind+1 < argc ) {     // if multiple args, assume it is the message

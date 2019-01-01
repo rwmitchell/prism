@@ -18,6 +18,7 @@ char *cvsid = "$Id$";
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include "bugout.h"
+#include "helpd.h"
 
 const char *TF[]= {"False", "True"};
 const char *white = " \t\n";
@@ -86,21 +87,7 @@ int asot_term( FILE *myin, char *str, int cnt ) {
 }
 // ############################################################
 
-void usage( const struct option longopts[] ) {
-  int i;
-
-  for (i=0; longopts[i].name != NULL; ++i ) {
-    STDOUT("%s%c %c ",
-      longopts[i].name,
-      longopts[i].has_arg == optional_argument ? '=' : ' ',
-      isprint(longopts[i].val) ? longopts[i].val : ' '
-    );
-  }
-  STDOUT("\n");
-  exit(0);
-}
-void help( char *progname, const char *opt, const struct option lopts[]) {
-  int i;
+void help( char *progname, const char *opt, struct option lopts[]) {
   STDERR( "%s %s\n", __DATE__, __TIME__ );
   STDERR( "%s\n\n", cvsid);
   STDERR( "%s [-%s]\n", progname, opt);
@@ -108,26 +95,7 @@ void help( char *progname, const char *opt, const struct option lopts[]) {
   STDERR( "-d INTEGER    (%d)\n", debug );
   STDERR( "try again later\n\n");
 
-  STDERR("%2s %-15s %4s %4s %c\n",
-      "  ",
-      "Name",
-      "arg",
-      "val",
-      '-' );
-
-  for (i=0; lopts[i].name != NULL; ++i ) {
-    STDERR("%2d %-15s %4d %4d %c",
-      i,
-      lopts[i].name,
-      lopts[i].has_arg,
-      lopts[i].val,
-      isprint(lopts[i].val) ? lopts[i].val : ' '
-    );
-    if ( lopts[i].flag != NULL ) {
-      STDERR(" Pointer: %d", *lopts[i].flag );
-    }
-    STDERR("\n");
-  }
+  if ( debug ) helpd( lopts );
 
   exit(-0);
 }
@@ -144,7 +112,7 @@ int main(int argc, char *argv[]) {
   extern int   optind,
                optopt;
 
-  const struct option longopts[] = {
+  static struct option longopts[] = {
     { "debug",   required_argument, NULL, 'd' },
     { "speed",   required_argument, NULL, 's' },
     { "help",    no_argument,       NULL, 'h' },

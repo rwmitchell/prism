@@ -17,6 +17,7 @@
 #include "bugout.h"
 #include "shmem.h"
 #include "traveler.h"
+#include "loadfile.h"
 #include "now.h"
 #include "helpd.h"
 
@@ -270,6 +271,7 @@ int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
 
   return(0);
 }
+#ifdef  NO_loadfile
 int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
   char    *ch;
   int i, cnt, pos;
@@ -305,6 +307,7 @@ int str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
 
   return( cnt );
 }
+#endif
 
 void help( char *progname, const char *opt, struct option lopts[] ) {
 
