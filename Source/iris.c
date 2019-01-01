@@ -26,7 +26,8 @@ int  debug =  0,
      ccnt  =  2;    // continuous colors
 
 bool B_o   = false,
-     B_256 = true;
+     B_256 = true,
+     B_row = false;
 
 enum {
   MAXCOLOR          =    6,
@@ -84,7 +85,15 @@ void set_color256( unsigned long clr) {
 //printf(" %06lX    %02x;%02x;%02xm", clr, R, G, B);
 }
 
-void inc_val( short *val, unsigned short cycle, int max ) {
+void inc_byrow( char ch, short *val, unsigned short cycle, int max ) {
+  static short cnt = 0;
+
+  if ( *val == -1 ) *val = cnt = 0;
+  if ( cnt == cycle ) { (*val)++; *val %= max; }
+  cnt %= cycle;
+  if ( ch == '\n' ) ++cnt;
+}
+void inc_bycol( short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
   if ( *val == -1 ) *val = cnt = 0;
@@ -126,13 +135,14 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8gmd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8gmrd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",    no_argument,       NULL, '8' },
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
+    { "row",     no_argument,       NULL, 'r' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -202,15 +212,17 @@ int main(int argc, char *argv[]) {
                 BUGOUT( "%2d ccnt\n", ccnt );
                 break;
 
-      case '8':  B_256 = !B_256;
-                 sz_pal = MAXCOLOR;
-                 break;
-      case 'g':  palette = rainbow;
-                 sz_pal  = sizeof( rainbow ) / 4;
-                 break;
-      case 'm':  palette = metal;
-                 sz_pal  = sizeof( metal ) / 4;
-                 break;
+      case '8': B_256 = !B_256;
+                sz_pal = MAXCOLOR;
+                break;
+      case 'g': palette = rainbow;
+                sz_pal  = sizeof( rainbow ) / 4;
+                break;
+      case 'm': palette = metal;
+                sz_pal  = sizeof( metal ) / 4;
+                break;
+
+      case 'r': B_row = !B_row; break;
 
       case 'o':
         B_o = !B_o;
@@ -268,7 +280,9 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      inc_val( &clr, ccnt, sz_pal );
+      if ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_pal );
+      else         inc_bycol(       &clr, ccnt, sz_pal );
+
       if ( B_256 ) set_color256(      palette[clr] );
       else {
         set_color8  ( stl, clr );
@@ -276,7 +290,7 @@ int main(int argc, char *argv[]) {
 //      ++stl; stl %= 7;
       }
       printf("%c", *pch );
-      if ( *pch == '\n' ) clr = -1;
+      if ( !B_row && *pch == '\n' ) clr = -1;
       ++pch;
     }
 
