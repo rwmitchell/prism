@@ -1,22 +1,19 @@
-// From:
-// https://stackoverflow.com/questions/1022957/getting-terminal-width-in-c
+/* iris.c                                        2018-12-31  rwm
+ * As a goddess, Iris is associated with communication, messages,
+ * the rainbow and new endeavors. This personification of a rainbow
+ * was once described as being a link to the heavens and earth.
+ * In some texts she is depicted wearing a coat of many colors.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <termios.h>
 #include <string.h>  // strcpy()
 #include <getopt.h>
 #include <ctype.h>   // isdigit()
-#include <fcntl.h>   // open()
 #include <stdbool.h> // bool
 #include "loadfile.h"
 #include "bugout.h"
 #include "helpd.h"
-
-// Reports the size of the terminal if run directly,
-// but cannot be run inside backticks or by another program
-
 
 const
 char *cvsid = "$Id$";
@@ -27,94 +24,66 @@ char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0;
 
-bool B_o       = false,
-     B_verbose = false,
-     B_left    = false,
-     B_right   = false,
-     B_top     = false;
+bool B_o = false;
 
-void setpos( int row, int col ) {
-  printf("[%d;%dH", row, col);
+void set_cursor( bool on) {
+  if ( on ) {
+    printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
+    printf("]1337;CursorShape=0");           // set block cursor
+  } else {
+    printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
+    printf("]1337;CursorShape=1");          // set vertical cursor
+  }
 }
 
-// From: https://stackoverflow.com/questions/16026858/reading-the-device-status-report-ansi-escape-sequence-reply
-bool getpos( int *row, int *col ) {
-    fd_set readset;
-    bool success = false;
-    struct timeval time;
-    struct termios term, initial_term;
+void set_color( unsigned short stl, unsigned short clr) {
+  printf("[%d;%dm", stl, clr+31);
+}
 
-    /*We store the actual properties of the input console and set it as:
-    no buffered (~ICANON): avoid blocking 
-    no echoing (~ECHO): do not display the result on the console*/
-    tcgetattr(STDIN_FILENO, &initial_term);
-    term = initial_term;
-    term.c_lflag &=~ICANON;
-    term.c_lflag &=~ECHO;
-    tcsetattr(STDIN_FILENO, TCSANOW, &term);
 
-    //We request position
-    printf("[6n");
-    fflush(stdout);
-
-    //We wait 100ms for a terminal answer
-    FD_ZERO(&readset);
-    FD_SET(STDIN_FILENO, &readset);
-    time.tv_sec = 0;
-    time.tv_usec = 100000;
-
-    //If it success we try to read the cursor value
-    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1) 
-      if (scanf("\033[%d;%dR", row, col) == 2) success = true;
-
-    //We set back the properties of the terminal
-    tcsetattr(STDIN_FILENO, TCSADRAIN, &initial_term);
-
-    return success;
+void one_line( const char *progname ) {
+  STDOUT("%-20s: Colorize input\n", progname );
+  exit(0);
 }
 
 void help( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
-  STDERR("%s [-%s]\n", progname, opt);
+  STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
+  STDERR("colorize text either by column or character\n");
+  STDERR("\n");
   STDERR("-o=STRING     (%s : %s)\n", TF[B_o], myopt );
   STDERR("-d INTEGER    (%d)\n", debug );
   STDERR("try again later\n");
+  STDERR("\n");
 
   if ( debug ) helpd( lopts );
 
   exit(-0);
 }
 
-
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt, i,
-      longindex;
+      longindex=0;
   bool B_have_arg = true;
   extern int   optind,
                optopt;
   extern char *optarg;
 
   const
-  char *opts=":Xo:lrtvd:uh";     // Leading : makes all :'s optional
+  char *opts=":Xo:d:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
-    { "left",    no_argument,       NULL, 'l' },
-    { "right",   no_argument,       NULL, 'r' },
-    { "top",     no_argument,       NULL, 't' },
-    { "verbose", no_argument,       NULL, 'v' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
+    { "oneline", no_argument,       NULL, '1' },
     { NULL,      0,                 NULL,  0  }
   };
-
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);    // Get window size
 
   strcpy(myopt, "defval");
 
@@ -126,6 +95,8 @@ int main(int argc, char *argv[]) {
 
     if ( opt == 0 ) {                 // we got a longopt
       opt = longopts[longindex].val;  // set opt to short opt value
+//  } else {
+//    BUGOUT("shortopt: %c:%d (%s)\n", opt, opt, optarg );
     }
 
     // Pre-Check
@@ -174,34 +145,11 @@ int main(int argc, char *argv[]) {
 
       case 'o':
         B_o = !B_o;
-#ifdef OLDBLOCK
-        if ( !optarg ) {
-          BUGOUT("optional arg for %s is NULL\n", longopts[longindex].name );
-          BUGOUT("using previous value: %s\n", myarg );
-          B_have_arg = false;
-        } else {
-
-          if ( *optarg == '\0' ) {
-            BUGOUT("optarg is empty\n");
-            BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
-            strcpy(myarg, argv[optind++]);
-          } else {
-            BUGOUT("setting myarg to: %s\n", optarg );
-            strcpy(myarg, optarg);
-          }
-        }
-#else
         BUGOUT("B_have_arg = %s\n", TF[B_have_arg]);
         BUGOUT("myarg = %s\n", myarg);
         if ( myarg[0] != '\0' ) strcpy(myopt, myarg);
-#endif
         BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
         break;
-
-      case 'l': B_left    = !B_left   ; break;
-      case 'r': B_right   = !B_right  ; break;
-      case 't': B_top     = !B_top    ; break;
-      case 'v': B_verbose = !B_verbose; break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -221,6 +169,8 @@ int main(int argc, char *argv[]) {
         usage( longopts );
         break;
 
+      case '1': one_line( argv[0] ); break;
+
       case 'h':
       default :
         ++errflg;
@@ -230,34 +180,38 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
-    BUGOUT("%2d: %s\n", optind, argv[optind] );
+  BUGOUT("Args already processed:\n");
+  for ( i=0; i<optind; ++i )
+    BUGOUT("%d: %s\n", i, argv[i] );
+
+  BUGOUT("debug level: %d\n", debug );
+  BUGOUT("      myopt: %s\n", myopt );
+
+  off_t  f_sz = 0;
+  char *buf   = NULL,
+       *pch;
+  int   clr=0,    // color
+        stl=0;    // style
+
+
+  set_cursor( false );
+  if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
+  for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
+
+    if ( ! f_sz )
+    buf   = (char *) loadfile ( argv[optind], &f_sz );
+
+    pch = buf;
+    while ( pch ) {
+      printf("%c", *pch++ );
+      set_color( stl, clr );
+//    ++stl; stl %= 7;
+      ++clr; clr %= 7;
+      if ( *pch == '\n' ) clr = 0;
+    }
+
   }                                         // for optind
 
-  int row, col;
-  getpos( &row, &col);
-//printf("Row: %d Col: %d\n", row, col );
-
-  if ( B_verbose) {
-    printf ( "lines %d\n", w.ws_row );
-    printf ( "columns %d\n", w.ws_col );
-  } else {
-    if ( ! ( B_left || B_right || B_top) )
-      printf( "%d %d\n", w.ws_row, w.ws_col );
-    else {
-      if ( B_top ) {
-        for (i=10; i<w.ws_col; i+= 10 )
-          printf("[%d;%dH%2d", 0, i, i/10 );
-      }
-
-      for ( i=1; i<w.ws_row; ++i ) {
-        if ( B_left ) printf("[%d;%dH%2d", i, 0, i-1 );
-        if ( B_right) printf("[%d;%dH%2d", i, w.ws_col-2, i-1 );
-      }
-//    setpos( w.ws_row-1, 0 );
-      setpos( row-1, 0 );
-    }
-  }
-
+  set_cursor( true  );
   exit(0);
 }
