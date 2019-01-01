@@ -24,24 +24,36 @@ char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0;
 
-bool B_o = false;
+bool B_o   = false,
+     B_256 = true;
 
 enum {
   MAXCOLOR          =    6,
-  CACA_LIGHTMAGENTA = 0x8b008b,      // 0x05,
-  CACA_LIGHTRED     = 0x8b0000,      // 0x0c,
-  CACA_YELLOW       = 0xffff00,      // 0x03,
-  CACA_LIGHTGREEN   = 0x90ee90,      // 0x0a,
-  CACA_LIGHTCYAN    = 0xe0ffff,      // 0x0b,
-  CACA_LIGHTBLUE    = 0xadd8e6,      // 0x09,
+  IRIS_LIGHTMAGENTA = 0x8b008b,
+  IRIS_LIGHTRED     = 0x8b0000,
+  IRIS_LIGHTGREEN   = 0x90ee90,
+  IRIS_LIGHTCYAN    = 0xe0ffff,
+  IRIS_LIGHTBLUE    = 0xadd8e6,
+  IRIS_LIGHTGREY    = 0xd3d3d3,
+  IRIS_DARKGREY     = 0xa9a9a9,
+  IRIS_RED          = 0xff0000,
+  IRIS_GREEN        = 0x00ff00,
+  IRIS_BLUE         = 0x0000ff,
+  IRIS_YELLOW       = 0xffff00,
 };
 int rainbow[] = {
-  CACA_LIGHTMAGENTA,
-  CACA_LIGHTRED,
-  CACA_YELLOW,
-  CACA_LIGHTGREEN,
-  CACA_LIGHTCYAN,
-  CACA_LIGHTBLUE
+  IRIS_LIGHTMAGENTA,
+  IRIS_LIGHTRED,
+  IRIS_YELLOW,
+  IRIS_LIGHTGREEN,
+  IRIS_LIGHTCYAN,
+  IRIS_LIGHTBLUE
+};
+int metal[] = {
+  IRIS_LIGHTBLUE,
+  IRIS_BLUE,
+  IRIS_LIGHTGREY,
+  IRIS_DARKGREY
 };
 
 void set_cursor( bool on) {
@@ -71,14 +83,14 @@ void set_color256( unsigned long clr) {
 //printf(" %06lX    %02x;%02x;%02xm", clr, R, G, B);
 }
 
-void inc_val( short *val, unsigned short cycle ) {
+void inc_val( short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
   if ( *val == -1 ) *val = cnt = 0;
   if ( cnt == cycle ) (*val)++;
    cnt %= cycle;
   ++cnt;
-  *val %= MAXCOLOR;
+  *val %= max;
 }
 void one_line( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
@@ -105,7 +117,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
-      opt, i,
+      opt,
       longindex=0;
   bool B_have_arg = true;
   extern int   optind,
@@ -113,16 +125,21 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":Xo:d:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:8gmd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
-    { "example", no_argument,       NULL, 'X' },
     { "myopt",   optional_argument, NULL, 'o' },
+    { "8bit",    no_argument,       NULL, '8' },
+    { "gay",     no_argument,       NULL, 'g' },
+    { "metal",   no_argument,       NULL, 'm' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
     { "oneline", no_argument,       NULL, '1' },
     { NULL,      0,                 NULL,  0  }
   };
+
+  int *palette = rainbow,
+       sz_pal  = sizeof( rainbow ) / 4;
 
   strcpy(myopt, "defval");
 
@@ -179,8 +196,15 @@ int main(int argc, char *argv[]) {
         }
         break;
 
-      case 'X':      // your code goes here
-        break;
+      case '8':  B_256 = !B_256;
+                 sz_pal = MAXCOLOR;
+                 break;
+      case 'g':  palette = rainbow;
+                 sz_pal  = sizeof( rainbow ) / 4;
+                 break;
+      case 'm':  palette = metal;
+                 sz_pal  = sizeof( metal ) / 4;
+                 break;
 
       case 'o':
         B_o = !B_o;
@@ -225,6 +249,8 @@ int main(int argc, char *argv[]) {
   short clr = -1,    // color
         stl =  1;    // style
 
+//BUGOUT("rainbow: %lu\n", sizeof( rainbow )/4);
+//BUGOUT("  metal: %lu\n", sizeof(   metal )/4);
 
   set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
@@ -236,12 +262,14 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      inc_val( &clr, 2 );
-//    set_color8  ( stl, clr );
-      set_color256(      rainbow[clr] );
+      inc_val( &clr, 2, sz_pal );
+      if ( B_256 ) set_color256(      palette[clr] );
+      else {
+        set_color8  ( stl, clr );
+        ++clr; clr %= 7;
+//      ++stl; stl %= 7;
+      }
       printf("%c", *pch );
-//    ++stl; stl %= 7;
-//    ++clr; clr %= 7;
       if ( *pch == '\n' ) clr = -1;
       ++pch;
     }
