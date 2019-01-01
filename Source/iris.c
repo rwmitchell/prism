@@ -22,7 +22,8 @@ const char *TF[]= {"False", "True"};
 
 char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
-int  debug =  0;
+int  debug =  0,
+     ccnt  =  2;    // continuous colors
 
 bool B_o   = false,
      B_256 = true;
@@ -125,9 +126,10 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:8gmd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8gmd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
+    { "cnt",     required_argument, NULL, 'c' },
     { "8bit",    no_argument,       NULL, '8' },
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
@@ -196,6 +198,10 @@ int main(int argc, char *argv[]) {
         }
         break;
 
+      case 'c': ccnt = strtol( optarg, NULL, 10 );
+                BUGOUT( "%2d ccnt\n", ccnt );
+                break;
+
       case '8':  B_256 = !B_256;
                  sz_pal = MAXCOLOR;
                  break;
@@ -262,7 +268,7 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      inc_val( &clr, 2, sz_pal );
+      inc_val( &clr, ccnt, sz_pal );
       if ( B_256 ) set_color256(      palette[clr] );
       else {
         set_color8  ( stl, clr );
