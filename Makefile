@@ -135,6 +135,7 @@ install:            \
 	$(NST)/matrix     \
 	$(NST)/traveler   \
 	$(NST)/trvlr_send \
+	$(NST)/iris       \
 
 $(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES) $(LB_FILES)
 	$(CC) -o $@ $^ $(LINKOPT)
