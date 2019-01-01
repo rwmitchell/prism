@@ -26,6 +26,24 @@ int  debug =  0;
 
 bool B_o = false;
 
+enum {
+  MAXCOLOR          =    6,
+  CACA_LIGHTMAGENTA = 0x8b008b,      // 0x05,
+  CACA_LIGHTRED     = 0x8b0000,      // 0x0c,
+  CACA_YELLOW       = 0xffff00,      // 0x03,
+  CACA_LIGHTGREEN   = 0x90ee90,      // 0x0a,
+  CACA_LIGHTCYAN    = 0xe0ffff,      // 0x0b,
+  CACA_LIGHTBLUE    = 0xadd8e6,      // 0x09,
+};
+int rainbow[] = {
+  CACA_LIGHTMAGENTA,
+  CACA_LIGHTRED,
+  CACA_YELLOW,
+  CACA_LIGHTGREEN,
+  CACA_LIGHTCYAN,
+  CACA_LIGHTBLUE
+};
+
 void set_cursor( bool on) {
   if ( on ) {
     printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
@@ -36,11 +54,32 @@ void set_cursor( bool on) {
   }
 }
 
-void set_color( unsigned short stl, unsigned short clr) {
+void set_color8( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
 }
 
+void set_color256( unsigned long clr) {
+//printf("[%d;%dm", stl, clr+31);
 
+  int R = (clr & 0xFF0000) >> 16,
+      G = (clr & 0x00FF00) >>  8,
+      B = (clr & 0x0000FF);
+
+//printf(  "[38;2;%02X;%02X;%02Xm", R, G, B);
+  printf(  "[38;2;%03d;%03d;%03dm", R, G, B);
+//printf(  "[38;2;%02X;%02X;%02Xm", R, G, B);
+//printf(" %06lX    %02x;%02x;%02xm", clr, R, G, B);
+}
+
+void inc_val( short *val, unsigned short cycle ) {
+  static short cnt = 0;
+
+  if ( *val == -1 ) *val = cnt = 0;
+  if ( cnt == cycle ) (*val)++;
+   cnt %= cycle;
+  ++cnt;
+  *val %= MAXCOLOR;
+}
 void one_line( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
   exit(0);
@@ -183,8 +222,8 @@ int main(int argc, char *argv[]) {
   off_t  f_sz = 0;
   char *buf   = NULL,
        *pch;
-  int   clr=0,    // color
-        stl=0;    // style
+  short clr = -1,    // color
+        stl =  1;    // style
 
 
   set_cursor( false );
@@ -197,11 +236,13 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      set_color( stl, clr );
+      inc_val( &clr, 2 );
+//    set_color8  ( stl, clr );
+      set_color256(      rainbow[clr] );
       printf("%c", *pch );
 //    ++stl; stl %= 7;
-      ++clr; clr %= 7;
-      if ( *pch == '\n' ) clr = 0;
+//    ++clr; clr %= 7;
+      if ( *pch == '\n' ) clr = -1;
       ++pch;
     }
 
