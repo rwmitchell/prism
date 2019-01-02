@@ -75,7 +75,76 @@ int rainbow[] = {
       IRIS_GREEN,
       IRIS_GREENALT,
       IRIS_DARKGREEN,
-    };
+    },
+    // https://www.color-hex.com
+    metal2[] = { 0xeeeeee, 0xcccccc, 0xbbbbbb, 0xaaaaaa, 0x777777 },
+    metal3[] = { 0xd0d8d9, 0xc9d0ce, 0xc6c8c9, 0xbac4c8, 0xb2babf },
+    fire1 [] = { 0xa70000, 0xdb1414, 0xec5300, 0xf27038, 0xff8d00 },
+    fire2 [] = { 0x9c2000, 0xb44000, 0xd86f05, 0xf09d00, 0xffc100 },
+    green1[] = { 0x00ff00, 0x00e000, 0x00c000, 0x00a000, 0x008000 },
+    green2[] = { 0x1d945b, 0x1b9f5f, 0x1ba964, 0x1ab268, 0x17ba6b },
+    green3[] = { 0x72e736, 0x15ff00, 0x0fb200, 0x69db93, 0x54c372 },
+    green4[] = { 0x6eff98, 0x59d85e, 0x38a44c, 0x30864d, 0x186038 },
+    rainb1[] = { 0xff005a, 0xffdc00, 0xd9ff00, 0x00ff1c, 0x005cff },
+    rainb2[] = { 0xff0000, 0xff8100, 0xfff400, 0x22ff00, 0x0045ff },
+    rainb3[] = { 0xff0000, 0xffff00, 0x00ff00, 0x0000ff, 0xff00ff },
+    tech1 [] = { 0x244ca3, 0xe56f1e, 0x247a3b, 0xd22626, 0x568dd8 },
+    grey1 [] = { 0xccd8dc, 0xb7c2c6, 0xa3acb0, 0x8c979a, 0x7a8184 },
+    bronz1[] = { 0xb87f0d, 0xb07504, 0xbd6700, 0xb06304, 0xa95b0e },
+    orang1[] = { 0xd4582c, 0xfb7125, 0xff861d, 0xff9529, 0xfdab3a },
+    orang2[] = { 0x7d0000, 0xcd3700, 0xcd7f32, 0xff8c00, 0xffa500 };
+
+/* Colors
+    metal2[] = { #eeeeee, #cccccc, #bbbbbb, #aaaaaa, #777777 }
+    metal3[] = { #d0d8d9, #c9d0ce, #c6c8c9, #bac4c8, #b2babf }
+    fire1 [] = { #a70000, #db1414, #ec5300, #f27038, #ff8d00 }
+    fire2 [] = { #9c2000, #b44000, #d86f05, #f09d00, #ffc100 }
+    green1[] = { #00ff00, #00e000, #00c000, #00a000, #008000 }
+    green2[] = { #1d945b, #1b9f5f, #1ba964, #1ab268, #17ba6b }
+    green3[] = { #72e736, #15ff00, #0fb200, #69db93, #54c372 }
+    green4[] = { #6eff98, #59d85e, #38a44c, #30864d, #186038 }
+    rainb1[] = { #ff005a, #ffdc00, #d9ff00, #00ff1c, #005cff }
+    rainb2[] = { #ff0000, #ff8100, #fff400, #22ff00, #0045ff }
+    rainb3[] = { #ff0000, #ffff00, #00ff00, #0000ff, #ff00ff }
+    tech1 [] = { #244ca3, #e56f1e, #247a3b, #d22626, #568dd8 }
+    grey1 [] = { #ccd8dc, #b7c2c6, #a3acb0, #8c979a, #7a8184 }
+    bronz1[] = { #b87f0d, #b07504, #bd6700, #b06304, #a95b0e }
+    orang1[] = { #d4582c, #fb7125, #ff861d, #ff9529, #fdab3a }
+    orang2[] = { #7d0000, #cd3700, #cd7f32, #ff8c00, #ffa500 }
+
+#eeeeee#d0d8d9#ccd8dc
+#cccccc#c9d0ce#b7c2c6
+#bbbbbb#c6c8c9#a3acb0
+#aaaaaa#bac4c8#8c979a
+#777777#b2babf#7a8184
+
+#a70000#9c2000#b87f0d#d4582c#7d0000
+#db1414#b44000#b07504#fb7125#cd3700
+#ec5300#d86f05#bd6700#ff861d#cd7f32
+#f27038#f09d00#b06304#ff9529#ff8c00
+#ff8d00#ffc100#a95b0e#fdab3a#ffa500
+
+#00ff00#1d945b#72e736#6eff98
+#00e000#1b9f5f#15ff00#59d85e
+#00c000#1ba964#0fb200#38a44c
+#00a000#1ab268#69db93#30864d
+#008000#17ba6b#54c372#186038
+
+#ff005a#ff0000#ff0000#244ca3
+#ffdc00#ff8100#ffff00#e56f1e
+#d9ff00#fff400#00ff00#247a3b
+#00ff1c#22ff00#0000ff#d22626
+#005cff#0045ff#ff00ff#568dd8
+
+*/
+
+int *palettes[] = { metal2,  metal3,
+                    fire1,   fire2,
+                    green1,  green2, green3, green4,
+                    rainb1,  rainb2, rainb3,
+                    tech1,   grey1, bronz1,
+                    orang1, orang2
+                  };
 
 void set_cursor( bool on) {
   if ( on ) {
@@ -153,6 +222,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -m: metal    colors\n");
   STDERR("  -r: change color by row\n");
+  STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( palettes ) / 8 );
   STDERR("  -w: change color by word\n");
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
@@ -166,6 +236,7 @@ int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt,
+      x,
       longindex=0;
   bool B_have_arg = true;
   extern int   optind,
@@ -173,7 +244,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8bgmrwd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8bgmp:rwd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -181,6 +252,7 @@ int main(int argc, char *argv[]) {
     { "bar",     no_argument,       NULL, 'b' },
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
+    { "palette", required_argument, NULL, 'p' },
     { "row",     no_argument,       NULL, 'r' },
     { "word",    no_argument,       NULL, 'w' },
     { "debug",   optional_argument, NULL, 'd' },
@@ -191,7 +263,8 @@ int main(int argc, char *argv[]) {
   };
 
   int *palette = rainbow,
-       sz_pal  = sizeof( rainbow ) / 4;
+       sz_pal  = sizeof( rainbow  ) / 4,
+       sz_all  = sizeof( palettes ) / 8;
 
   strcpy(myopt, "defval");
 
@@ -265,6 +338,15 @@ int main(int argc, char *argv[]) {
                 sz_pal  = sizeof( metal ) / 4;
                 break;
 
+      case 'p': x = strtol( optarg, NULL, 10 );
+                if ( x < 0 || x > sz_all ) {
+                  BUGERR("Invalid palette %d, expected 0 to %d\n", x, sz_all );
+                  exit( __LINE__ );
+                }
+                palette = palettes[x];
+                sz_pal  = 5;
+                break;
+
       case 'r': B_row = !B_row; break;
       case 'w': B_wrd = !B_wrd; ccnt = 1; break;
 
@@ -313,6 +395,7 @@ int main(int argc, char *argv[]) {
 
 //BUGOUT("rainbow: %lu\n", sizeof( rainbow )/4);
 //BUGOUT("  metal: %lu\n", sizeof(   metal )/4);
+//BUGOUT("palette: %lu\n", sizeof( palettes )/8);
 
   set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
