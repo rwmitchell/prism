@@ -33,6 +33,9 @@ bool B_o   = false,
 enum {
   MAXCOLOR          =    6,
   IRIS_LIGHTMAGENTA = 0x8b008b,
+  IRIS_PINK         = 0xffc0cb,
+  IRIS_PINK2        = 0xeea9b8,
+  IRIS_PINKNEON     = 0xff8bff,
   IRIS_LIGHTRED     = 0x8b0000,
   IRIS_LIGHTGREEN   = 0x90ee90,
   IRIS_LIGHTCYAN    = 0xe0ffff,
@@ -42,16 +45,23 @@ enum {
   IRIS_DARKGREY     = 0xa9a9a9,
   IRIS_RED          = 0xff0000,
   IRIS_GREEN        = 0x00ff00,
+  IRIS_CYAN         = 0x00ffff,
+  IRIS_CYANNEON     = 0x76ffff,
   IRIS_BLUE         = 0x0000ff,
+  IRIS_PURPLE       = 0xa020f0,
+  IRIS_LILAC        = 0x7080fb,
   IRIS_YELLOW       = 0xffff00,
+  IRIS_ORANGE       = 0xffa500,
+  IRIS_ORANGENEON   = 0xfd7674,
 };
 int rainbow[] = {
-      IRIS_LIGHTMAGENTA,
-      IRIS_LIGHTRED,
+      IRIS_PINKNEON,
+      IRIS_ORANGENEON,
       IRIS_YELLOW,
       IRIS_LIGHTGREEN,
-      IRIS_LIGHTCYAN,
-      IRIS_LIGHTBLUE
+      IRIS_CYANNEON,
+      IRIS_LILAC,
+//    IRIS_LIGHTBLUE
     },
     metal[] = {
       IRIS_LIGHTBLUE,
@@ -69,9 +79,11 @@ void set_cursor( bool on) {
   if ( on ) {
     printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
     printf("]1337;CursorShape=0");           // set block cursor
+    printf("[%d;m", 0 );  // not bold
   } else {
     printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
     printf("]1337;CursorShape=1");          // set vertical cursor
+    printf("[%d;m", 1 );  // bold
   }
 }
 
@@ -86,8 +98,9 @@ void set_color256( unsigned long clr) {
       G = (clr & 0x00FF00) >>  8,
       B = (clr & 0x0000FF);
 
-//printf(  "[38;2;%02X;%02X;%02Xm", R, G, B);
   printf(  "[38;2;%03d;%03d;%03dm", R, G, B);
+
+//printf(  "[38;2;%02X;%02X;%02Xm", R, G, B);
 //printf(  "[38;2;%02X;%02X;%02Xm", R, G, B);
 //printf(" %06lX    %02x;%02x;%02xm", clr, R, G, B);
 }
