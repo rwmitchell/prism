@@ -27,7 +27,8 @@ int  debug =  0,
 
 bool B_o   = false,
      B_256 = true,
-     B_row = false;
+     B_row = false,
+     B_wrd = false;
 
 enum {
   MAXCOLOR          =    6,
@@ -108,6 +109,17 @@ void inc_bycol( short *val, unsigned short cycle, int max ) {
   ++cnt;
   *val %= max;
 }
+void inc_bywrd( char ch, short *val, unsigned short cycle, int max ) {
+  static
+  char och = '\0';
+  static short cnt = 0;
+
+  if ( cnt == cycle ) { (*val)++; *val %= max; }
+  cnt %= cycle;
+  if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
+  och = ch;
+
+}
 void one_line( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
   exit(0);
@@ -118,11 +130,16 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
   STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
-  STDERR("colorize text either by column or character\n");
+  STDERR("colorize text either by character column\n");
   STDERR("\n");
-  STDERR("-o=STRING     (%s : %s)\n", TF[B_o], myopt );
-  STDERR("-d INTEGER    (%d)\n", debug );
-  STDERR("try again later\n");
+  STDERR("  -c CNT: change color every %d units\n", ccnt );
+  STDERR("  -8: 8 bit    colors\n");
+  STDERR("  -b: greenbar colors\n");
+  STDERR("  -g: rainbow  colors\n");
+  STDERR("  -m: metal    colors\n");
+  STDERR("  -r: change color by row\n");
+  STDERR("  -w: change color by word\n");
+  STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
 
   if ( debug ) helpd( lopts );
@@ -141,7 +158,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8bgmrd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8bgmrwd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -150,6 +167,7 @@ int main(int argc, char *argv[]) {
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
     { "row",     no_argument,       NULL, 'r' },
+    { "word",    no_argument,       NULL, 'w' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -233,6 +251,7 @@ int main(int argc, char *argv[]) {
                 break;
 
       case 'r': B_row = !B_row; break;
+      case 'w': B_wrd = !B_wrd; ccnt = 1; break;
 
       case 'o':
         B_o = !B_o;
@@ -290,8 +309,9 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      if ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_pal );
-      else         inc_bycol(       &clr, ccnt, sz_pal );
+      if      ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_pal );
+      else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_pal );
+      else              inc_bycol(       &clr, ccnt, sz_pal );
 
       if ( B_256 ) set_color256(      palette[clr] );
       else {
