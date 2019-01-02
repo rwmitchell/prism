@@ -45,6 +45,7 @@ enum {
   IRIS_DARKGREY     = 0xa9a9a9,
   IRIS_RED          = 0xff0000,
   IRIS_GREEN        = 0x00ff00,
+  IRIS_GREENALT     = 0x39a52f,
   IRIS_CYAN         = 0x00ffff,
   IRIS_CYANNEON     = 0x76ffff,
   IRIS_BLUE         = 0x0000ff,
@@ -70,8 +71,9 @@ int rainbow[] = {
       IRIS_DARKGREY
     },
     greenbar[] = {
-      IRIS_GREEN,
       IRIS_LIGHTGREEN,
+      IRIS_GREEN,
+      IRIS_GREENALT,
       IRIS_DARKGREEN,
     };
 
