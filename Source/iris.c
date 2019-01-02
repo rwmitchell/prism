@@ -37,6 +37,7 @@ enum {
   IRIS_LIGHTCYAN    = 0xe0ffff,
   IRIS_LIGHTBLUE    = 0xadd8e6,
   IRIS_LIGHTGREY    = 0xd3d3d3,
+  IRIS_DARKGREEN    = 0x006400,
   IRIS_DARKGREY     = 0xa9a9a9,
   IRIS_RED          = 0xff0000,
   IRIS_GREEN        = 0x00ff00,
@@ -44,19 +45,24 @@ enum {
   IRIS_YELLOW       = 0xffff00,
 };
 int rainbow[] = {
-  IRIS_LIGHTMAGENTA,
-  IRIS_LIGHTRED,
-  IRIS_YELLOW,
-  IRIS_LIGHTGREEN,
-  IRIS_LIGHTCYAN,
-  IRIS_LIGHTBLUE
-};
-int metal[] = {
-  IRIS_LIGHTBLUE,
-  IRIS_BLUE,
-  IRIS_LIGHTGREY,
-  IRIS_DARKGREY
-};
+      IRIS_LIGHTMAGENTA,
+      IRIS_LIGHTRED,
+      IRIS_YELLOW,
+      IRIS_LIGHTGREEN,
+      IRIS_LIGHTCYAN,
+      IRIS_LIGHTBLUE
+    },
+    metal[] = {
+      IRIS_LIGHTBLUE,
+      IRIS_BLUE,
+      IRIS_LIGHTGREY,
+      IRIS_DARKGREY
+    },
+    greenbar[] = {
+      IRIS_GREEN,
+      IRIS_LIGHTGREEN,
+      IRIS_DARKGREEN,
+    };
 
 void set_cursor( bool on) {
   if ( on ) {
@@ -135,11 +141,12 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8gmrd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8bgmrd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",    no_argument,       NULL, '8' },
+    { "bar",     no_argument,       NULL, 'b' },
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
     { "row",     no_argument,       NULL, 'r' },
@@ -214,6 +221,9 @@ int main(int argc, char *argv[]) {
 
       case '8': B_256 = !B_256;
                 sz_pal = MAXCOLOR;
+                break;
+      case 'b': palette = greenbar;
+                sz_pal  = sizeof( greenbar ) / 4;
                 break;
       case 'g': palette = rainbow;
                 sz_pal  = sizeof( rainbow ) / 4;
