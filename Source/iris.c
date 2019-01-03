@@ -179,8 +179,8 @@ int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt,
-      x,
-      longindex=0;
+      pal_ndx  = 0 ,
+      longindex= 0;
   bool B_have_arg = true;
   extern int   optind,
                optopt;
@@ -271,15 +271,11 @@ int main(int argc, char *argv[]) {
       case '8': B_256 = !B_256;
                 sz_pal = MAXCOLOR;
                 break;
-      case 'g': sz_pal = get_colors( 0, palette );      // rainbow - gay
-                break;
-      case 'b': sz_pal = get_colors( 1, palette );      // greenbar
-                break;
-      case 'm': sz_pal = get_colors( 2, palette );      // metal
-                break;
+      case 'g': pal_ndx = 0; break;      // rainbow - gay
+      case 'b': pal_ndx = 1; break;      // greenbar
+      case 'm': pal_ndx = 2; break;      // metal
 
-      case 'p': x = strtol( optarg, NULL, 10 );
-                sz_pal = get_colors( x, palette );
+      case 'p': pal_ndx = strtol( optarg, NULL, 10 );
                 break;
 
       case 'r': B_row = !B_row; break;
@@ -321,6 +317,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (errflg) help(argv[0], opts, longopts);
+
+  sz_pal = get_colors( pal_ndx, palette );
 
 //show_colors();
 
