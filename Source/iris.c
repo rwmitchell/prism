@@ -28,7 +28,8 @@ int  debug =  0,
 bool B_o   = false,
      B_256 = true,
      B_row = false,
-     B_wrd = false;
+     B_wrd = false,
+     B_test= false;
 
 enum {
   MAXCOLOR          =    6,
@@ -56,23 +57,34 @@ const char *altcolors[] = {
    "#d4582c#fb7125#ff861d#ff9529#fdab3a",
    "#7d0000#cd3700#cd7f32#ff8c00#ffa500",
 };
+void set_color256( unsigned long clr) {
+
+  int R = (clr & 0xFF0000) >> 16,
+      G = (clr & 0x00FF00) >>  8,
+      B = (clr & 0x0000FF);
+
+  printf(  "[38;2;%03d;%03d;%03dm", R, G, B);
+}
+
 void show_colors( ) {
   const
   char *pt;
   int i,
-      hex,
       cnt = sizeof( altcolors) / 8;
+  unsigned long hex;
 
   BUGOUT("sizeof: %d\n", cnt );
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
-      hex = strtol( pt, NULL, 16 );
-      STDOUT("%2d: %06x ", i, hex ); fflush(stdout);
+     hex = strtol( pt, NULL, 16 );
+     set_color256(      hex );
+      STDOUT("%2d: #%06lX ", i, hex ); fflush(stdout);
     }
     STDOUT("\n");
   }
+  exit(0);
 }
 unsigned int get_colors( int ndx, unsigned int *hex ) {
   const
@@ -108,15 +120,6 @@ void set_cursor( bool on) {
 
 void set_color8( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
-}
-
-void set_color256( unsigned long clr) {
-
-  int R = (clr & 0xFF0000) >> 16,
-      G = (clr & 0x00FF00) >>  8,
-      B = (clr & 0x0000FF);
-
-  printf(  "[38;2;%03d;%03d;%03dm", R, G, B);
 }
 
 void inc_byrow( char ch, short *val, unsigned short cycle, int max ) {
@@ -187,7 +190,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8bgmp:rwd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8bgmp:rwtd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -198,6 +201,7 @@ int main(int argc, char *argv[]) {
     { "palette", required_argument, NULL, 'p' },
     { "row",     no_argument,       NULL, 'r' },
     { "word",    no_argument,       NULL, 'w' },
+    { "test",    no_argument,       NULL, 't' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",    no_argument,       NULL, 'h' },
     { "usage",   no_argument,       NULL, 'u' },
@@ -278,8 +282,9 @@ int main(int argc, char *argv[]) {
       case 'p': pal_ndx = strtol( optarg, NULL, 10 );
                 break;
 
-      case 'r': B_row = !B_row; break;
-      case 'w': B_wrd = !B_wrd; ccnt = 1; break;
+      case 'r': B_row  = !B_row;  break;
+      case 'w': B_wrd  = !B_wrd;  ccnt = 1; break;
+      case 't': B_test = !B_test; break;
 
       case 'o':
         B_o = !B_o;
@@ -320,7 +325,7 @@ int main(int argc, char *argv[]) {
 
   sz_pal = get_colors( pal_ndx, palette );
 
-//show_colors();
+  if ( B_test ) show_colors();
 
   off_t  f_sz = 0;
   char *buf   = NULL,
