@@ -32,55 +32,13 @@ bool B_o   = false,
 
 enum {
   MAXCOLOR          =    6,
-  IRIS_LIGHTMAGENTA = 0x8b008b,
-  IRIS_PINK         = 0xffc0cb,
-  IRIS_PINK2        = 0xeea9b8,
-  IRIS_PINKNEON     = 0xff8bff,
-  IRIS_LIGHTRED     = 0x8b0000,
-  IRIS_LIGHTGREEN   = 0x90ee90,
-  IRIS_LIGHTCYAN    = 0xe0ffff,
-  IRIS_LIGHTBLUE    = 0xadd8e6,
-  IRIS_LIGHTGREY    = 0xd3d3d3,
-  IRIS_DARKGREEN    = 0x006400,
-  IRIS_DARKGREY     = 0xa9a9a9,
-  IRIS_RED          = 0xff0000,
-  IRIS_GREEN        = 0x00ff00,
-  IRIS_GREENALT     = 0x39a52f,
-  IRIS_CYAN         = 0x00ffff,
-  IRIS_CYANNEON     = 0x76ffff,
-  IRIS_BLUE         = 0x0000ff,
-  IRIS_PURPLE       = 0xa020f0,
-  IRIS_LILAC        = 0x7080fb,
-  IRIS_YELLOW       = 0xffff00,
-  IRIS_ORANGE       = 0xffa500,
-  IRIS_ORANGENEON   = 0xfd7674,
 };
-int rainbow[] = {
-      IRIS_PINKNEON,
-      IRIS_ORANGENEON,
-      IRIS_YELLOW,
-      IRIS_LIGHTGREEN,
-      IRIS_CYANNEON,
-      IRIS_LILAC,
-//    IRIS_LIGHTBLUE
-    },
-    metal[] = {
-      IRIS_LIGHTBLUE,
-      IRIS_BLUE,
-      IRIS_LIGHTGREY,
-      IRIS_DARKGREY
-    },
-    greenbar[] = {
-      IRIS_LIGHTGREEN,
-      IRIS_GREEN,
-      IRIS_GREENALT,
-      IRIS_DARKGREEN,
-    };
 
 // https://www.color-hex.com
 const char *altcolors[] = {
    "#ff8bff#fd7674#ffff00#90ee90#76ffff#7080fb",  // rainbow
    "#90ee90#00ff00#39a52f#006400",                // greenbar
+   "#add8e6#0000ff#d3d3d3#a9a9a9",                // metal?
    "#eeeeee#cccccc#bbbbbb#aaaaaa#777777",
    "#d0d8d9#c9d0ce#c6c8c9#bac4c8#b2babf",
    "#a70000#db1414#ec5300#f27038#ff8d00",
@@ -223,7 +181,6 @@ int main(int argc, char *argv[]) {
       opt,
       x,
       longindex=0;
-  unsigned int hex[32] = { 0 };
   bool B_have_arg = true;
   extern int   optind,
                optopt;
@@ -248,8 +205,9 @@ int main(int argc, char *argv[]) {
     { NULL,      0,                 NULL,  0  }
   };
 
-  int *palette = rainbow,
-       sz_pal  = sizeof( rainbow  ) / 4;
+  unsigned
+  int palette[32] = { 0 },
+      sz_pal = 0;
 
   strcpy(myopt, "defval");
 
@@ -313,19 +271,15 @@ int main(int argc, char *argv[]) {
       case '8': B_256 = !B_256;
                 sz_pal = MAXCOLOR;
                 break;
-      case 'b': palette = greenbar;
-                sz_pal  = sizeof( greenbar ) / 4;
+      case 'g': sz_pal = get_colors( 0, palette );      // rainbow - gay
                 break;
-      case 'g': palette = rainbow;
-                sz_pal  = sizeof( rainbow ) / 4;
+      case 'b': sz_pal = get_colors( 1, palette );      // greenbar
                 break;
-      case 'm': palette = metal;
-                sz_pal  = sizeof( metal ) / 4;
+      case 'm': sz_pal = get_colors( 2, palette );      // metal
                 break;
 
       case 'p': x = strtol( optarg, NULL, 10 );
-                sz_pal = get_colors( x, hex );
-                palette = (int *) hex;
+                sz_pal = get_colors( x, palette );
                 break;
 
       case 'r': B_row = !B_row; break;
@@ -375,9 +329,6 @@ int main(int argc, char *argv[]) {
        *pch;
   short clr = -1,    // color
         stl =  1;    // style
-
-//BUGOUT("rainbow: %lu\n", sizeof( rainbow )/4);
-//BUGOUT("  metal: %lu\n", sizeof(   metal )/4);
 
   set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
