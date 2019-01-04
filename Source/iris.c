@@ -50,12 +50,20 @@ const char *altcolors[] = {
    "#6eff98#59d85e#38a44c#30864d#186038",
    "#ff005a#ffdc00#d9ff00#00ff1c#005cff",
    "#ff0000#ff8100#fff400#22ff00#0045ff",
-   "#ff0000#ffff00#00ff00#0000ff#ff00ff",
+   "#ff0000#ffff00#00ff00#0000ff#ff00ff",         // neon rainbow
+   "#fe0000#fdfe02#0bff01#011efe#fe00f6",         // neon 0908
    "#244ca3#e56f1e#247a3b#d22626#568dd8",
    "#ccd8dc#b7c2c6#a3acb0#8c979a#7a8184",
    "#b87f0d#b07504#bd6700#b06304#a95b0e",
    "#d4582c#fb7125#ff861d#ff9529#fdab3a",
    "#7d0000#cd3700#cd7f32#ff8c00#ffa500",
+   "#04daec#ea04ec#f9fb0a#01ff1f#5c01ee",
+   "#8aff4f#3cff3f#2fff00#00ea33#00ba0d",
+   "#fdff00#c9ff00#00ffdf#e302ff#ff00ce",
+   "#03ff00#ff00bc#deff00#00cdff#8500ff",         // neon highlighter
+   "#bf00ff#00ff7f#ff0000#007fff#ff00bf",
+   "#156cf7#1d7af8#288af7#3399f8#41aef9",
+   "#ffe700#fdff00#d6ff00#89ff00#2fff00",
 };
 void set_color256( unsigned long clr) {
 
