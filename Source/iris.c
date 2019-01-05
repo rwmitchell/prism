@@ -345,6 +345,8 @@ int main(int argc, char *argv[]) {
   set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
 
+  if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
+
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
 
     if ( ! f_sz )
