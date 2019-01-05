@@ -91,6 +91,7 @@ void show_colors( ) {
   BUGOUT("sizeof: %d\n", cnt );
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
+    set_color256( 0xFFFFFF );
     STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
