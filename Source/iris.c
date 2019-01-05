@@ -84,11 +84,12 @@ void show_colors( ) {
   BUGOUT("sizeof: %d\n", cnt );
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
+    STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
      hex = strtol( pt, NULL, 16 );
      set_color256(      hex );
-      STDOUT("%2d: #%06lX ", i, hex ); fflush(stdout);
+      STDOUT("#%06lX", hex ); fflush(stdout);
     }
     STDOUT("\n");
   }
