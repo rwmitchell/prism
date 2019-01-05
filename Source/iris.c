@@ -40,8 +40,6 @@ const char *altcolors[] = {
    "#ff8bff#fd7674#ffff00#90ee90#76ffff#7080fb",  // rainbow
    "#90ee90#00ff00#39a52f#006400",                // greenbar
    "#add8e6#0000ff#d3d3d3#a9a9a9",                // metal?
-   "#eeeeee#cccccc#bbbbbb#aaaaaa#777777",
-   "#d0d8d9#c9d0ce#c6c8c9#bac4c8#b2babf",
    "#a70000#db1414#ec5300#f27038#ff8d00",
    "#9c2000#b44000#d86f05#f09d00#ffc100",
    "#00ff00#00e000#00c000#00a000#008000",
@@ -64,7 +62,16 @@ const char *altcolors[] = {
    "#bf00ff#00ff7f#ff0000#007fff#ff00bf",
    "#156cf7#1d7af8#288af7#3399f8#41aef9",
    "#ffe700#fdff00#d6ff00#89ff00#2fff00",
+   "#9a8262#e8ca93#f0e2a8#fff68f#ffffff",
+   "#fdffc2#edefc2#dddfc2#cdcfc2#bdbfc2",
+   "#ee729d#fb8c78#f6cb77#ccff83#77f6cb",
+   "#32ffc6#65ccd0#9999d9#cc65e3#ff32ec",
+   "#f13057#f68118#f9ca00#aef133#19ee9f",
+   "#eeeeee#cccccc#bbbbbb#aaaaaa#777777",
+   "#eeedee#dddddd#cccccc#bbbbbb#aaaaaa",
+   "#d0d8d9#c9d0ce#c6c8c9#bac4c8#b2babf",
 };
+
 void set_color256( unsigned long clr) {
 
   int R = (clr & 0xFF0000) >> 16,
