@@ -25,14 +25,25 @@ char myarg[1024],   // temporary optarg value
 int  debug =  0,
      ccnt  =  2;    // continuous colors
 
-bool B_o   = false,
-     B_256 = true,
-     B_row = false,
-     B_wrd = false,
-     B_test= false;
+bool B_o     = false,
+     B_256   = true,
+     B_bkgnd = false,
+     B_row   = false,
+     B_wrd   = false,
+     B_test  = false;
 
 enum {
-  MAXCOLOR          =    6,
+  MAXCOLOR =    6,
+  FGC      =   38,
+  BGC      =   48,
+};
+
+const char *foo[] = {
+  "#77777F#777780#777781#888888#77778F",
+  "#777685#777685#777685#777686#77768F",
+  "#777685#777685#77758A#77758B#77768F",
+  "#777685#777685#777490#777491#77768F",
+  "red"
 };
 
 // https://www.color-hex.com
@@ -72,13 +83,42 @@ const char *altcolors[] = {
    "#d0d8d9#c9d0ce#c6c8c9#bac4c8#b2babf",
 };
 
-void set_color256( unsigned long clr) {
+// https://trendct.org/2016/01/22/how-to-choose-a-label-color-to-contrast-with-background/
+int brightness( unsigned long clr) {
+
+  int R = (clr & 0xFF0000) >> 16,
+      G = (clr & 0x00FF00) >>  8,
+      B = (clr & 0x0000FF);
+  int r = 34,         // test values - background color
+      g = 53,
+      b = 70;
+  float
+      text, bkgd,
+      brit;           // brightness
+
+  text = ( 299.0*R + 587.0*G + 114.0*B ) / 1000;  // This formula is real
+  bkgd = ( 299.0*r + 587.0*g + 114.0*b ) / 1000;
+  brit = ( text / bkgd * 100 );                   // This I made up
+
+//if ( brit > 150 ) printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x22, 0x35, 0x46);
+//else              printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x7F, 0x7F, 0x7F);
+//printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+//printf(" %3d ", (int) brit );
+
+  return ( (int) brit );
+}
+
+void set_color256( unsigned long clr, bool BG) {
 
   int R = (clr & 0xFF0000) >> 16,
       G = (clr & 0x00FF00) >>  8,
       B = (clr & 0x0000FF);
 
-  printf(  "[38;2;%03d;%03d;%03dm", R, G, B);
+  if ( BG ) {
+    printf(  "[%d;2;%03d;%03d;%03dm", FGC, 0, 0, 0);  // Black text
+    printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
+  } else
+    printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
 }
 
 void show_colors( ) {
@@ -88,16 +128,15 @@ void show_colors( ) {
       cnt = sizeof( altcolors) / 8;
   unsigned long hex;
 
-  BUGOUT("sizeof: %d\n", cnt );
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
-    set_color256( 0xFFFFFF );
+    set_color256( 0xFFFFFF, B_bkgnd );
     STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
      hex = strtol( pt, NULL, 16 );
-     set_color256(      hex );
-      STDOUT("#%06lX", hex ); fflush(stdout);
+     set_color256(     hex, B_bkgnd );
+      STDOUT("#%06lX", hex ); // fflush(stdout);
     }
     STDOUT("\n");
   }
@@ -142,10 +181,13 @@ void set_color8( short stl, short clr) {
 void inc_byrow( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
-  if ( *val == -1 ) *val = cnt = 0;
-  if ( cnt == cycle ) { (*val)++; *val %= max; }
+  if ( *val == -1    )    *val = cnt = 0;
+  if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
-  if ( ch == '\n' ) ++cnt;
+  if ( ch == '\n' ) { 
+    ++cnt;
+    printf( "[0K");
+  }
 }
 void inc_bycol( short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
@@ -207,7 +249,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8bgmp:rwtd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8Bbgmp:rwtd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -216,6 +258,7 @@ int main(int argc, char *argv[]) {
     { "gay",     no_argument,       NULL, 'g' },
     { "metal",   no_argument,       NULL, 'm' },
     { "palette", required_argument, NULL, 'p' },
+    { "backgrnd",no_argument,       NULL, 'B' },
     { "row",     no_argument,       NULL, 'r' },
     { "word",    no_argument,       NULL, 'w' },
     { "test",    no_argument,       NULL, 't' },
@@ -299,9 +342,10 @@ int main(int argc, char *argv[]) {
       case 'p': pal_ndx = strtol( optarg, NULL, 10 );
                 break;
 
-      case 'r': B_row  = !B_row;  break;
-      case 'w': B_wrd  = !B_wrd;  ccnt = 1; break;
-      case 't': B_test = !B_test; break;
+      case 'B' :B_bkgnd= !B_bkgnd; break;
+      case 'r': B_row  = !B_row;   break;
+      case 'w': B_wrd  = !B_wrd;   ccnt = 1; break;
+      case 't': B_test = !B_test;  break;
 
       case 'o':
         B_o = !B_o;
@@ -366,7 +410,7 @@ int main(int argc, char *argv[]) {
       else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_pal );
       else              inc_bycol(       &clr, ccnt, sz_pal );
 
-      if ( B_256 ) set_color256(      palette[clr] );
+      if ( B_256 ) set_color256( palette[clr], B_bkgnd );
       else {
         set_color8  ( stl, clr );
         ++clr; clr %= 7;
