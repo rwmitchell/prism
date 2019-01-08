@@ -50,22 +50,21 @@ const char *foo[] = {
 const char *altcolors[] = {
    "#ff8bff#fd7674#ffff00#90ee90#76ffff#7080fb",  // rainbow
    "#90ee90#00ff00#39a52f#006400",                // greenbar
-   "#add8e6#0000ff#d3d3d3#a9a9a9",                // metal?
+   "#add8e6#d3d3d3#a9a9a9#a0a0ff",                // metal?
    "#a70000#db1414#ec5300#f27038#ff8d00",
    "#9c2000#b44000#d86f05#f09d00#ffc100",
    "#00ff00#00e000#00c000#00a000#008000",
-   "#1d945b#1b9f5f#1ba964#1ab268#17ba6b",
+   "#1d945b#1b9f5f#1ba964#1ab268#57ba6b",
    "#72e736#15ff00#0fb200#69db93#54c372",
-   "#6eff98#59d85e#38a44c#30864d#186038",
-   "#ff005a#ffdc00#d9ff00#00ff1c#005cff",
-   "#ff0000#ff8100#fff400#22ff00#0045ff",
-   "#ff0000#ffff00#00ff00#0000ff#ff00ff",         // neon rainbow
-   "#fe0000#fdfe02#0bff01#011efe#fe00f6",         // neon 0908
+   "#6eff98#59d85e#38a44c#30864d#388048",
+   "#ff005a#ff8c00#d9ff00#22ff00#805cff",
+   "#ff0000#ffff00#00ff00#7f7fff#ff00ff",         // neon rainbow
+   "#fe0000#fdfe02#0bff01#8f8ffe#fe00f6",         // neon 0908
    "#244ca3#e56f1e#247a3b#d22626#568dd8",
    "#ccd8dc#b7c2c6#a3acb0#8c979a#7a8184",
    "#b87f0d#b07504#bd6700#b06304#a95b0e",
    "#d4582c#fb7125#ff861d#ff9529#fdab3a",
-   "#7d0000#cd3700#cd7f32#ff8c00#ffa500",
+   "#bd0000#cd3700#cd7f32#ff8c00#ffa500",
    "#04daec#ea04ec#f9fb0a#01ff1f#5c01ee",
    "#8aff4f#3cff3f#2fff00#00ea33#00ba0d",
    "#fdff00#c9ff00#00ffdf#e302ff#ff00ce",
