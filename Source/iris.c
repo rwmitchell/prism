@@ -7,10 +7,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  // strcpy()
+#include <string.h>    // strcpy()
 #include <getopt.h>
-#include <ctype.h>   // isdigit()
-#include <stdbool.h> // bool
+#include <ctype.h>     // isdigit()
+#include <stdbool.h>   // bool
+#include <sys/param.h> // MAX()
 #include "loadfile.h"
 #include "bugout.h"
 #include "helpd.h"
@@ -24,6 +25,10 @@ char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0,
      ccnt  =  2;    // continuous colors
+
+enum { MAX_SEQ = 64 };
+int SEQ[] = {[0 ... MAX_SEQ] = -1 },
+      sz_seq = 0;
 
 bool B_o     = false,
      B_256   = true,
@@ -46,6 +51,52 @@ const char *foo[] = {
   "red"
 };
 
+int  append_SEQ   ( int val ) {                      // append -y args to an array
+  int cnt=0,
+     *ps = SEQ;
+
+  while ( cnt++ < MAX_SEQ && *ps != -1  ) ++ps;
+  *ps = val;
+
+  return( cnt );
+}
+short fix_SEQ     ( short nseq, int npal, unsigned int pal[] ) {
+  short i,
+        t;
+
+  if ( debug & 0x0002 ) {
+    STDOUT("%2d: nseq\n", nseq );
+    STDOUT("%2d: npal\n", npal );
+  }
+
+  for ( i=0; i<nseq; ++i ) {
+    if ( SEQ[i] > npal ) {
+      BUGOUT("%2d: index %2d too large, %2d is max\n", i, SEQ[i], npal );
+      SEQ[i] %= npal;
+    }
+    SEQ[i]--;     // index starts at 0, decrement values
+  }
+
+  if ( nseq > 0 ) {
+    t = SEQ[ nseq-1 ];
+    t++;
+  } else t = 0;
+
+//for ( i=nseq; i<npal; ++i, ++t ) { STDOUT("%2d: %2d %2d\n", i, t, t%npal ); SEQ[i] = t%npal; }
+  for ( i=nseq; i<npal; ++i, ++t ) SEQ[i] = t%npal;
+  nseq = MAX( nseq, npal );
+  for ( i=0; i<nseq; ++i ) SEQ[i] = pal[ SEQ[i] ];
+
+  return( nseq );
+}
+void list_SEQ     ( ) {
+  int cnt=0,
+     *ps = SEQ;
+
+  STDOUT("Y: " );
+  while ( cnt++ < MAX_SEQ && *ps != -1  ) STDOUT(" %06X", *ps++ );
+  STDOUT("\n");
+}
 // https://www.color-hex.com
 const char *altcolors[] = {
    "#ff8bff#fd7674#ffff00#90ee90#76ffff#7080fb",  // rainbow
@@ -226,6 +277,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -m: metal    colors\n");
   STDERR("  -r: change color by row\n");
+  STDERR("  -s palette_list: specify palette index for each column\n");
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
   STDERR("  -w: change color by word\n");
   STDERR("  -d INTEGER    (%d)\n", debug );
@@ -248,29 +300,32 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8Bbgmp:rwtd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8Bbgmp:rs:wtd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
-    { "8bit",    no_argument,       NULL, '8' },
-    { "bar",     no_argument,       NULL, 'b' },
-    { "gay",     no_argument,       NULL, 'g' },
-    { "metal",   no_argument,       NULL, 'm' },
+    { "8bit",          no_argument, NULL, '8' },
+    { "bar",           no_argument, NULL, 'b' },
+    { "gay",           no_argument, NULL, 'g' },
+    { "metal",         no_argument, NULL, 'm' },
     { "palette", required_argument, NULL, 'p' },
-    { "backgrnd",no_argument,       NULL, 'B' },
-    { "row",     no_argument,       NULL, 'r' },
-    { "word",    no_argument,       NULL, 'w' },
-    { "test",    no_argument,       NULL, 't' },
+    { "backgrnd",      no_argument, NULL, 'B' },
+    { "row",           no_argument, NULL, 'r' },
+    { "seq",     required_argument, NULL, 's' },
+    { "word",          no_argument, NULL, 'w' },
+    { "test",          no_argument, NULL, 't' },
     { "debug",   optional_argument, NULL, 'd' },
-    { "help",    no_argument,       NULL, 'h' },
-    { "usage",   no_argument,       NULL, 'u' },
-    { "oneline", no_argument,       NULL, '1' },
-    { NULL,      0,                 NULL,  0  }
+    { "help",          no_argument, NULL, 'h' },
+    { "usage",         no_argument, NULL, 'u' },
+    { "oneline",       no_argument, NULL, '1' },
+    { NULL,                      0, NULL,  0  }
   };
 
   unsigned
   int palette[32] = { 0 },
       sz_pal = 0;
+
+  short tseq = -1;
 
   strcpy(myopt, "defval");
 
@@ -341,6 +396,13 @@ int main(int argc, char *argv[]) {
       case 'p': pal_ndx = strtol( optarg, NULL, 10 );
                 break;
 
+      case 's': tseq     = strtol( optarg, NULL, 0 ); sz_seq = append_SEQ( tseq );
+                while ( optind < argc &&  ( tseq = strtol( (argv[optind]), NULL, 0 ) ) > 0 ) {
+                  sz_seq = append_SEQ( tseq );
+                  optind++;
+                }
+                break;
+
       case 'B' :B_bkgnd= !B_bkgnd; break;
       case 'r': B_row  = !B_row;   break;
       case 'w': B_wrd  = !B_wrd;   ccnt = 1; break;
@@ -383,7 +445,16 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+//if ( SEQ[0] == -1 ) SEQ[0] = tseq;
+  if ( debug & 0x0002 ) list_SEQ();
+
   sz_pal = get_colors( pal_ndx, palette );
+
+  sz_seq = fix_SEQ( sz_seq, sz_pal, palette );
+  if ( debug & 0x0002 ) {
+    list_SEQ();
+    STDOUT("%2d: sz_seq\n", sz_seq );
+  }
 
   if ( B_test ) show_colors();
 
@@ -405,11 +476,11 @@ int main(int argc, char *argv[]) {
 
     pch = buf;
     while ( f_sz-- ) {
-      if      ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_pal );
-      else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_pal );
-      else              inc_bycol(       &clr, ccnt, sz_pal );
+      if      ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_seq );
+      else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_seq );
+      else              inc_bycol(       &clr, ccnt, sz_seq );
 
-      if ( B_256 ) set_color256( palette[clr], B_bkgnd );
+      if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
       else {
         set_color8  ( stl, clr );
         ++clr; clr %= 7;
