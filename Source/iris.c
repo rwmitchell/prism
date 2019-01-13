@@ -176,8 +176,8 @@ void mycontrast( unsigned int pal[], int len ) {
   bkg = brightness( rgb );
 
   for (i=0; i < len; ++i ) {
-     set_color256(    pal[i], B_bkgnd );
-     STDOUT("#%06X  ", pal[i] );
+    set_color256(     pal[i], B_bkgnd );
+    STDOUT("#%06X  ", pal[i] );
     set_color256( 0xFFFFFF, B_bkgnd );
 
     txt = brightness( pal[i]  );
@@ -200,9 +200,9 @@ void show_colors( ) {
     STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
-     hex = strtol( pt, NULL, 16 );
-     set_color256(     hex, B_bkgnd );
-     STDOUT("#%06lX", hex ); // fflush(stdout);
+      hex = strtol( pt, NULL, 16 );
+      set_color256(    hex, B_bkgnd );
+      STDOUT("#%06lX", hex ); // fflush(stdout);
     }
     STDOUT("\n");
   }
@@ -239,7 +239,6 @@ void set_cursor( bool on) {
     printf("[%d;m", 1 );  // bold
   }
 }
-
 void set_color8( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
 }
