@@ -19,4 +19,7 @@
     - palette[ seq[ i ]  ]
     - for seq we do not specify the columns, but the colors
     - how do handle mismatch between palette entries and seq values?
-    - 
+    - take the % of the palette size
+    - DONE
+  6) Optimize palette for background color
+    - How?

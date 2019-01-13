@@ -35,7 +35,8 @@ bool B_o     = false,
      B_bkgnd = false,
      B_row   = false,
      B_wrd   = false,
-     B_test  = false;
+     B_test  = false,
+     B_brght = false;
 
 enum {
   MAXCOLOR =    6,
@@ -134,29 +135,6 @@ const char *altcolors[] = {
 };
 
 // https://trendct.org/2016/01/22/how-to-choose-a-label-color-to-contrast-with-background/
-int brightness( unsigned long clr) {
-
-  int R = (clr & 0xFF0000) >> 16,
-      G = (clr & 0x00FF00) >>  8,
-      B = (clr & 0x0000FF);
-  int r = 34,         // test values - background color
-      g = 53,
-      b = 70;
-  float
-      text, bkgd,
-      brit;           // brightness
-
-  text = ( 299.0*R + 587.0*G + 114.0*B ) / 1000;  // This formula is real
-  bkgd = ( 299.0*r + 587.0*g + 114.0*b ) / 1000;
-  brit = ( text / bkgd * 100 );                   // This I made up
-
-//if ( brit > 150 ) printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x22, 0x35, 0x46);
-//else              printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x7F, 0x7F, 0x7F);
-//printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
-//printf(" %3d ", (int) brit );
-
-  return ( (int) brit );
-}
 
 void set_color256( unsigned long clr, bool BG) {
 
@@ -169,6 +147,44 @@ void set_color256( unsigned long clr, bool BG) {
     printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
   } else
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+}
+float brightness( unsigned long clr) {
+  float brght;
+
+  int R = (clr & 0xFF0000) >> 16,
+      G = (clr & 0x00FF00) >>  8,
+      B = (clr & 0x0000FF);
+
+  brght = ( 299.0*R + 587.0*G + 114.0*B ) / 1000;  // This formula is real
+
+//if ( brit > 150 ) printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x22, 0x35, 0x46);
+//else              printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x7F, 0x7F, 0x7F);
+//printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+//printf(" %3d ", (int) brit );
+
+  return ( brght );
+}
+void mycontrast( unsigned int pal[], int len ) {
+  float
+      txt, bkg,
+      con;           // contrast
+  int i;
+
+  unsigned
+  int rgb = 0X0C1E04; // test values - background color
+
+  bkg = brightness( rgb );
+
+  for (i=0; i < len; ++i ) {
+     set_color256(    pal[i], B_bkgnd );
+     STDOUT("#%06X  ", pal[i] );
+    set_color256( 0xFFFFFF, B_bkgnd );
+
+    txt = brightness( pal[i]  );
+    con = MIN( txt, bkg ) / MAX( txt, bkg ) * 100.0;        // I made this up
+    STDOUT("%06x: %6.2lf %6.2lf : %6.2lf\n", pal[i], txt, bkg, con );
+  }
+  exit( 0 );
 }
 
 void show_colors( ) {
@@ -186,7 +202,7 @@ void show_colors( ) {
       pt++;
      hex = strtol( pt, NULL, 16 );
      set_color256(     hex, B_bkgnd );
-      STDOUT("#%06lX", hex ); // fflush(stdout);
+     STDOUT("#%06lX", hex ); // fflush(stdout);
     }
     STDOUT("\n");
   }
@@ -300,7 +316,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8Bbgmp:rs:wtd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8Bbgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -314,6 +330,7 @@ int main(int argc, char *argv[]) {
     { "seq",     required_argument, NULL, 's' },
     { "word",          no_argument, NULL, 'w' },
     { "test",          no_argument, NULL, 't' },
+    { "bright",        no_argument, NULL, 'T' },
     { "debug",   optional_argument, NULL, 'd' },
     { "help",          no_argument, NULL, 'h' },
     { "usage",         no_argument, NULL, 'u' },
@@ -403,10 +420,11 @@ int main(int argc, char *argv[]) {
                 }
                 break;
 
-      case 'B' :B_bkgnd= !B_bkgnd; break;
-      case 'r': B_row  = !B_row;   break;
-      case 'w': B_wrd  = !B_wrd;   ccnt = 1; break;
-      case 't': B_test = !B_test;  break;
+      case 'B' :B_bkgnd = !B_bkgnd; break;
+      case 'r': B_row   = !B_row;   break;
+      case 'w': B_wrd   = !B_wrd;   ccnt = 1; break;
+      case 't': B_test  = !B_test;  break;
+      case 'T': B_brght = !B_brght; break;
 
       case 'o':
         B_o = !B_o;
@@ -457,6 +475,7 @@ int main(int argc, char *argv[]) {
   }
 
   if ( B_test ) show_colors();
+  if ( B_brght) mycontrast( palette, sz_seq );
 
   off_t  f_sz = 0;
   char *buf   = NULL,
