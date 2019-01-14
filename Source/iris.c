@@ -136,6 +136,18 @@ const char *altcolors[] = {
 
 // https://trendct.org/2016/01/22/how-to-choose-a-label-color-to-contrast-with-background/
 
+unsigned long brighten( unsigned long clr ) {
+
+  int R = (clr & 0xFF0000) >> 16,
+      G = (clr & 0x00FF00) >>  8,
+      B = (clr & 0x0000FF);
+
+  R = MIN( 0xFF, R+0x10);
+  G = MIN( 0xFF, G+0x10);
+  B = MIN( 0xFF, B+0x10);
+
+  return( (R<<16)+(G<<8)+B );
+}
 void set_color256( unsigned long clr, bool BG) {
 
   int R = (clr & 0xFF0000) >> 16,
@@ -171,18 +183,24 @@ void mycontrast( unsigned int pal[], int len ) {
   int i;
 
   unsigned
-  int rgb = 0X0C1E04; // test values - background color
+  int rgb = 0X0C1E04, // test values - background color
+      tmp;
 
   bkg = brightness( rgb );
 
   for (i=0; i < len; ++i ) {
-    set_color256(     pal[i], B_bkgnd );
-    STDOUT("#%06X  ", pal[i] );
-    set_color256( 0xFFFFFF, B_bkgnd );
+    tmp = pal[i];
+    do {
 
-    txt = brightness( pal[i]  );
-    con = MIN( txt, bkg ) / MAX( txt, bkg ) * 100.0;        // I made this up
-    STDOUT("%06x: %6.2lf %6.2lf : %6.2lf\n", pal[i], txt, bkg, con );
+      set_color256(     tmp, B_bkgnd );
+      STDOUT("#%06X  ", tmp );
+      set_color256( 0xFFFFFF, B_bkgnd );
+
+      txt = brightness( tmp );
+      con = MIN( txt, bkg ) / MAX( txt, bkg ) * 100.0;        // I made this up
+      STDOUT("%06x: %6.2lf %6.2lf : %6.2lf\n", tmp, txt, bkg, con );
+      tmp = brighten( tmp );
+    } while ( con > 29.0 );
   }
   exit( 0 );
 }
