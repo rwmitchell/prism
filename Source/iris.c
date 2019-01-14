@@ -33,10 +33,13 @@ int SEQ[] = {[0 ... MAX_SEQ] = -1 },
 bool B_o     = false,
      B_256   = true,
      B_bkgnd = false,
+     B_fix   = false,
      B_row   = false,
      B_wrd   = false,
      B_test  = false,
      B_brght = false;
+
+#define MAX_CON 28.0
 
 enum {
   MAXCOLOR =    6,
@@ -176,11 +179,10 @@ float brightness( unsigned long clr) {
 
   return ( brght );
 }
-void mycontrast( unsigned int pal[], int len ) {
-  float
-      txt, bkg,
-      con;           // contrast
-  int i;
+void mycontrast( int pal[], int len ) {
+  float txt, bkg,
+        con;           // contrast
+  int   i;
 
   unsigned
   int rgb = 0X0C1E04, // test values - background color
@@ -200,11 +202,31 @@ void mycontrast( unsigned int pal[], int len ) {
       con = MIN( txt, bkg ) / MAX( txt, bkg ) * 100.0;        // I made this up
       STDOUT("%06x: %6.2lf %6.2lf : %6.2lf\n", tmp, txt, bkg, con );
       tmp = brighten( tmp );
-    } while ( con > 29.0 );
+    } while ( con > MAX_CON );
   }
   exit( 0 );
 }
+void bright_pal( int pal[], int len ) {
+  float txt, bkg,
+        con;           // contrast
+  int   i;
 
+  unsigned
+  int rgb = 0X0C1E04, // test values - background color
+      tmp;
+
+  bkg = brightness( rgb );
+
+  for (i=0; i < len; ++i ) {
+    tmp = pal[i];
+    do {
+      txt = brightness( tmp );
+      con = MIN( txt, bkg ) / MAX( txt, bkg ) * 100.0;        // I made this up
+      if ( con > MAX_CON ) tmp = brighten( tmp );
+    } while ( con > MAX_CON );
+    pal[i] = tmp;
+  }
+}
 void show_colors( ) {
   const
   char *pt;
@@ -333,7 +355,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8Bbgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":o:c:8Bbfgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
@@ -343,6 +365,7 @@ int main(int argc, char *argv[]) {
     { "metal",         no_argument, NULL, 'm' },
     { "palette", required_argument, NULL, 'p' },
     { "backgrnd",      no_argument, NULL, 'B' },
+    { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",           no_argument, NULL, 'r' },
     { "seq",     required_argument, NULL, 's' },
     { "word",          no_argument, NULL, 'w' },
@@ -438,6 +461,7 @@ int main(int argc, char *argv[]) {
                 break;
 
       case 'B' :B_bkgnd = !B_bkgnd; break;
+      case 'f': B_fix   = !B_fix;   break;
       case 'r': B_row   = !B_row;   break;
       case 'w': B_wrd   = !B_wrd;   ccnt = 1; break;
       case 't': B_test  = !B_test;  break;
@@ -492,7 +516,8 @@ int main(int argc, char *argv[]) {
   }
 
   if ( B_test ) show_colors();
-  if ( B_brght) mycontrast( palette, sz_seq );
+  if ( B_brght) mycontrast( SEQ, sz_seq );
+  if ( B_fix )  bright_pal( SEQ, sz_seq );
 
   off_t  f_sz = 0;
   char *buf   = NULL,
@@ -526,6 +551,7 @@ int main(int argc, char *argv[]) {
       if ( !B_row && *pch == '\n' ) clr = -1;
       ++pch;
     }
+//  mycontrast( SEQ, sz_seq );
 
     f_sz = 0;
     if ( buf  ) { free( buf  ); buf = NULL; }
