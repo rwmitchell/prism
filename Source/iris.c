@@ -326,14 +326,17 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("colorize text either by character column\n");
   STDERR("\n");
   STDERR("  -c CNT: change color every %d units\n", ccnt );
-  STDERR("  -8: 8 bit    colors\n");
+  STDERR("  -8: 8 bit    colors      [%5s]\n", TF[ !B_256 ]);
   STDERR("  -b: greenbar colors\n");
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -m: metal    colors\n");
-  STDERR("  -r: change color by row\n");
-  STDERR("  -s palette_list: specify palette index for each column\n");
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
-  STDERR("  -w: change color by word\n");
+  STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
+  STDERR("  -r: change color by row  [%5s]\n", TF[  B_row   ]);
+  STDERR("  -s palette_list: specify palette index for each column\n");
+  STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
+  STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
+  STDERR("  -w: change color by word [%5s]\n", TF[  B_wrd   ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
 
@@ -354,18 +357,17 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":o:c:8Bbfgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8Bbfgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
-    { "myopt",   optional_argument, NULL, 'o' },
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",          no_argument, NULL, '8' },
     { "bar",           no_argument, NULL, 'b' },
     { "gay",           no_argument, NULL, 'g' },
     { "metal",         no_argument, NULL, 'm' },
-    { "palette", required_argument, NULL, 'p' },
-    { "backgrnd",      no_argument, NULL, 'B' },
+    { "palette", required_argument, NULL, 'p' },  // choose a palette
+    { "backgrnd",      no_argument, NULL, 'B' },  // set background color
     { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
-    { "row",           no_argument, NULL, 'r' },
+    { "row",           no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",     required_argument, NULL, 's' },
     { "word",          no_argument, NULL, 'w' },
     { "test",          no_argument, NULL, 't' },
@@ -400,7 +402,6 @@ int main(int argc, char *argv[]) {
     // Pre-Check
     if ( optarg ) {                // only check if not null
       switch (opt) {               // check only args with possible STRING options
-        case 'o':
         case 'd':
           if ( *optarg == '\0' ) {
             BUGOUT("optarg is empty\n");
