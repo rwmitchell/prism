@@ -332,11 +332,12 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -m: metal    colors\n");
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
   STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
+  STDERR("  -f: fix contrast levels  [%5s]\n", TF[  B_fix   ]);
   STDERR("  -r: change color by row  [%5s]\n", TF[  B_row   ]);
   STDERR("  -s palette_list: specify palette index for each column\n");
+  STDERR("  -w: change color by word [%5s]\n", TF[  B_wrd   ]);
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
-  STDERR("  -w: change color by word [%5s]\n", TF[  B_wrd   ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
 
