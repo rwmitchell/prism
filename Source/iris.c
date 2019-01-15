@@ -24,13 +24,13 @@ const char *TF[]= {"False", "True"};
 char myarg[1024],   // temporary optarg value
      myopt[1024];   // example optional argument
 int  debug =  0,
-     ccnt  =  2;    // continuous colors
+     ccnt  =  2;    // contiguous colors
 
 enum { MAX_SEQ = 64 };
-int SEQ[] = {[0 ... MAX_SEQ] = -1 },
+int SEQ[] = { [0 ... MAX_SEQ] = -1 },
       sz_seq = 0;
 
-bool B_o     = false,
+bool 
      B_256   = true,
      B_bkgnd = false,
      B_fix   = false,
@@ -43,8 +43,8 @@ bool B_o     = false,
 
 enum {
   MAXCOLOR =    6,
-  FGC      =   38,
-  BGC      =   48,
+  FGC      =   38,         // ansi code to set foreground color
+  BGC      =   48,         // ansi code to set background color
 };
 
 const char *foo[] = {
@@ -64,7 +64,7 @@ int  append_SEQ   ( int val ) {                      // append -y args to an arr
 
   return( cnt );
 }
-short fix_SEQ     ( short nseq, int npal, unsigned int pal[] ) {
+short   set_SEQ   ( short nseq, int npal, unsigned int pal[] ) {   // set the color sequence order
   short i,
         t;
 
@@ -93,7 +93,7 @@ short fix_SEQ     ( short nseq, int npal, unsigned int pal[] ) {
 
   return( nseq );
 }
-void list_SEQ     ( ) {
+void   list_SEQ   ( ) {
   int cnt=0,
      *ps = SEQ;
 
@@ -163,7 +163,7 @@ void set_color256( unsigned long clr, bool BG) {
   } else
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
 }
-float brightness( unsigned long clr) {
+float brightness ( unsigned long clr) {
   float brght;
 
   int R = (clr & 0xFF0000) >> 16,
@@ -179,7 +179,7 @@ float brightness( unsigned long clr) {
 
   return ( brght );
 }
-void mycontrast( int pal[], int len ) {
+void mycontrast  ( int pal[], int len ) {
   float txt, bkg,
         con;           // contrast
   int   i;
@@ -206,7 +206,7 @@ void mycontrast( int pal[], int len ) {
   }
   exit( 0 );
 }
-void bright_pal( int pal[], int len ) {
+void bright_pal  ( int pal[], int len ) {
   float txt, bkg,
         con;           // contrast
   int   i;
@@ -227,7 +227,7 @@ void bright_pal( int pal[], int len ) {
     pal[i] = tmp;
   }
 }
-void show_colors( ) {
+void show_colors ( ) {
   const
   char *pt;
   int i,
@@ -248,7 +248,8 @@ void show_colors( ) {
   }
   exit(0);
 }
-unsigned int get_colors( int ndx, unsigned int *hex ) {
+unsigned
+int   get_colors ( int ndx, unsigned int *hex ) {
   const
   char *pt;
   int pos = 0,
@@ -267,8 +268,7 @@ unsigned int get_colors( int ndx, unsigned int *hex ) {
 
   return( pos );
 }
-
-void set_cursor( bool on) {
+void  set_cursor ( bool on) {
   if ( on ) {
     printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
     printf("]1337;CursorShape=0");           // set block cursor
@@ -279,11 +279,11 @@ void set_cursor( bool on) {
     printf("[%d;m", 1 );  // bold
   }
 }
-void set_color8( short stl, short clr) {
+void  set_color8 ( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
 }
 
-void inc_byrow( char ch, short *val, unsigned short cycle, int max ) {
+void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
   if ( *val == -1    )    *val = cnt = 0;
@@ -294,7 +294,7 @@ void inc_byrow( char ch, short *val, unsigned short cycle, int max ) {
     printf( "[0K");
   }
 }
-void inc_bycol( short *val, unsigned short cycle, int max ) {
+void  inc_bycol  ( short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
   if ( *val == -1 ) *val = cnt = 0;
@@ -303,7 +303,7 @@ void inc_bycol( short *val, unsigned short cycle, int max ) {
   ++cnt;
   *val %= max;
 }
-void inc_bywrd( char ch, short *val, unsigned short cycle, int max ) {
+void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   static
   char och = '\0';
   static short cnt = 0;
@@ -314,12 +314,11 @@ void inc_bywrd( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
 
 }
-void one_line( const char *progname ) {
+void  one_line   ( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
   exit(0);
 }
-
-void help( char *progname, const char *opt, struct option lopts[] ) {
+void  help       ( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
@@ -433,7 +432,6 @@ int main(int argc, char *argv[]) {
         BUGOUT("Got a Colon for: %c\n", optopt );
         B_have_arg = false;
         switch( optopt ) {
-          case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
           default : BUGOUT("No arg for %c\n", optopt ); break;
         }
@@ -466,14 +464,6 @@ int main(int argc, char *argv[]) {
       case 'w': B_wrd   = !B_wrd;   ccnt = 1; break;
       case 't': B_test  = !B_test;  break;
       case 'T': B_brght = !B_brght; break;
-
-      case 'o':
-        B_o = !B_o;
-        BUGOUT("B_have_arg = %s\n", TF[B_have_arg]);
-        BUGOUT("myarg = %s\n", myarg);
-        if ( myarg[0] != '\0' ) strcpy(myopt, myarg);
-        BUGOUT("optional arg for (%s) is [%s]\n", longopts[longindex].name, myopt );
-        break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -508,16 +498,16 @@ int main(int argc, char *argv[]) {
   if ( debug & 0x0002 ) list_SEQ();
 
   sz_pal = get_colors( pal_ndx, palette );
+  sz_seq = set_SEQ   ( sz_seq, sz_pal, palette );
 
-  sz_seq = fix_SEQ( sz_seq, sz_pal, palette );
   if ( debug & 0x0002 ) {
     list_SEQ();
     STDOUT("%2d: sz_seq\n", sz_seq );
   }
 
-  if ( B_test ) show_colors();
-  if ( B_brght) mycontrast( SEQ, sz_seq );
-  if ( B_fix )  bright_pal( SEQ, sz_seq );
+  if ( B_test  ) show_colors();
+  if ( B_brght ) mycontrast ( SEQ, sz_seq );
+  if ( B_fix   ) bright_pal ( SEQ, sz_seq );
 
   off_t  f_sz = 0;
   char *buf   = NULL,
@@ -533,7 +523,7 @@ int main(int argc, char *argv[]) {
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
 
     if ( ! f_sz )
-    buf   = (char *) loadfile ( argv[optind], &f_sz );
+      buf   = (char *) loadfile ( argv[optind], &f_sz );
 
     pch = buf;
     while ( f_sz-- ) {
@@ -544,14 +534,13 @@ int main(int argc, char *argv[]) {
       if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
       else {
         set_color8  ( stl, clr );
-        ++clr; clr %= 7;
-//      ++stl; stl %= 7;
+        ++clr; clr %= 7;              // increment color
+//      ++stl; stl %= 7;              // increment style
       }
       printf("%c", *pch );
       if ( !B_row && *pch == '\n' ) clr = -1;
       ++pch;
     }
-//  mycontrast( SEQ, sz_seq );
 
     f_sz = 0;
     if ( buf  ) { free( buf  ); buf = NULL; }
