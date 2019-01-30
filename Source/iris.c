@@ -524,7 +524,7 @@ int main(int argc, char *argv[]) {
   if ( B_tty ) set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
 
-  if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
+//if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
 
@@ -532,6 +532,7 @@ int main(int argc, char *argv[]) {
       buf   = (char *) loadfile ( argv[optind], &f_sz );
 
     pch = buf;
+    if( B_wrd && *pch != '\n' ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
     while ( f_sz-- ) {
       if      ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_seq );
       else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_seq );
