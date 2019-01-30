@@ -37,6 +37,7 @@ bool
      B_row   = false,
      B_wrd   = false,
      B_test  = false,
+     B_tty   = false,
      B_brght = false;
 
 #define MAX_CON 28.0
@@ -496,6 +497,9 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+  B_tty = isatty(1);    // setcursor fails when stdout is piped
+//BUGOUT("tty: %s\n", ttyname(1) );
+
 //if ( SEQ[0] == -1 ) SEQ[0] = tseq;
   if ( debug & 0x0002 ) list_SEQ();
 
@@ -517,7 +521,7 @@ int main(int argc, char *argv[]) {
   short clr = -1,    // color
         stl =  1;    // style
 
-  set_cursor( false );
+  if ( B_tty ) set_cursor( false );
   if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
 
   if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
@@ -548,6 +552,6 @@ int main(int argc, char *argv[]) {
     if ( buf  ) { free( buf  ); buf = NULL; }
   }                                         // for optind
 
-  set_cursor( true  );
+  if ( B_tty ) set_cursor( true  );
   exit(0);
 }
