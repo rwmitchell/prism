@@ -441,7 +441,6 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'c': ccnt = strtol( optarg, NULL, 10 );
-                BUGOUT( "%2d ccnt\n", ccnt );
                 break;
 
       case '8': B_256 = !B_256;
