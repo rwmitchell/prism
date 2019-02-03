@@ -14,6 +14,7 @@
 #include <unistd.h>     // read()
 #include <sys/param.h>  // str2arr(), INT_MAX
 #include <stdbool.h>
+#include <sys/param.h>  // MIN/MAX
 #include "io.h"
 #include "bugout.h"
 
@@ -47,6 +48,18 @@ int   count_lines  ( char  *fname ) {                 // count lines in file
   fclose( fp );
 
   return( rv );
+}
+int   max_linelen( char **arr ) {
+  char **pa = arr;
+  size_t  max=0;
+  while ( **pa ) {
+//  STDOUT("%3lu: %s\n", strlen( *pa ), *pa );
+    max = MAX( max, strlen( *pa ) );
+    pa++;
+  }
+//STDOUT("%3lu: MANLEN\n", max );
+
+  return( max );
 }
 int   str2arr( char *mlstr, const char *FS, char ***arr, int lim ) {
   char *ch;

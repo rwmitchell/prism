@@ -38,7 +38,8 @@ bool
      B_wrd   = false,
      B_test  = false,
      B_tty   = false,
-     B_brght = false;
+     B_brght = false,
+     B_once  = false;
 
 #define MAX_CON 28.0
 
@@ -104,6 +105,9 @@ void   list_SEQ   ( ) {
 }
 // https://www.color-hex.com
 const char *altcolors[] = {
+   "#ff005a#fd7674#ffff00#90ee90#8090fb#8564ad#ac84b6",
+   "#ff005a#fd7674#ffff00#90ee90#7080fb#75549b#ac84b6",
+   "#ff005a#fd7674#ffff00#90ee90#7080fb#76ffff#ff8bff",
    "#ff8bff#fd7674#ffff00#90ee90#76ffff#7080fb",  // rainbow
    "#90ee90#00ff00#39a52f#006400",                // greenbar
    "#add8e6#d3d3d3#a9a9a9#a0a0ff",                // metal?
@@ -346,7 +350,6 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
 
   exit(-0);
 }
-
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
@@ -359,7 +362,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8Bbfgmp:rs:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8Bbfgmp:ros:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",          no_argument, NULL, '8' },
@@ -371,6 +374,7 @@ int main(int argc, char *argv[]) {
     { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",           no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",     required_argument, NULL, 's' },
+    { "once",          no_argument, NULL, 'o' },
     { "word",          no_argument, NULL, 'w' },
     { "test",          no_argument, NULL, 't' },
     { "bright",        no_argument, NULL, 'T' },
@@ -463,6 +467,7 @@ int main(int argc, char *argv[]) {
       case 'B' :B_bkgnd = !B_bkgnd; break;
       case 'f': B_fix   = !B_fix;   break;
       case 'r': B_row   = !B_row;   break;
+      case 'o': B_once  = !B_once;  break;
       case 'w': B_wrd   = !B_wrd;   ccnt = 1; break;
       case 't': B_test  = !B_test;  break;
       case 'T': B_brght = !B_brght; break;
@@ -517,6 +522,8 @@ int main(int argc, char *argv[]) {
   off_t  f_sz = 0;
   char *buf   = NULL,
        *pch;
+  int max,
+      cnt;
   short clr = -1,    // color
         stl =  1;    // style
 
@@ -529,6 +536,17 @@ int main(int argc, char *argv[]) {
 
     if ( ! f_sz )
       buf   = (char *) loadfile ( argv[optind], &f_sz );
+
+    if ( B_once ) {
+      max = cnt = 0;
+      for ( pch = buf; *pch != '\0'; ++pch ) {        // get max line length
+        if ( *pch == '\n' ) {
+          max = MAX( max, cnt );
+          cnt = 0;
+        } else ++cnt;
+      }
+      ccnt = max / sz_seq + 1;
+    }
 
     pch = buf;
     if( B_wrd && *pch != '\n' ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
