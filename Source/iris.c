@@ -30,12 +30,10 @@ enum { MAX_SEQ = 64 };
 int SEQ[] = { [0 ... MAX_SEQ] = -1 },
       sz_seq = 0;
 
-bool 
+bool
      B_256   = true,
      B_bkgnd = false,
      B_fix   = false,
-     B_row   = false,
-     B_wrd   = false,
      B_test  = false,
      B_tty   = false,
      B_brght = false,
@@ -49,6 +47,12 @@ enum {
   BGC      =   48,         // ansi code to set background color
 };
 
+typedef enum {
+  MCOL = 0,
+  MROW = 1,
+  MWRD = 2,
+} Mode_t;
+Mode_t mode = MCOL;
 const char *foo[] = {
   "#77777F#777780#777781#888888#77778F",
   "#777685#777685#777685#777686#77768F",
@@ -338,9 +342,9 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
   STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
   STDERR("  -f: fix contrast levels  [%5s]\n", TF[  B_fix   ]);
-  STDERR("  -r: change color by row  [%5s]\n", TF[  B_row   ]);
+  STDERR("  -r: change color by row\n" );
   STDERR("  -s palette_list: specify palette index for each column\n");
-  STDERR("  -w: change color by word [%5s]\n", TF[  B_wrd   ]);
+  STDERR("  -w: change color by word\n");
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
@@ -466,9 +470,9 @@ int main(int argc, char *argv[]) {
 
       case 'B' :B_bkgnd = !B_bkgnd; break;
       case 'f': B_fix   = !B_fix;   break;
-      case 'r': B_row   = !B_row;   break;
+      case 'r': mode = MROW;        break;
       case 'o': B_once  = !B_once;  break;
-      case 'w': B_wrd   = !B_wrd;   ccnt = 1; break;
+      case 'w': mode = MWRD; ccnt = 1; break;
       case 't': B_test  = !B_test;  break;
       case 'T': B_brght = !B_brght; break;
 
@@ -522,8 +526,9 @@ int main(int argc, char *argv[]) {
   off_t  f_sz = 0;
   char *buf   = NULL,
        *pch;
-  int max,
-      cnt;
+  int cmax,  cnt,
+      wmax, wcnt,
+      lcnt;
   short clr = -1,    // color
         stl =  1;    // style
 
@@ -538,22 +543,35 @@ int main(int argc, char *argv[]) {
       buf   = (char *) loadfile ( argv[optind], &f_sz );
 
     if ( B_once ) {
-      max = cnt = 0;
-      for ( pch = buf; *pch != '\0'; ++pch ) {        // get max line length
+      char och = ' ';
+      cmax = cnt = lcnt = wmax = wcnt = 0;
+      for ( pch = buf; *pch != '\0'; ++pch ) {      // get max line length
+        if ( !isspace( och ) &&  isspace( *pch ) ) wcnt++;
         if ( *pch == '\n' ) {
-          max = MAX( max, cnt );
-          cnt = 0;
+          cmax = MAX( cmax,  cnt );
+          wmax = MAX( wmax, wcnt );
+          lcnt++;
+          wcnt = cnt = 0;
         } else ++cnt;
+        och = *pch;
       }
-      ccnt = max / sz_seq + 1;
+      switch ( mode ) {
+        case MCOL: ccnt = cmax / sz_seq + 1; break;
+        case MWRD: ccnt = 1; break; // wmax / sz_seq + 1; break;  // XYZZY -- needs work
+        case MROW: ccnt = lcnt / sz_seq + 1; break; 
+        default: break;
+      }
     }
 
     pch = buf;
-    if( B_wrd && *pch != '\n' ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
+    if( mode == MWRD && *pch != '\n' )
+      inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
     while ( f_sz-- ) {
-      if      ( B_row ) inc_byrow( *pch, &clr, ccnt, sz_seq );
-      else if ( B_wrd ) inc_bywrd( *pch, &clr, ccnt, sz_seq );
-      else              inc_bycol(       &clr, ccnt, sz_seq );
+      switch ( mode ) {
+        case MCOL: inc_bycol(       &clr, ccnt, sz_seq ); break;
+        case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+        case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+      }
 
       if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
       else {
@@ -562,7 +580,7 @@ int main(int argc, char *argv[]) {
 //      ++stl; stl %= 7;              // increment style
       }
       printf("%c", *pch );
-      if ( !B_row && *pch == '\n' ) clr = -1;
+      if ( mode != MROW && *pch == '\n' ) clr = -1;
       ++pch;
     }
 
