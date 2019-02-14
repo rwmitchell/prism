@@ -317,6 +317,8 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   char och = '\0';
   static short cnt = 0;
 
+  if ( och == '\n' ) cnt = 1;
+  
   if ( cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
   if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
