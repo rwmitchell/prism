@@ -1,18 +1,28 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>  // strncasestr()
 #include <ctype.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include "bugout.h"
 
 void usage(struct option longopts[]) {
-  int i;
+  bool B_zsh = false;
 
-  for (i=0; longopts[i].name != NULL; ++i ) {
-    STDOUT("%s%c %c ",
+  if ( strcasestr( getenv("SHELL"), "zsh" ) != NULL ) B_zsh = true;
+
+  for ( int i=0; longopts[i].name != NULL; ++i ) {
+    STDOUT("%s%s%s%s%s%c ",
+      B_zsh ? "-" : "",
       longopts[i].name,
-      longopts[i].has_arg == optional_argument ? '=' : ' ',
+      longopts[i].has_arg == optional_argument ? "=" : "",
+      B_zsh ? "\n" : " ",
+      B_zsh ? "-" : "",
       isprint(longopts[i].val) ? longopts[i].val : ' '
     );
+    if ( B_zsh ) STDOUT("\n");
   }
-  STDOUT("\n");
+  if ( !B_zsh ) STDOUT("\n");
   exit(0);
 }
 void helpd( struct option lopts[] ) {
@@ -31,7 +41,7 @@ void helpd( struct option lopts[] ) {
       "--------"
       );
 
-  for (int i=0; lopts[i].name != NULL; ++i ) {
+  for ( int i=0; lopts[i].name != NULL; ++i ) {
     STDERR("%2d  -%c  %-9s %-15s\n",
       i,
       isprint(lopts[i].val) ? lopts[i].val : ' ',
