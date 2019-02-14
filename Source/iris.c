@@ -166,11 +166,26 @@ void set_color256( unsigned long clr, bool BG) {
       G = (clr & 0x00FF00) >>  8,
       B = (clr & 0x0000FF);
 
+#define COLORS_256
+#ifdef  COLORS_256
   if ( BG ) {
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, 0, 0, 0);  // Black text
     printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
   } else
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+
+#else
+
+  R /= 16;
+  G /= 16;
+  B /= 16;
+
+  if ( BG ) {
+    printf(  "[%d;2;%02d;%02d;%02dm", FGC, 0, 0, 0);  // Black text
+    printf(  "[%d;2;%02d;%02d;%02dm", BGC, R, G, B);
+  } else
+    printf(  "[%d;%d;%d;m", R, G, B);
+#endif
 }
 float brightness ( unsigned long clr) {
   float brght;
@@ -578,7 +593,7 @@ int main(int argc, char *argv[]) {
       if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
       else {
         set_color8  ( stl, clr );
-        ++clr; clr %= 7;              // increment color
+//      ++clr; clr %= 7;              // increment color
 //      ++stl; stl %= 7;              // increment style
       }
       printf("%c", *pch );
