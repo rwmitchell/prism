@@ -1,13 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <libgen.h>
 #define BUGOUT( FMT, ... ) { \
-  fprintf(stdout, "%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
+  fprintf(stdout, "%s: %5d:%-24s:", basename(__FILE__), __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fflush (stdout); \
 }
 #define BUGERR( FMT, ... ) { \
-  fprintf(stderr, "%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
+  fprintf(stderr, "%s: %5d:%-24s:", basename(__FILE__), __LINE__, __func__ ); \
   fprintf(stderr, FMT, ##__VA_ARGS__ ); \
   fflush (stderr); \
 }
@@ -25,7 +23,7 @@
 char *timer();
 #define TIMOUT( FMT, ... ) { \
   fprintf(stdout, "%s: ", timer() ); \
-  fprintf(stdout, "%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
+  fprintf(stdout, "%s: %5d:%-24s:", basename(__FILE__), __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fflush (stdout); \
 }
