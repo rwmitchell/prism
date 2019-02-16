@@ -313,7 +313,7 @@ void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
-  if ( ch == '\n' ) { 
+  if ( ch == '\n' ) {
     ++cnt;
     printf( "[0K");
   }
@@ -333,7 +333,7 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
   if ( och == '\n' ) cnt = 1;
-  
+
   if ( cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
   if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
@@ -395,7 +395,7 @@ int main(int argc, char *argv[]) {
     { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",           no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",     required_argument, NULL, 's' },
-    { "once",          no_argument, NULL, 'o' },
+    { "once",          no_argument, NULL, 'o' },  // do not use -ro, interpreted as -row
     { "word",          no_argument, NULL, 'w' },
     { "test",          no_argument, NULL, 't' },
     { "bright",        no_argument, NULL, 'T' },
@@ -485,13 +485,13 @@ int main(int argc, char *argv[]) {
                 }
                 break;
 
-      case 'B' :B_bkgnd = !B_bkgnd; break;
-      case 'f': B_fix   = !B_fix;   break;
-      case 'r': mode = MROW;        break;
-      case 'o': B_once  = !B_once;  break;
+      case 'B' :B_bkgnd = !B_bkgnd;    break;
+      case 'f': B_fix   = !B_fix;      break;
+      case 'r': mode = MROW;           break;
+      case 'o': B_once  = !B_once;     break;
       case 'w': mode = MWRD; ccnt = 1; break;
-      case 't': B_test  = !B_test;  break;
-      case 'T': B_brght = !B_brght; break;
+      case 't': B_test  = !B_test;     break;
+      case 'T': B_brght = !B_brght;    break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -559,9 +559,9 @@ int main(int argc, char *argv[]) {
     if ( ! f_sz )
       buf   = (char *) loadfile ( argv[optind], &f_sz );
 
+    cmax = cnt = lcnt = wmax = wcnt = 0;
     if ( B_once ) {
       char och = ' ';
-      cmax = cnt = lcnt = wmax = wcnt = 0;
       for ( pch = buf; *pch != '\0'; ++pch ) {      // get max line length
         if ( !isspace( och ) &&  isspace( *pch ) ) wcnt++;
         if ( *pch == '\n' ) {
@@ -575,10 +575,11 @@ int main(int argc, char *argv[]) {
       switch ( mode ) {
         case MCOL: ccnt = cmax / sz_seq + 1; break;
         case MWRD: ccnt = 1; break; // wmax / sz_seq + 1; break;  // XYZZY -- needs work
-        case MROW: ccnt = lcnt / sz_seq + 1; break; 
+        case MROW: ccnt = (float) lcnt / sz_seq + .8; break;
         default: break;
       }
     }
+//  BUGOUT("%d: ccnt %lf\n", ccnt, ( .8 + (float) lcnt / sz_seq ));
 
     pch = buf;
     if( mode == MWRD && *pch != '\n' )
