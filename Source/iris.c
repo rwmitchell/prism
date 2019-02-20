@@ -51,6 +51,7 @@ typedef enum {
   MCOL = 0,
   MROW = 1,
   MWRD = 2,
+  MPAR = 3,
 } Mode_t;
 Mode_t mode = MCOL;
 const char *foo[] = {
@@ -306,7 +307,19 @@ void  set_cursor ( bool on) {
 void  set_color8 ( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
 }
+void  inc_bypar  ( char ch, short *val, unsigned short cycle, int max ) {
+  static short cnt = 0;
+  static char och = '\0';
 
+  if ( *val == -1    )    *val = cnt = 0;
+  if (  cnt == cycle ) { (*val)++; *val %= max; }
+  cnt %= cycle;
+  if ( ch == '\n' && och == '\n' ) {
+    ++cnt;
+    printf( "[0K");
+  }
+  och = ch;
+}
 void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0;
 
@@ -383,7 +396,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8Bbfgmp:ros:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8Bbfgmp:Pros:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",          no_argument, NULL, '8' },
@@ -396,6 +409,7 @@ int main(int argc, char *argv[]) {
     { "row",           no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",     required_argument, NULL, 's' },
     { "once",          no_argument, NULL, 'o' },  // do not use -ro, interpreted as -row
+    { "paragraph",     no_argument, NULL, 'P' },
     { "word",          no_argument, NULL, 'w' },
     { "test",          no_argument, NULL, 't' },
     { "bright",        no_argument, NULL, 'T' },
@@ -487,6 +501,7 @@ int main(int argc, char *argv[]) {
 
       case 'B' :B_bkgnd = !B_bkgnd;    break;
       case 'f': B_fix   = !B_fix;      break;
+      case 'P': mode = MPAR; ccnt = 1; break;
       case 'r': mode = MROW;           break;
       case 'o': B_once  = !B_once;     break;
       case 'w': mode = MWRD; ccnt = 1; break;
@@ -545,7 +560,8 @@ int main(int argc, char *argv[]) {
        *pch;
   int cmax,  cnt,
       wmax, wcnt,
-      lcnt;
+      lcnt,
+      pcnt;
   short clr = -1,    // color
         stl =  1;    // style
 
@@ -559,7 +575,7 @@ int main(int argc, char *argv[]) {
     if ( ! f_sz )
       buf   = (char *) loadfile ( argv[optind], &f_sz );
 
-    cmax = cnt = lcnt = wmax = wcnt = 0;
+    cmax = cnt = lcnt = pcnt = wmax = wcnt = 0;
     if ( B_once ) {
       char och = ' ';
       for ( pch = buf; *pch != '\0'; ++pch ) {      // get max line length
@@ -569,6 +585,7 @@ int main(int argc, char *argv[]) {
           wmax = MAX( wmax, wcnt );
           lcnt++;
           wcnt = cnt = 0;
+          if ( och == '\n' ) ++pcnt;
         } else ++cnt;
         och = *pch;
       }
@@ -576,6 +593,7 @@ int main(int argc, char *argv[]) {
         case MCOL: ccnt = cmax / sz_seq + 1; break;
         case MWRD: ccnt = 1; break; // wmax / sz_seq + 1; break;  // XYZZY -- needs work
         case MROW: ccnt = (float) lcnt / sz_seq + .8; break;
+        case MPAR: ccnt = pcnt / sz_seq + 1; break;
         default: break;
       }
     }
@@ -589,6 +607,7 @@ int main(int argc, char *argv[]) {
         case MCOL: inc_bycol(       &clr, ccnt, sz_seq ); break;
         case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
         case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+        case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
       }
 
       if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
@@ -598,7 +617,7 @@ int main(int argc, char *argv[]) {
 //      ++stl; stl %= 7;              // increment style
       }
       printf("%c", *pch );
-      if ( mode != MROW && *pch == '\n' ) clr = -1;
+      if ( ( mode != MROW && mode != MPAR) && *pch == '\n' ) clr = -1;
       ++pch;
     }
 
