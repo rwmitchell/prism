@@ -372,6 +372,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
   STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
   STDERR("  -f: fix contrast levels  [%5s]\n", TF[  B_fix   ]);
+  STDERR("  -P: change color by paragraph\n" );
   STDERR("  -r: change color by row\n" );
   STDERR("  -s palette_list: specify palette index for each column\n");
   STDERR("  -w: change color by word\n");
