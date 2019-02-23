@@ -274,24 +274,29 @@ void show_colors ( ) {
   exit(0);
 }
 unsigned
-int   get_colors ( int ndx, unsigned int *hex ) {
+int str2hex( const char *str, unsigned int *hex ) {
   const
   char *pt;
-  int pos = 0,
-      cnt = sizeof( altcolors) / 8 - 1;
+  int pos = 0;
 
-  if ( ndx < 0 || ndx > cnt ) {
-    BUGERR("ndx %d is invalid, expected 0 to %d\n", ndx, cnt );
-    exit( __LINE__ );
-  }
-
-  pt = altcolors[ndx];
+  pt = str;
   while ( ( pt=strchr( pt, '#') ) ) {
     pt++;
     hex[pos++] = strtol( pt, NULL, 16 );
   }
 
   return( pos );
+}
+unsigned
+int   get_colors ( int ndx, unsigned int *hex ) {
+  int cnt = sizeof( altcolors) / 8 - 1;
+
+  if ( ndx < 0 || ndx > cnt ) {
+    BUGERR("ndx %d is invalid, expected 0 to %d\n", ndx, cnt );
+    exit( __LINE__ );
+  }
+
+  return( str2hex( altcolors[ndx], hex ) );
 }
 void  set_cursor ( bool on) {
   if ( on ) {
@@ -380,6 +385,9 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
+  STDERR("A custom palette can be set using the environment variable 'IRIS'. \n");
+  STDERR("Ex: export IRIS=\"#00FF00#00E000#00C000#00A000#008000\"\n");
+  STDERR("or  setenv IRIS \"#00FF00#00E000#00C000#00A000#008000\"\n");
 
   if ( debug ) helpd( lopts );
 
@@ -389,8 +397,8 @@ int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt,
-      pal_ndx  = 0 ,
-      longindex= 0;
+      pal_ndx  = -1,
+      longindex=  0;
   bool B_have_arg = true;
   extern int   optind,
                optopt;
@@ -420,6 +428,8 @@ int main(int argc, char *argv[]) {
     { "oneline",       no_argument, NULL, '1' },
     { NULL,                      0, NULL,  0  }
   };
+
+  char *env_col = getenv("IRIS");
 
   unsigned
   int palette[32] = { 0 },
@@ -544,8 +554,13 @@ int main(int argc, char *argv[]) {
 //if ( SEQ[0] == -1 ) SEQ[0] = tseq;
   if ( debug & 0x0002 ) list_SEQ();
 
-  sz_pal = get_colors( pal_ndx, palette );
-  sz_seq = set_SEQ   ( sz_seq, sz_pal, palette );
+  if ( pal_ndx < 0 && env_col ) sz_pal = str2hex( env_col, palette );
+  else pal_ndx = 0;
+
+  if ( ! sz_pal )
+    sz_pal = get_colors( pal_ndx, palette );
+
+    sz_seq = set_SEQ   ( sz_seq, sz_pal, palette );
 
   if ( debug & 0x0002 ) {
     list_SEQ();
