@@ -387,6 +387,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -b: greenbar colors\n");
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -m: metal    colors\n");
+  STDERR("  -n CNT: max of %d items to colorize\n", ncol );
   STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
   STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
   STDERR("  -f: fix contrast levels  [%5s]\n", TF[  B_fix   ]);
