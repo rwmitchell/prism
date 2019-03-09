@@ -22,7 +22,8 @@ char *cvsid = "$Id$";
 const char *TF[]= {"False", "True"};
 
 char myarg[1024],   // temporary optarg value
-     myopt[1024];   // example optional argument
+     myopt[1024],   // example optional argument
+     FS = ' ';
 int  debug =  0,
      ccnt  =  2;    // contiguous colors
 
@@ -53,6 +54,7 @@ typedef enum {
   MROW = 1,
   MWRD = 2,
   MPAR = 3,
+  MFLD = 4,
 } Mode_t;
 Mode_t mode = MCOL;
 const char *foo[] = {
@@ -346,6 +348,21 @@ void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
   }
   if ( row > ncol ) *val = -1;
 }
+void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
+  static short cnt = 0,
+               fpl = 0;
+
+  if ( ch == '\n' ) {  fpl = 0; cnt = 1; }
+
+  if ( *val == -1    )    *val = cnt = 0;
+  if (  cnt == cycle ) { (*val)++; *val %= max; }
+  cnt %= cycle;
+  if ( ch == FS ) {
+    cnt++;
+    fpl++;
+  }
+  if ( fpl >= ncol ) *val = -1;
+}
 void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0,
                cpl = 0;    // columns per line
@@ -395,6 +412,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -r: change color by row\n" );
   STDERR("  -s palette_list: specify palette index for each column\n");
   STDERR("  -w: change color by word\n");
+  STDERR("  -F SEP : change color by field [%c]\n", FS);
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
@@ -419,29 +437,30 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8Bbfgmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8BbfF:gmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
-    { "cnt",     required_argument, NULL, 'c' },
-    { "8bit",          no_argument, NULL, '8' },
-    { "bar",           no_argument, NULL, 'b' },
-    { "gay",           no_argument, NULL, 'g' },
-    { "metal",         no_argument, NULL, 'm' },
-    { "num",     required_argument, NULL, 'n' },
-    { "palette", required_argument, NULL, 'p' },  // choose a palette
-    { "backgrnd",      no_argument, NULL, 'B' },  // set background color
-    { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
-    { "row",           no_argument, NULL, 'r' },  // color rows instead of columns
-    { "seq",     required_argument, NULL, 's' },
-    { "once",          no_argument, NULL, 'o' },  // do not use -ro, interpreted as -row
-    { "paragraph",     no_argument, NULL, 'P' },
-    { "word",          no_argument, NULL, 'w' },
-    { "test",          no_argument, NULL, 't' },
-    { "bright",        no_argument, NULL, 'T' },
-    { "debug",   optional_argument, NULL, 'd' },
-    { "help",          no_argument, NULL, 'h' },
-    { "usage",         no_argument, NULL, 'u' },
-    { "oneline",       no_argument, NULL, '1' },
-    { NULL,                      0, NULL,  0  }
+    { "cnt",       required_argument, NULL, 'c' },
+    { "8bit",            no_argument, NULL, '8' },
+    { "bar",             no_argument, NULL, 'b' },
+    { "gay",             no_argument, NULL, 'g' },
+    { "metal",           no_argument, NULL, 'm' },
+    { "num",       required_argument, NULL, 'n' },
+    { "palette",   required_argument, NULL, 'p' },  // choose a palette
+    { "backgrnd",        no_argument, NULL, 'B' },  // set background color
+    { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
+    { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
+    { "seq",       required_argument, NULL, 's' },
+    { "once",            no_argument, NULL, 'o' },  // do not use -ro, interpreted as -row
+    { "paragraph",       no_argument, NULL, 'P' },
+    { "word",            no_argument, NULL, 'w' },
+    { "field",     required_argument, NULL, 'F' },
+    { "test",            no_argument, NULL, 't' },
+    { "bright",          no_argument, NULL, 'T' },
+    { "debug",     optional_argument, NULL, 'd' },
+    { "help",            no_argument, NULL, 'h' },
+    { "usage",           no_argument, NULL, 'u' },
+    { "oneline",         no_argument, NULL, '1' },
+    { NULL,                        0, NULL,  0  }
   };
 
   char *env_col = getenv("IRIS");
@@ -537,6 +556,8 @@ int main(int argc, char *argv[]) {
       case 't': B_test  = !B_test;     break;
       case 'T': B_brght = !B_brght;    break;
 
+      case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
+
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
@@ -628,6 +649,7 @@ int main(int argc, char *argv[]) {
         case MWRD: ccnt = 1; break; // wmax / sz_seq + 1; break;  // XYZZY -- needs work
         case MROW: ccnt = (float) lcnt / sz_seq + .8; break;
         case MPAR: ccnt = pcnt / sz_seq + 1; break;
+        case MFLD: ccnt = 1; break;
         default: break;
       }
     }
@@ -642,6 +664,7 @@ int main(int argc, char *argv[]) {
         case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
         case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
         case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+        case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
       }
 
       if ( clr == -1 ) reset_attr();
