@@ -27,8 +27,9 @@ int  debug =  0,
      ccnt  =  2;    // contiguous colors
 
 enum { MAX_SEQ = 64 };
-int SEQ[] = { [0 ... MAX_SEQ] = -1 },
-      sz_seq = 0;
+int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
+    sz_seq =   0,
+    ncol   = 999;    // max columns to color
 
 bool
      B_256   = true,
@@ -160,6 +161,9 @@ unsigned long brighten( unsigned long clr ) {
   B = MIN( 0xFF, B+0x10);
 
   return( (R<<16)+(G<<8)+B );
+}
+void reset_attr() {
+  printf("\e[0m");
 }
 void set_color256( unsigned long clr, bool BG) {
 
@@ -313,50 +317,59 @@ void  set_color8 ( short stl, short clr) {
   printf("[%d;%dm", stl, clr+31);
 }
 void  inc_bypar  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0;
+  static short cnt = 0,
+               par = 0;        // total paragraphs
   static char och = '\0';
 
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
   if ( ch == '\n' && och == '\n' ) {
-    ++cnt;
+    cnt++;
+    par++;
     printf( "[0K");
   }
   och = ch;
+  if ( par >= ncol ) *val = -1;
 }
 void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0;
+  static short cnt = 0,
+               row = 0;
 
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
   if ( ch == '\n' ) {
-    ++cnt;
+    cnt++;
+    row++;
     printf( "[0K");
   }
+  if ( row > ncol ) *val = -1;
 }
-void  inc_bycol  ( short *val, unsigned short cycle, int max ) {
-  static short cnt = 0;
+void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
+  static short cnt = 0,
+               cpl = 0;    // columns per line
 
   if ( *val == -1 ) *val = cnt = 0;
-  if ( cnt == cycle ) (*val)++;
-   cnt %= cycle;
-  ++cnt;
+  if ( cnt == cycle ) { (*val)++; cpl++; }
+  if ( ch == '\n' )  cpl = 0;
+  cnt %= cycle;
+  cnt++;
   *val %= max;
+  if ( cpl >= ncol ) *val = -1;
 }
 void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
-  static
-  char och = '\0';
-  static short cnt = 0;
+  static char  och = '\0';
+  static short cnt = 0,
+               wpl = 0;        // words per line
 
-  if ( och == '\n' ) cnt = 1;
+  if ( och == '\n' ) {  wpl = 0; cnt = 1; }
 
-  if ( cnt == cycle ) { (*val)++; *val %= max; }
+  if ( cnt == cycle ) { (*val)++; *val %= max; ++wpl; }
   cnt %= cycle;
   if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
   och = ch;
-
+  if ( wpl > ncol ) *val = -1;
 }
 void  one_line   ( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
@@ -405,13 +418,14 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8Bbfgmp:Pros:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8Bbfgmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",     required_argument, NULL, 'c' },
     { "8bit",          no_argument, NULL, '8' },
     { "bar",           no_argument, NULL, 'b' },
     { "gay",           no_argument, NULL, 'g' },
     { "metal",         no_argument, NULL, 'm' },
+    { "num",     required_argument, NULL, 'n' },
     { "palette", required_argument, NULL, 'p' },  // choose a palette
     { "backgrnd",      no_argument, NULL, 'B' },  // set background color
     { "fix",           no_argument, NULL, 'f' },  // adjust brightness of palette selection
@@ -499,6 +513,9 @@ int main(int argc, char *argv[]) {
       case 'g': pal_ndx = 0; break;      // rainbow - gay
       case 'b': pal_ndx = 1; break;      // greenbar
       case 'm': pal_ndx = 2; break;      // metal
+
+      case 'n': ncol = strtol( optarg, NULL, 10 );
+                break;
 
       case 'p': pal_ndx = strtol( optarg, NULL, 10 );
                 break;
@@ -620,17 +637,20 @@ int main(int argc, char *argv[]) {
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
     while ( f_sz-- ) {
       switch ( mode ) {
-        case MCOL: inc_bycol(       &clr, ccnt, sz_seq ); break;
+        case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
         case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
         case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
         case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
       }
 
-      if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+      if ( clr == -1 ) reset_attr();
       else {
-        set_color8  ( stl, clr );
-//      ++clr; clr %= 7;              // increment color
-//      ++stl; stl %= 7;              // increment style
+        if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+        else {
+          set_color8  ( stl, clr );
+  //      ++clr; clr %= 7;              // increment color
+  //      ++stl; stl %= 7;              // increment style
+        }
       }
       printf("%c", *pch );
       if ( ( mode != MROW && mode != MPAR) && *pch == '\n' ) clr = -1;
