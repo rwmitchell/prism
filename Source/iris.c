@@ -388,6 +388,19 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
+// "Borrowed" from lolcat.c - START
+static void find_escape_sequences(wint_t c, int* state)
+{
+    if (c == '\033') { /* Escape sequence YAY */
+        *state = 1;
+    } else if (*state == 1) {
+        if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
+            *state = 2;
+    } else {
+        *state = 0;
+    }
+}
+// "Borrowed" from lolcat.c - END
 void  one_line   ( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
   exit(0);
@@ -626,6 +639,7 @@ int main(int argc, char *argv[]) {
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
+    int escape_state = 0;
 
     if ( ! f_sz )
       buf   = (char *) loadfile ( argv[optind], &f_sz );
@@ -659,25 +673,31 @@ int main(int argc, char *argv[]) {
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
     while ( f_sz-- ) {
-      switch ( mode ) {
-        case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
-        case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
-        case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
-        case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
-        case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-      }
 
-      if ( clr == -1 ) reset_attr();
-      else {
-        if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
-        else {
-          set_color8  ( stl, clr );
-  //      ++clr; clr %= 7;              // increment color
-  //      ++stl; stl %= 7;              // increment style
+      find_escape_sequences(*pch, &escape_state);
+
+      if (!escape_state) {
+
+        switch ( mode ) {
+          case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
+          case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+          case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+          case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+          case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
         }
+
+        if ( clr == -1 ) reset_attr();
+        else {
+          if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+          else {
+            set_color8  ( stl, clr );
+    //      ++clr; clr %= 7;              // increment color
+    //      ++stl; stl %= 7;              // increment style
+          }
+        }
+        printf("%c", *pch );
+        if ( ( mode != MROW && mode != MPAR) && *pch == '\n' ) clr = -1;
       }
-      printf("%c", *pch );
-      if ( ( mode != MROW && mode != MPAR) && *pch == '\n' ) clr = -1;
       ++pch;
     }
 
