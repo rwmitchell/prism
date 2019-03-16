@@ -601,7 +601,7 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  B_tty = isatty(1);    // setcursor fails when stdout is piped
+  B_tty = isatty( STDOUT_FILENO );    // setcursor fails when stdout is piped
 //BUGOUT("tty: %s\n", ttyname(1) );
 
 //if ( SEQ[0] == -1 ) SEQ[0] = tseq;
