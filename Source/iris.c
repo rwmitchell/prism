@@ -58,14 +58,6 @@ typedef enum {
   MFLD = 4,
 } Mode_t;
 Mode_t mode = MCOL;
-const char *foo[] = {
-  "#77777F#777780#777781#888888#77778F",
-  "#777685#777685#777685#777686#77768F",
-  "#777685#777685#77758A#77758B#77768F",
-  "#777685#777685#777490#777491#77768F",
-  "red"
-};
-
 int  append_SEQ   ( int val ) {                      // append -y args to an array
   int cnt=0,
      *ps = SEQ;
