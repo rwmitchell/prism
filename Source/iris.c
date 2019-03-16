@@ -42,6 +42,7 @@ bool
      B_once  = false;
 
 #define MAX_CON 28.0
+#define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
 
 enum {
   MAXCOLOR =    6,
@@ -262,7 +263,7 @@ void show_colors ( ) {
   const
   char *pt;
   int i,
-      cnt = sizeof( altcolors) / 8;
+      cnt = ARRAY_SIZE( altcolors );
   unsigned long hex;
 
   for (i=0; i<cnt; ++i ) {
@@ -295,7 +296,7 @@ int str2hex( const char *str, unsigned int *hex ) {
 }
 unsigned
 int   get_colors ( int ndx, unsigned int *hex ) {
-  int cnt = sizeof( altcolors) / 8 - 1;
+  int cnt = ARRAY_SIZE( altcolors ) - 1;
 
   if ( ndx < 0 || ndx > cnt ) {
     BUGERR("ndx %d is invalid, expected 0 to %d\n", ndx, cnt );
@@ -418,7 +419,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -m: metal    colors\n");
   STDERR("  -n CNT: max of %d items to colorize\n", ncol );
-  STDERR("  -p [0-%lu]: alternate palettes\n", sizeof( altcolors ) / 8 );
+  STDERR("  -p [0-%lu]: alternate palettes\n", ARRAY_SIZE( altcolors ) );
   STDERR("  -B: set background color [%5s]\n", TF[  B_bkgnd ]);
   STDERR("  -f: fix contrast levels  [%5s]\n", TF[  B_fix   ]);
   STDERR("  -P: change color by paragraph\n" );
