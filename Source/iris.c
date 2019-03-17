@@ -433,6 +433,9 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -8: 8 bit    colors      [%5s]\n", TF[ !B_256 ]);
   STDERR("  -b: greenbar colors\n");
   STDERR("  -g: rainbow  colors\n");
+  STDERR("  -l: lolcat   colors\n");
+  STDERR("  -H: lolcat horizontal frequency :%.3lf\n", freq_h );
+  STDERR("  -V: lolcat vertical   frequency :%.3lf\n", freq_v );
   STDERR("  -m: metal    colors\n");
   STDERR("  -n CNT: max of %d items to colorize\n", ncol );
   STDERR("  -p [0-%lu]: alternate palettes\n", ARRAY_SIZE( altcolors ) );
