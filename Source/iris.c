@@ -12,6 +12,8 @@
 #include <ctype.h>     // isdigit()
 #include <stdbool.h>   // bool
 #include <sys/param.h> // MAX()
+#include <sys/time.h>  // gettimeofday()
+#include <wchar.h>     // wcwidth()
 #include "loadfile.h"
 #include "bugout.h"
 #include "helpd.h"
@@ -24,8 +26,12 @@ const char *TF[]= {"False", "True"};
 char myarg[1024],   // temporary optarg value
      myopt[1024],   // example optional argument
      FS = ' ';
-int  debug =  0,
-     ccnt  =  2;    // contiguous colors
+
+double offx   = 0.0, // randomize output colors
+       freq_h = 0.23,
+       freq_v = 0.1;
+int    debug  = 0,
+       ccnt   = 2;   // contiguous colors
 
 enum { MAX_SEQ = 64 };
 int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
@@ -43,6 +49,12 @@ bool
 
 #define MAX_CON 28.0
 #define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
+const unsigned char codes[] = {
+   39,  38,  44,  43,  49,  48,
+   84,  83, 119, 118, 154, 148,
+  184, 178, 214, 208, 209, 203,
+  204, 198, 199, 163, 164, 128,
+  129,  93,  99,  63,  69,  33 };
 
 enum {
   MAXCOLOR =    6,
@@ -55,7 +67,8 @@ typedef enum {
   MROW = 1,
   MWRD = 2,
   MPAR = 3,
-  MFLD = 4,
+  MLOL = 4,
+  MFLD = 5,
 } Mode_t;
 Mode_t mode = MCOL;
 int  append_SEQ   ( int val ) {                      // append -y args to an array
@@ -368,6 +381,17 @@ void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   *val %= max;
   if ( cpl >= ncol ) *val = -1;
 }
+void inc_bylol  ( char ch, short *val, unsigned short cycle, int max ) {
+  static int i = 0,
+             l = 0;
+  if ( ch == '\n' ) { l++; i=0; }
+  else {
+    int nval = offx * ARRAY_SIZE(codes) + (int)((i += wcwidth(ch)) * freq_h + l * freq_v);
+
+    if ( *val != nval )
+      wprintf(L"\033[38;5;%hhum", codes[(*val = nval) % ARRAY_SIZE(codes)]);
+  }
+}
 void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   static char  och = '\0';
   static short cnt = 0,
@@ -443,7 +467,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8BbfF:gmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8BbfF:glmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -460,6 +484,7 @@ int main(int argc, char *argv[]) {
     { "paragraph",       no_argument, NULL, 'P' },
     { "word",            no_argument, NULL, 'w' },
     { "field",     required_argument, NULL, 'F' },
+    { "lol",             no_argument, NULL, 'l' },  // duplicate lolcat
     { "test",            no_argument, NULL, 't' },
     { "bright",          no_argument, NULL, 'T' },
     { "debug",     optional_argument, NULL, 'd' },
@@ -476,6 +501,10 @@ int main(int argc, char *argv[]) {
       sz_pal = 0;
 
   short tseq = -1;
+
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  offx = (tv.tv_sec % 300) / 300.0;
 
   strcpy(myopt, "defval");
 
@@ -563,6 +592,7 @@ int main(int argc, char *argv[]) {
       case 'T': B_brght = !B_brght;    break;
 
       case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
+      case 'l': mode = MLOL; ccnt = 1; B_256 = false;  break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -657,6 +687,7 @@ int main(int argc, char *argv[]) {
         case MROW: ccnt = (float) lcnt / sz_seq + .8; break;
         case MPAR: ccnt = pcnt / sz_seq + 1; break;
         case MFLD: ccnt = 1; break;
+        case MLOL: ccnt = 1; break;
         default: break;
       }
     }
@@ -677,19 +708,20 @@ int main(int argc, char *argv[]) {
           case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
           case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
           case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
+          case MLOL: inc_bylol( *pch, &clr, ccnt, sz_seq ); break;
         }
 
         if ( clr == -1 ) reset_attr();
         else {
           if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
           else {
-            set_color8  ( stl, clr );
+            if ( mode != MLOL ) set_color8  ( stl, clr );
     //      ++clr; clr %= 7;              // increment color
     //      ++stl; stl %= 7;              // increment style
           }
         }
         printf("%c", *pch );
-        if ( ( mode != MROW && mode != MPAR) && *pch == '\n' ) clr = -1;
+        if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) clr = -1;
       }
       ++pch;
     }
