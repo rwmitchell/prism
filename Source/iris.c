@@ -467,7 +467,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8BbfF:glmn:p:Pros:wtTd:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8BbfF:glmn:p:Pros:wtTH:V:d:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -487,6 +487,8 @@ int main(int argc, char *argv[]) {
     { "lol",             no_argument, NULL, 'l' },  // duplicate lolcat
     { "test",            no_argument, NULL, 't' },
     { "bright",          no_argument, NULL, 'T' },
+    { "horiz",     required_argument, NULL, 'H' },
+    { "vert",      required_argument, NULL, 'V' },
     { "debug",     optional_argument, NULL, 'd' },
     { "help",            no_argument, NULL, 'h' },
     { "usage",           no_argument, NULL, 'u' },
@@ -593,6 +595,8 @@ int main(int argc, char *argv[]) {
 
       case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
       case 'l': mode = MLOL; ccnt = 1; B_256 = false;  break;
+      case 'H': freq_h = strtod( optarg, NULL );       break;
+      case 'V': freq_v = strtod( optarg, NULL );       break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
