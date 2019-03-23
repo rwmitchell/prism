@@ -380,7 +380,7 @@ void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   *val %= max;
   if ( cpl >= ncol ) *val = -1;
 }
-void inc_bylol  ( char ch, short *val, unsigned short cycle, int max ) {
+void inc_bylol  ( char ch, short *val ) {
   static int i = 0,
              l = 0;
   if ( ch == '\n' ) { l++; i=0; }
@@ -688,7 +688,7 @@ int main(int argc, char *argv[]) {
           case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
           case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
           case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-          case MLOL: inc_bylol( *pch, &clr, ccnt, sz_seq ); break;
+          case MLOL: inc_bylol( *pch, &clr ); break;
         }
 
         if ( clr == -1 ) reset_attr();
