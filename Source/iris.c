@@ -44,8 +44,7 @@ bool
      B_fix   = false,
      B_test  = false,
      B_tty   = false,
-     B_brght = false,
-     B_once  = false;
+     B_brght = false;
 
 #define MAX_CON 28.0
 #define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
@@ -470,7 +469,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8BbfF:glmn:p:Pros:wtTH:V:d:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8BbfF:glmn:p:Prs:wtTH:V:d:uh1";      // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -483,7 +482,6 @@ int main(int argc, char *argv[]) {
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",       required_argument, NULL, 's' },
-    { "once",            no_argument, NULL, 'o' },  // do not use -ro, interpreted as -row
     { "paragraph",       no_argument, NULL, 'P' },
     { "word",            no_argument, NULL, 'w' },
     { "field",     required_argument, NULL, 'F' },
@@ -591,7 +589,6 @@ int main(int argc, char *argv[]) {
       case 'f': B_fix   = !B_fix;      break;
       case 'P': mode = MPAR; ccnt = 1; break;
       case 'r': mode = MROW;           break;
-      case 'o': B_once  = !B_once;     break;
       case 'w': mode = MWRD; ccnt = 1; break;
       case 't': B_test  = !B_test;     break;
       case 'T': B_brght = !B_brght;    break;
@@ -675,30 +672,6 @@ int main(int argc, char *argv[]) {
       buf   = (char *) loadfile ( argv[optind], &f_sz );
 
     cmax = cnt = lcnt = pcnt = wmax = wcnt = 0;
-    if ( B_once ) {
-      char och = ' ';
-      for ( pch = buf; *pch != '\0'; ++pch ) {      // get max line length
-        if ( !isspace( och ) &&  isspace( *pch ) ) wcnt++;
-        if ( *pch == '\n' ) {
-          cmax = MAX( cmax,  cnt );
-          wmax = MAX( wmax, wcnt );
-          lcnt++;
-          wcnt = cnt = 0;
-          if ( och == '\n' ) ++pcnt;
-        } else ++cnt;
-        och = *pch;
-      }
-      switch ( mode ) {
-        case MCOL: ccnt = cmax / sz_seq + 1; break;
-        case MWRD: ccnt = 1; break; // wmax / sz_seq + 1; break;  // XYZZY -- needs work
-        case MROW: ccnt = (float) lcnt / sz_seq + .8; break;
-        case MPAR: ccnt = pcnt / sz_seq + 1; break;
-        case MFLD: ccnt = 1; break;
-        case MLOL: ccnt = 1; break;
-        default: break;
-      }
-    }
-//  BUGOUT("%d: ccnt %lf\n", ccnt, ( .8 + (float) lcnt / sz_seq ));
 
     pch = buf;
     if( mode == MWRD && *pch != '\n' )
