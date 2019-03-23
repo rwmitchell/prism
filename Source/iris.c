@@ -404,6 +404,17 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
+char mygetch( void *buf ) {
+  return( getchar() );
+}
+char mybufch( void *buf  ) {
+  static char *pch;
+
+  if ( buf ) pch = (char *) buf;
+  else ++pch;
+
+  return( *pch );
+}
 // "Borrowed" from lolcat.c - START
 static void find_escape_sequences(wint_t c, int* state)
 {
@@ -504,6 +515,8 @@ int main(int argc, char *argv[]) {
       sz_pal = 0;
 
   short tseq = -1;
+
+  char ( *myread)( void * );
 
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -652,7 +665,8 @@ int main(int argc, char *argv[]) {
 
   off_t  f_sz = 0;
   char *buf   = NULL,
-       *pch;
+       *pch,
+         ch;
   int cmax,  cnt,
       wmax, wcnt,
       lcnt,
@@ -661,22 +675,29 @@ int main(int argc, char *argv[]) {
         stl =  1;    // style
 
   if ( B_tty ) set_cursor( false );
-  if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
+//if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
+
+  if ( optind == argc ) { myread = mygetch; f_sz = 1; }
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     int escape_state = 0;
 
-    if ( ! f_sz )
+    if ( ! f_sz ) {
       buf   = (char *) loadfile ( argv[optind], &f_sz );
+      mybufch( buf );
+      myread = mybufch;
+    }
 
     cmax = cnt = lcnt = pcnt = wmax = wcnt = 0;
 
-    pch = buf;
+//  pch = buf;
+    pch = &ch;
+    *pch = myread( (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
-    while ( f_sz-- ) {
+    while ( *pch > 0) {
 
       find_escape_sequences(*pch, &escape_state);
 
@@ -703,7 +724,8 @@ int main(int argc, char *argv[]) {
         printf("%c", *pch );
         if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) clr = -1;
       }
-      ++pch;
+//    ++pch;
+      *pch = myread( (void *) NULL );
     }
 
     f_sz = 0;
