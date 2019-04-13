@@ -66,6 +66,7 @@ DST_PROGS = \
 						$(DST)/getwinsz      \
 						$(DST)/matrix        \
 						$(DST)/iris          \
+						$(DST)/ttl           \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \

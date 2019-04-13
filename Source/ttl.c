@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <ctype.h>   // isdigit()
 #include <stdbool.h> // bool
+#include "io.h"
 #include "bugout.h"
 #include "helpd.h"
 
@@ -19,6 +20,37 @@ int  debug =  0;
 
 bool B_o = false;
 
+void parse_line( const char *line ) {
+  const
+  char *pc = line;
+  int val;
+  
+  STDOUT("MARK: %s\n", line );
+  while ( ( pc = strchr( pc, '$' )) != NULL ) {
+    ++pc;               // move to next char;
+    val = *pc-'0';
+    STDOUT(" %d", val );
+  }
+  STDOUT("\n\n");
+}
+void load_file( const char *fname ) {
+  FILE *F_in;
+  int rc;
+  char line[512],
+      *pc;
+
+
+  if ( ( F_in=fopen( fname, "r" ) ) == NULL ) {
+    BUGOUT( "%s: Unable to open", fname );
+    exit( __LINE__ );
+  }
+
+  while ( (rc=fgetl(F_in, line, 511) ) > 0 ) {
+    pc = strchr( line, '#' );
+    if ( pc ) *pc = '\0';
+    if ( pc-line > 0 ) parse_line( line );
+  }
+}
 void one_line( const char *progname ) {
   STDOUT("%-20s: announce job completions for long running jobs\n", progname );
   exit(0);
@@ -69,8 +101,6 @@ int main(int argc, char *argv[]) {
 
     if ( opt == 0 ) {                 // we got a longopt
       opt = longopts[longindex].val;  // set opt to short opt value
-//  } else {
-//    BUGOUT("shortopt: %c:%d (%s)\n", opt, opt, optarg );
     }
 
     // Pre-Check
@@ -163,6 +193,7 @@ int main(int argc, char *argv[]) {
 
   for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     BUGOUT("%2d: %s\n", optind, argv[optind] );
+    load_file( argv[optind] );
   }                                         // for optind
 
   exit(0);
