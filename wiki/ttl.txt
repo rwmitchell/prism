@@ -1,0 +1,39 @@
+Take Too Long
+
+= Goal =
+  - fun and witty way to announce the completion of long running jobs
+  - customizable to specific commands
+  - randomly select between multiple responses
+  - most commands the program name is sufficient
+    ◌ qfit
+  - some commands the args are more important
+    ◌ s
+    ◌ ssh
+= Issues =
+  - where do we store the config file? shmem?
+  - how do we store the config file?
+    ◌ array sorted by program name?
+    ◌ multiple array elements per program?
+  - how do you search to find the matching elements to randomly choose between?
+    ◌ |cmd|command|another|
+      ▸ use strcasestr() to find the start position of each command
+      ▸ count FS to get command number
+    ◌ define a structure such that a given commands points to:
+      ▸ number of phrases
+      ▸ array of start positions for each phrase
+      ▸ phrases
+  - load file?
+    ◌ parse each line
+    ◌ add command to search string ("|cmd|cmd|")
+    ◌ if we read each file via "sort FILE|", all commands would be grouped together
+  - how are variables dealt with?
+    ◌ how do we parse the string to sub in vars?
+      ▸ use vars to put args in order
+      ▸ replace all vars with %s
+      ▸ use sprintf()
+
+
+= Examples =
+  s:Connection to $1 is closed  # simple example - s hgatm
+  s:$$2 on $$1 has finished       # s hgatm show_tunnels - uses second argument
+  
