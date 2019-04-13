@@ -20,22 +20,37 @@ int  debug =  0;
 
 bool B_o = false;
 
-void parse_line( const char *line ) {
+int *parse_line( const char *line ) {
   const
   char *pc = line;
-  int val;
+  int i=0;
+
+  static
+  int rv[10];    // max of 10 return elements
   
-  STDOUT("MARK: %s\n", line );
-  while ( ( pc = strchr( pc, '$' )) != NULL ) {
+  while ( ( pc = strchr( pc, '$' )) != NULL && i<10 ) {
     ++pc;               // move to next char;
-    val = *pc-'0';
-    STDOUT(" %d", val );
+    rv[i++] = *pc-'0';
   }
-  STDOUT("\n\n");
+
+  return( rv );
+}
+int restring( char *str ) {
+  char *pc = str;
+  int cnt=0;
+
+  while ( (pc=strchr( pc, '$' )) != NULL ) {
+    cnt++;
+    *pc = '%';
+     pc++;
+    *pc = 's';
+  }
+  return( cnt );
 }
 void load_file( const char *fname ) {
   FILE *F_in;
-  int rc;
+  int rc,
+     *arr;
   char line[512],
       *pc;
 
@@ -48,7 +63,14 @@ void load_file( const char *fname ) {
   while ( (rc=fgetl(F_in, line, 511) ) > 0 ) {
     pc = strchr( line, '#' );
     if ( pc ) *pc = '\0';
-    if ( pc-line > 0 ) parse_line( line );
+    if ( pc-line > 0 ) {
+      arr = parse_line( line );
+
+      rc = restring( line );
+      STDOUT("%2d: %s", rc, line );
+      for (int i=0; i<rc; ++i ) STDOUT(" %d", arr[i] );
+      STDOUT("\n");
+    }
   }
 }
 void one_line( const char *progname ) {
