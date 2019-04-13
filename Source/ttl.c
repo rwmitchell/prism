@@ -72,7 +72,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 int main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
-      opt, i,
+      opt,
       longindex=0;
   bool B_have_arg = true;
   extern int   optind,
@@ -183,13 +183,6 @@ int main(int argc, char *argv[]) {
   }
 
   if (errflg) help(argv[0], opts, longopts);
-
-  BUGOUT("Args already processed:\n");
-  for ( i=0; i<optind; ++i )
-    BUGOUT("%d: %s\n", i, argv[i] );
-
-  BUGOUT("debug level: %d\n", debug );
-  BUGOUT("      myopt: %s\n", myopt );
 
   for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     BUGOUT("%2d: %s\n", optind, argv[optind] );
