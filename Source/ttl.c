@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <ctype.h>   // isdigit()
 #include <stdbool.h> // bool
+#include "ttl.h"
 #include "io.h"
 #include "bugout.h"
 #include "helpd.h"
@@ -20,7 +21,28 @@ int  debug =  0;
 
 bool B_o = false;
 
-int *parse_line( const char *line ) {
+void append( STR_t *str, char *add ) {
+  int siz;
+  char buf[34];
+  sprintf(buf, "|%s|", add );
+  siz = strlen( add )+1;
+
+  if ( str->len+siz > str->siz ) {
+    str->siz += siz*10;
+    str->str  = (char *) reallocf( str->str, str->siz );
+    STDOUT("Increased %p by %d\n", str->str, str->siz );
+  }
+
+  if ( strcasestr( str->str, buf)) return;
+
+  STDOUT("Adding: [%s][%s]\n", str->str, add );
+
+  if ( str->len == 0 ) str->str[0] = '|';
+  strcat( str->str, add );
+  strcat( str->str, "|" );
+  str->len += siz;
+}
+int  *parse_line( const char *line ) {
   const
   char *pc = line;
   int i=0;
@@ -35,7 +57,7 @@ int *parse_line( const char *line ) {
 
   return( rv );
 }
-int restring( char *str ) {
+int  restring( char *str ) {
   char *pc = str;
   int cnt=0;
 
@@ -55,6 +77,7 @@ void load_file( const char *fname ) {
       *cmd,
       *msg,
       *pc;
+  STR_t scmd = { 0, 0, NULL };
 
 
   if ( ( F_in=fopen( fname, "r" ) ) == NULL ) {
@@ -63,14 +86,16 @@ void load_file( const char *fname ) {
   }
 
   while ( (rc=fgetl(F_in, line, 511) ) > 0 ) {
-    pc = strchr( line, '#' );
-    if ( pc ) *pc = '\0';
-    if ( pc-line > 0 ) {
+    STDOUT("## %s", line );
+    pc = strchr( line, '\n' ); if ( pc ) *pc = '\0';   // remove newlines
+    pc = strchr( line, '#'  ); if ( pc ) *pc = '\0';   // remove comments
+    if ( strlen(line) > 0 ) {
       cmd = line;
       msg = strchr( line, ':' );
       *msg = '\0';
       msg++;
       arr = parse_line( msg );
+      append( &scmd, cmd );
 
       rc = restring( msg );
       STDOUT("%2d: (%s):%s", rc, cmd, msg );
@@ -78,6 +103,7 @@ void load_file( const char *fname ) {
       STDOUT("\n");
     }
   }
+  STDOUT("->%s#\n", scmd.str );
 }
 void one_line( const char *progname ) {
   STDOUT("%-20s: announce job completions for long running jobs\n", progname );
@@ -97,7 +123,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
 
   exit(-0);
 }
-int main(int argc, char *argv[]) {
+int  main(int argc, char *argv[]) {
   int errflg = 0,
       dinc   = 1,                // debug incrementor
       opt,
