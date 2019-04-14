@@ -52,6 +52,8 @@ void load_file( const char *fname ) {
   int rc,
      *arr;
   char line[512],
+      *cmd,
+      *msg,
       *pc;
 
 
@@ -64,10 +66,14 @@ void load_file( const char *fname ) {
     pc = strchr( line, '#' );
     if ( pc ) *pc = '\0';
     if ( pc-line > 0 ) {
-      arr = parse_line( line );
+      cmd = line;
+      msg = strchr( line, ':' );
+      *msg = '\0';
+      msg++;
+      arr = parse_line( msg );
 
-      rc = restring( line );
-      STDOUT("%2d: %s", rc, line );
+      rc = restring( msg );
+      STDOUT("%2d: (%s):%s", rc, cmd, msg );
       for (int i=0; i<rc; ++i ) STDOUT(" %d", arr[i] );
       STDOUT("\n");
     }
