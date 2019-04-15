@@ -35,8 +35,6 @@ void append( STR_t *str, char *add ) {
 
   if ( strcasestr( str->str, buf)) return;
 
-  STDOUT("Adding: [%s][%s]\n", str->str, add );
-
   if ( str->len == 0 ) str->str[0] = '|';
   strcat( str->str, add );
   strcat( str->str, "|" );
@@ -86,7 +84,6 @@ void load_file( const char *fname ) {
   }
 
   while ( (rc=fgetl(F_in, line, 511) ) > 0 ) {
-    STDOUT("## %s", line );
     pc = strchr( line, '\n' ); if ( pc ) *pc = '\0';   // remove newlines
     pc = strchr( line, '#'  ); if ( pc ) *pc = '\0';   // remove comments
     if ( strlen(line) > 0 ) {
