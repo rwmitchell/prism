@@ -39,7 +39,6 @@ bool exists( const char *path, const char *name ) {
 
   if ( !access( tmp, R_OK ) ) rv = true;
 
-
 #ifdef  DEBUG
   if ( debug & 0x0100 )
     printf("%s:%d: tmp: %s\n", __func__, __LINE__, tmp );
@@ -47,7 +46,10 @@ bool exists( const char *path, const char *name ) {
 
   return( rv );
 }
-
+int file_exists( const char *filename ) {
+  struct stat buf;
+  return( stat(filename, &buf) == 0 );
+}
 char *findfile( const char *path, const char *name ) {
   bool found = false,
        error = false;

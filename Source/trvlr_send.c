@@ -9,6 +9,7 @@
 #include "bugout.h"
 #include "shmem.h"
 #include "traveler.h"
+#include "io.h"
 #include "loadfile.h"
 #include "now.h"
 #include "helpd.h"
@@ -34,7 +35,6 @@ bool B_o    = false,
 /*
 "@(#)$Id$";
 */
-
 #ifdef  NO_loadfile
 off_t fsize( char *name ) {
   off_t size = -1L;
@@ -53,6 +53,11 @@ char *loadfile( char *fname, off_t *f_sz ) {
   static
   char *data = NULL;
 
+  if ( ! file_exists( fname ) ) {
+    BUGOUT("%s does not exist, exiting\n", fname );
+    exit( __LINE__ );
+  }
+  
   *f_sz = fsize( fname )+1;                // get file size
   if ( debug & 0x0001 )
     BUGOUT( "%12llu file size\n", *f_sz );
@@ -84,10 +89,6 @@ char *loadfile( char *fname, off_t *f_sz ) {
   return( data );
 }
 #endif
-int file_exists( char *filename ) {
-  struct stat buf;
-  return( stat(filename, &buf) == 0 );
-}
 void help( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
