@@ -150,6 +150,11 @@ char *loadfile( char *fname, off_t *f_sz ) {
   static
   char *data = NULL;
 
+  if ( ! file_exists( fname ) ) {
+    BUGOUT("%s does not exist, exiting\n", fname );
+    exit( __LINE__ );
+  }
+  
   *f_sz = fsize( fname )+1;                // get file size
   if ( debug & 0x0001 )
     BUGOUT( "%12llu file size\n", *f_sz );
