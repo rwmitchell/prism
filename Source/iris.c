@@ -582,8 +582,8 @@ int main(int argc, char *argv[]) {
                 sz_pal = MAXCOLOR;
                 break;
       case 'g': pal_ndx = 0; break;      // rainbow - gay
-      case 'b': pal_ndx = 1; break;      // greenbar
-      case 'm': pal_ndx = 2; break;      // metal
+      case 'b': pal_ndx = 4; break;      // greenbar
+      case 'm': pal_ndx = 5; break;      // metal
 
       case 'n': ncol = strtol( optarg, NULL, 10 );
                 break;
@@ -646,8 +646,10 @@ int main(int argc, char *argv[]) {
 //if ( SEQ[0] == -1 ) SEQ[0] = tseq;
   if ( debug & 0x0002 ) list_SEQ();
 
-  if ( pal_ndx < 0 && env_col ) sz_pal = str2hex( env_col, palette );
-  else pal_ndx = 0;
+  if ( pal_ndx < 0 ) {
+    if ( env_col ) sz_pal = str2hex( env_col, palette );
+    else pal_ndx = 0;    // force pal_ndx to rainbow only
+  }
 
   if ( ! sz_pal )
     sz_pal = get_colors( pal_ndx, palette );
