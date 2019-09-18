@@ -437,7 +437,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n\n", cvsid);
   STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
-  STDERR("colorize text either by character column\n");
+  STDERR("colorize text either by character, column, row, or field\n");
   STDERR("\n");
   STDERR("  -c CNT: change color every %d units\n", ccnt );
   STDERR("  -8: 8 bit    colors      [%5s]\n", TF[ !B_256 ]);
@@ -567,10 +567,13 @@ int main(int argc, char *argv[]) {
     // Normal Check
     switch (opt) {
       case ':':              // check optopt for previous option
-        BUGOUT("Got a Colon for: %c\n", optopt );
+//      BUGOUT("Got a Colon for: %c\n", optopt );
         B_have_arg = false;
         switch( optopt ) {
-          case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
+          case 'd': debug += dinc;
+//                  BUGOUT("debug level: %d\n", debug );
+                    dinc <<= 1;
+                    break;
           default : BUGOUT("No arg for %c\n", optopt ); break;
         }
         break;
