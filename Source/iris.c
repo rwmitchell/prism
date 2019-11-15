@@ -40,6 +40,7 @@ int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 
 bool
      B_256   = true,
+     B_align = false,
      B_bkgnd = false,
      B_fix   = false,
      B_test  = false,
@@ -355,16 +356,25 @@ void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
 }
 void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
   static short cnt = 0,
-               fpl = 0;
+               pos = 0,
+               fld = 0,
+               fpl = 0,
+               fpm[64] = { 0 };    // max pos for each fld
 
-  if ( ch == '\n' ) {  fpl = 0; cnt = 1; }
+  pos++;
+  if ( ch == '\n' ) {  fld = fpl = 0; cnt = 1; }
 
-  if ( *val == -1    )    *val = cnt = 0;
+  if ( *val == -1    )    *val = pos = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
   if ( ch == FS ) {
     cnt++;
+    fld++;
     fpl++;
+    fpm[fld] = MAX( fpm[fld], pos );
+    if ( B_align ) STDOUT("%*s", fpm[fld] - pos, "");
+//  STDOUT("(%2d:%2d:%2d)", fld, pos, fpm[fld] );
+    pos = 0;
   }
   if ( fpl >= ncol ) *val = -1;
 }
@@ -404,7 +414,7 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char mygetch( void *buf ) {
+char mygetch(  ) {
   return( getchar() );
 }
 char mybufch( void *buf  ) {
@@ -455,6 +465,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -r: change color by row\n" );
   STDERR("  -s palette_list: specify palette index for each column\n");
   STDERR("  -w: change color by word\n");
+  STDERR("  -a: align on SEP [%5s]\n", TF[  B_align ]);
   STDERR("  -F SEP : change color by field [%c]\n", FS);
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
@@ -480,10 +491,11 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8BbfF:glmn:p:Prs:wtTH:V:d:uh1";      // Leading : makes all :'s optional
+  char *opts=":c:8aBbfF:glmn:p:Prs:wtTH:V:d:uh1";   // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
+    { "align",           no_argument, NULL, 'a' },
     { "bar",             no_argument, NULL, 'b' },
     { "gay",             no_argument, NULL, 'g' },
     { "metal",           no_argument, NULL, 'm' },
@@ -601,6 +613,7 @@ int main(int argc, char *argv[]) {
                 }
                 break;
 
+      case 'a' :B_align = !B_align;    break;
       case 'B' :B_bkgnd = !B_bkgnd;    break;
       case 'f': B_fix   = !B_fix;      break;
       case 'P': mode = MPAR; ccnt = 1; break;
