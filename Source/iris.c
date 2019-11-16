@@ -414,7 +414,7 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char mygetch(  ) {
+char mygetch( void * ) {
   return( getchar() );
 }
 char mybufch( void *buf  ) {
