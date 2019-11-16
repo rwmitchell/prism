@@ -414,7 +414,10 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char mygetch( void * ) {
+char mygetch( void *buf ) {
+  static char *pch;               // these lines are not used directly,
+  if ( buf ) pch = (char *) buf;  // just staying compatible to mybufch()
+
   return( getchar() );
 }
 char mybufch( void *buf  ) {
