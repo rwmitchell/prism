@@ -170,10 +170,10 @@ unsigned long brighten( unsigned long clr ) {
 
   return( (R<<16)+(G<<8)+B );
 }
-void reset_attr() {
+void reset_attr   ( ) {
   printf("\e[0m");
 }
-void set_color256( unsigned long clr, bool BG) {
+void set_color256 ( unsigned long clr, bool BG) {
 
   int R = (clr & 0xFF0000) >> 16,
       G = (clr & 0x00FF00) >>  8,
@@ -200,7 +200,7 @@ void set_color256( unsigned long clr, bool BG) {
     printf(  "[%d;%d;%d;m", R, G, B);
 #endif
 }
-float brightness ( unsigned long clr) {
+float brightness  ( unsigned long clr) {
   float brght;
 
   int R = (clr & 0xFF0000) >> 16,
@@ -216,7 +216,7 @@ float brightness ( unsigned long clr) {
 
   return ( brght );
 }
-void mycontrast  ( int pal[], int len ) {
+void  mycontrast  ( int pal[], int len ) {
   float txt, bkg,
         con;           // contrast
   int   i;
@@ -243,7 +243,7 @@ void mycontrast  ( int pal[], int len ) {
   }
   exit( 0 );
 }
-void bright_pal  ( int pal[], int len ) {
+void  bright_pal  ( int pal[], int len ) {
   float txt, bkg,
         con;           // contrast
   int   i;
@@ -264,7 +264,7 @@ void bright_pal  ( int pal[], int len ) {
     pal[i] = tmp;
   }
 }
-void show_colors ( ) {
+void  show_colors ( ) {
   const
   char *pt;
   int i,
@@ -286,7 +286,7 @@ void show_colors ( ) {
   exit(0);
 }
 unsigned
-int str2hex( const char *str, unsigned int *hex ) {
+int   str2hex    ( const char *str, unsigned int *hex ) {
   const
   char *pt;
   int pos = 0;
@@ -390,7 +390,7 @@ void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   *val %= max;
   if ( cpl >= ncol ) *val = -1;
 }
-void inc_bylol  ( char ch, short *val ) {
+void  inc_bylol  ( char ch, short *val ) {
   static int i = 0,
              l = 0;
   if ( ch == '\n' ) { l++; i=0; }
@@ -414,13 +414,13 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char mygetch( void *buf ) {
+char  mygetch    ( void *buf ) {
   static char *pch;               // these lines are not used directly,
   if ( buf ) pch = (char *) buf;  // just staying compatible to mybufch()
 
   return( getchar() );
 }
-char mybufch( void *buf  ) {
+char  mybufch    ( void *buf ) {
   static char *pch;
 
   if ( buf ) pch = (char *) buf;
