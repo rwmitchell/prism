@@ -45,7 +45,8 @@ bool
      B_fix   = false,
      B_test  = false,
      B_tty   = false,
-     B_brght = false;
+     B_brght = false,
+     B_layer = false;    // keep original colors
 
 #define MAX_CON 28.0
 #define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
@@ -429,6 +430,40 @@ char  mybufch    ( void *buf ) {
   return( *pch );
 }
 // "Borrowed" from lolcat.c - START
+#define NEW_ESC
+#ifdef  NEW_ESC
+static void find_escape_sequences(wint_t c, int* state, bool *on)
+{
+  static char esc[32] = { '\0' };
+  static char *pc = esc;
+    if (c == '\033') { /* Escape sequence YAY */
+        *state = 1;
+    } else if (*state == 1) {
+        *(pc++) = c;
+        if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
+            *state = 2;
+    } else {
+        *state = 0;
+    }
+
+    // escape off sequence can be either \[[m or \[[0;0m
+
+    if ( *state == 2 ) {
+      pc--;
+//    STDOUT( "\n{%s:%c}\n", esc, *pc );
+      if ( *pc == 'm' ) {
+        int f = 0, b = 0, s = 0;
+        sscanf( esc, "[%d%*c%d%*c%d", &b, &f, &s );
+        *on =  b+f ? true : false;
+  //    STDOUT("{%s: :%d:%d:%d}\n", esc, f, b, *on)
+      }
+      memset( esc, '\0', 31 );   // clear
+      pc = esc;                  // and reset
+    }
+
+//  if ( *state || cnt ) STDOUT( "[%d:%d:%d]", cnt, *state, *on );
+}
+#else
 static void find_escape_sequences(wint_t c, int* state)
 {
     if (c == '\033') { /* Escape sequence YAY */
@@ -440,6 +475,7 @@ static void find_escape_sequences(wint_t c, int* state)
         *state = 0;
     }
 }
+#endif
 // "Borrowed" from lolcat.c - END
 void  one_line   ( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
@@ -494,7 +530,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8aBbfF:glmn:p:Prs:wtTH:V:d:uh1";   // Leading : makes all :'s optional
+  char *opts=":c:8aBbfF:glLmn:p:Prs:wtTH:V:d:uh1";   // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -512,6 +548,7 @@ int main(int argc, char *argv[]) {
     { "word",            no_argument, NULL, 'w' },
     { "field",     required_argument, NULL, 'F' },
     { "lol",             no_argument, NULL, 'l' },  // duplicate lolcat
+    { "layer",           no_argument, NULL, 'L' },  // keep original non-white colors
     { "test",            no_argument, NULL, 't' },
     { "bright",          no_argument, NULL, 'T' },
     { "horiz",     required_argument, NULL, 'H' },
@@ -625,6 +662,8 @@ int main(int argc, char *argv[]) {
       case 't': B_test  = !B_test;     break;
       case 'T': B_brght = !B_brght;    break;
 
+      case 'L': B_layer = !B_layer;    break;
+
       case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
       case 'l': mode = MLOL; ccnt = 1; B_256 = false;  break;
       case 'H': freq_h = strtod( optarg, NULL );       break;
@@ -704,6 +743,8 @@ int main(int argc, char *argv[]) {
 
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     int escape_state = 0;
+    bool on = false;
+//       pon= false;
 
     if ( ! f_sz ) {
       buf   = (char *) loadfile ( argv[optind], &f_sz );
@@ -720,32 +761,43 @@ int main(int argc, char *argv[]) {
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
     while ( *pch > 0) {
 
-      find_escape_sequences(*pch, &escape_state);
+      find_escape_sequences( *pch, &escape_state, &on );
 
       if (!escape_state) {
 
-        switch ( mode ) {
-          case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
-          case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
-          case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
-          case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
-          case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-          case MLOL: inc_bylol( *pch, &clr ); break;
-        }
+        if ( B_layer && on ) printf( "%c", *pch );
+        else if ( !B_layer || !on ) {
 
-        if ( clr == -1 ) reset_attr();
-        else {
-          if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+          switch ( mode ) {
+            case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
+            case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+            case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+            case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+            case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
+            case MLOL: inc_bylol( *pch, &clr ); break;
+          }
+
+          if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
           else {
-            if ( mode != MLOL ) set_color8  ( stl, clr );
-    //      ++clr; clr %= 7;              // increment color
-    //      ++stl; stl %= 7;              // increment style
+            if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+            else {
+              if ( mode != MLOL ) set_color8  ( stl, clr );
+      //      ++clr; clr %= 7;              // increment color
+      //      ++stl; stl %= 7;              // increment style
+            }
+          }
+          printf("%c", *pch );
+          if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) {
+            clr = -1;
+            on  = false;
+            escape_state = 0;
           }
         }
-        printf("%c", *pch );
-        if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) clr = -1;
-      }
-//    ++pch;
+      } else if ( B_layer ) printf( "%c", *pch  );   // print escape codes if layering
+
+//    if ( pon != on ) STDOUT( "%c", on ? 'Z' : 'x' )
+//    pon = on;
+
       *pch = myread( (void *) NULL );
     }
 
