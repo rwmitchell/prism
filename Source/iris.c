@@ -368,7 +368,7 @@ void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
   if ( *val == -1    )    *val = pos = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
-  if ( ch == FS && fld < ncol ) {
+  if ( ch == FS && fld <= ncol ) {
     cnt++;
     fld++;
     fpl++;
