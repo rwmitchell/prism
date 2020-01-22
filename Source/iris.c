@@ -368,11 +368,12 @@ void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
   if ( *val == -1    )    *val = pos = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
   cnt %= cycle;
-  if ( ch == FS ) {
+  if ( ch == FS && fld < ncol ) {
     cnt++;
     fld++;
     fpl++;
-    fpm[fld] = MAX( fpm[fld], MIN( fpm[fld]+2, pos ) );           // limit increasing field separator position
+    if ( fpm[fld] == 0 ) fpm[fld] = pos;
+    fpm[fld] = MAX( fpm[fld], MIN( fpm[fld]+4, pos ) );           // limit increasing field separator position
     if ( B_align && fpm[fld] >= pos) STDOUT("%*s", fpm[fld] - pos, "");
 //  STDOUT("(%2d:%2d:%2d)", fld, pos, fpm[fld] );
     pos = 0;
