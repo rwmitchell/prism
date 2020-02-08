@@ -1,8 +1,10 @@
-/* iris.c                                        2018-12-31  rwm
+/* prism.c                                        2018-12-31  rwm
  * As a goddess, Iris is associated with communication, messages,
  * the rainbow and new endeavors. This personification of a rainbow
  * was once described as being a link to the heavens and earth.
  * In some texts she is depicted wearing a coat of many colors.
+ * However, a prism is also very appropriate for refracting or
+ * combining colors of light
  */
 
 #include <stdio.h>
