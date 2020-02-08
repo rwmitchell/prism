@@ -46,7 +46,8 @@ bool
      B_test  = false,
      B_tty   = false,
      B_brght = false,
-     B_layer = false;    // keep original colors
+     B_layer = false,    // keep original colors
+     B_strip = false;    // strip colors
 
 #define MAX_CON 28.0
 #define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
@@ -504,6 +505,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -P: change color by paragraph\n" );
   STDERR("  -r: change color by row\n" );
   STDERR("  -s palette_list: specify palette index for each column\n");
+  STDERR("  -S: strip color\n");
   STDERR("  -w: change color by word\n");
   STDERR("  -a: align on SEP [%5s]\n", TF[  B_align ]);
   STDERR("  -F SEP : change color by field [%c]\n", FS);
@@ -531,7 +533,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8aBbfF:glLmn:p:Prs:wtTH:V:d:uh1";   // Leading : makes all :'s optional
+  char *opts=":c:8aBbfF:glLmn:p:Prs:SwtTH:V:d:uh1";   // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -545,6 +547,7 @@ int main(int argc, char *argv[]) {
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",       required_argument, NULL, 's' },
+    { "strip",           no_argument, NULL, 'S' },  // strip colors from input, do not add
     { "paragraph",       no_argument, NULL, 'P' },
     { "word",            no_argument, NULL, 'w' },
     { "field",     required_argument, NULL, 'F' },
@@ -664,6 +667,7 @@ int main(int argc, char *argv[]) {
       case 'T': B_brght = !B_brght;    break;
 
       case 'L': B_layer = !B_layer;    break;
+      case 'S': B_strip = !B_strip;    break;
 
       case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
       case 'l': mode = MLOL; ccnt = 1; B_256 = false;  break;
@@ -769,29 +773,33 @@ int main(int argc, char *argv[]) {
         if ( B_layer && on ) printf( "%c", *pch );
         else if ( !B_layer || !on ) {
 
-          switch ( mode ) {
-            case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
-            case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
-            case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
-            case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
-            case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-            case MLOL: inc_bylol( *pch, &clr ); break;
-          }
-
-          if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
+          if ( B_strip ) printf( "%c", *pch );
           else {
-            if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
-            else {
-              if ( mode != MLOL ) set_color8  ( stl, clr );
-      //      ++clr; clr %= 7;              // increment color
-      //      ++stl; stl %= 7;              // increment style
+
+            switch ( mode ) {
+              case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
+              case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+              case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+              case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+              case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
+              case MLOL: inc_bylol( *pch, &clr ); break;
             }
-          }
-          printf("%c", *pch );
-          if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) {
-            clr = -1;
-            on  = false;
-            escape_state = 0;
+
+            if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
+            else {
+              if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+              else {
+                if ( mode != MLOL ) set_color8  ( stl, clr );
+        //      ++clr; clr %= 7;              // increment color
+        //      ++stl; stl %= 7;              // increment style
+              }
+            }
+            printf("%c", *pch );
+            if ( ( mode != MROW && mode != MPAR && mode != MLOL ) && *pch == '\n' ) {
+              clr = -1;
+              on  = false;
+              escape_state = 0;
+            }
           }
         }
       } else if ( B_layer ) printf( "%c", *pch  );   // print escape codes if layering
