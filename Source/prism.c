@@ -513,9 +513,9 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
-  STDERR("A custom palette can be set using the environment variable 'IRIS'. \n");
-  STDERR("Ex: export IRIS=\"#00FF00#00E000#00C000#00A000#008000\"\n");
-  STDERR("or  setenv IRIS \"#00FF00#00E000#00C000#00A000#008000\"\n");
+  STDERR("A custom palette can be set using the environment variable 'PRISM'. \n");
+  STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
+  STDERR("or  setenv PRISM \"#00FF00#00E000#00C000#00A000#008000\"\n");
 
   if ( debug ) helpd( lopts );
 
@@ -564,7 +564,7 @@ int main(int argc, char *argv[]) {
     { NULL,                        0, NULL,  0  }
   };
 
-  char *env_col = getenv("IRIS");
+  char *env_col = getenv("PRISM");
 
   unsigned
   int palette[32] = { 0 },

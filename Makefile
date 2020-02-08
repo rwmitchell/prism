@@ -65,7 +65,7 @@ DST_PROGS = \
 						$(DST)/asot_term     \
 						$(DST)/getwinsz      \
 						$(DST)/matrix        \
-						$(DST)/iris          \
+						$(DST)/prism         \
 						$(DST)/ttl           \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
@@ -136,7 +136,7 @@ install:            \
 	$(NST)/matrix     \
 	$(NST)/traveler   \
 	$(NST)/trvlr_send \
-	$(NST)/iris       \
+	$(NST)/prism      \
 
 $(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES) $(LB_FILES)
 	$(CC) -o $@ $^ $(LINKOPT)
