@@ -169,7 +169,11 @@ unsigned char *loadstdin( off_t *f_sz ) {
     if ( size-len <= BUF_MIN ) {
       size   *= 2;
 
+#ifdef __APPLE__
       input = (char *) reallocf( input, size );
+#else
+      input = (char *) realloc ( input, size );
+#endif
       if ( !input ) *f_sz = -1;
       pi = input + len;
     }

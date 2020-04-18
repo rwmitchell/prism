@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>    // strcpy()
 #include <getopt.h>
 #include <ctype.h>     // isdigit()
@@ -400,7 +401,11 @@ void  inc_bylol  ( char ch, short *val ) {
              l = 0;
   if ( ch == '\n' ) { l++; i=0; }
   else {
+#ifdef __APPLE__
     int nval = offx * ARRAY_SIZE(codes) + (int)((i += wcwidth(ch)) * freq_h + l * freq_v);
+#else
+    int nval = offx * ARRAY_SIZE(codes) + (int)((i += 1          ) * freq_h + l * freq_v);
+#endif
 
     if ( *val != nval )
       wprintf(L"\033[38;5;%hhum", codes[(*val = nval) % ARRAY_SIZE(codes)]);

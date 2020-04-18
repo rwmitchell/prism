@@ -1,6 +1,7 @@
 // ttl: take too long - announce job that takes too long to complete
 #include <stdio.h>
 #include <stdlib.h>
+# define _GNU_SOURCE         // strcasestr()
 #include <string.h>  // strcpy()
 #include <getopt.h>
 #include <ctype.h>   // isdigit()
@@ -9,6 +10,8 @@
 #include "io.h"
 #include "bugout.h"
 #include "helpd.h"
+#ifndef __APPLE__
+#endif
 
 const
 char *cvsid = "$Id$";
@@ -29,7 +32,11 @@ void append( STR_t *str, char *add ) {
 
   if ( str->len+siz > str->siz ) {
     str->siz += siz*10;
+#ifdef __APPLE__
     str->str  = (char *) reallocf( str->str, str->siz );
+#else
+    str->str  = (char *) realloc ( str->str, str->siz );
+#endif
     STDOUT("Increased %p by %d\n", str->str, str->siz );
   }
 
