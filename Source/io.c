@@ -2,11 +2,14 @@
 #include <stdlib.h>    // strtol()
 #include <unistd.h>    // access()
 #include <string.h>    // strncpy()
+#include <strings.h>   // rindex()
 #include <sys/stat.h>  // fstat()
 #include <dirent.h>    // MAXNAMLEN
 #include <stdbool.h>
 #include "strings.h"   // truncname
 #include "types.h"
+
+char *rindex(const char *s, int c);
 
 off_t  fsize( const char *name ) {       // return size of the named file
   off_t size = -1L;
@@ -34,7 +37,11 @@ bool exists( const char *path, const char *name ) {
   bool rv = false;
   char tmp[MAXNAMLEN];
   strncpy( tmp, path, MAXNAMLEN );
+#ifdef __APPLE__
   strncat( tmp, "/", 1);
+#else
+  strcat( tmp, "/" );
+#endif
   strncat( tmp, name, MAXNAMLEN-(strlen(tmp) + strlen(name)) );
 
   if ( !access( tmp, R_OK ) ) rv = true;
@@ -67,7 +74,11 @@ char *findfile( const char *path, const char *name ) {
     }
     error = strlen(tmp) <= 0 ;
   }
+#ifdef __APPLE__
   strncat( tmp, "/", 1);
+#else
+  strcat( tmp, "/" );
+#endif
   strncat( tmp, name, MAXNAMLEN-(strlen(tmp) + strlen(name)) );
 
   return( error ? (char *) NULL : tmp );
