@@ -749,7 +749,7 @@ int main(int argc, char *argv[]) {
   if ( B_tty ) set_cursor( false );
 //if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
 
-  if ( optind == argc ) { myread = mygetch; f_sz = 1; }
+  if ( optind == argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
@@ -771,7 +771,7 @@ int main(int argc, char *argv[]) {
     *pch = myread( (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
-    while ( *pch > 0) {
+    while ( *pch > 0  && *pch < 255) {
 
       find_escape_sequences( *pch, &escape_state, &on );
 

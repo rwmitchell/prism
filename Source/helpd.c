@@ -1,5 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef __APPLE__
+#define _GNU_SOURCE         /* See feature_test_macros(7) */
+char *strcasestr(const char *haystack, const char *needle);   // above line isn't working
+#endif
+
 #include <string.h>  // strncasestr()
 #include <ctype.h>
 #include <getopt.h>
