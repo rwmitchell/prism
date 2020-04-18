@@ -3,11 +3,6 @@
 #include <signal.h>
 #include <stdbool.h>
 
-char __buf[MAXNAMLEN],           // make name hidden/unique
-     *timer();
-// -----------------------------------------------------------------
-
-
 extern
 bool _itwasme; // = false;
 
