@@ -1,10 +1,54 @@
 #include <libgen.h>
 #include <dirent.h>
 #include <signal.h>
+#include <stdbool.h>
 
 char __buf[MAXNAMLEN],           // make name hidden/unique
      *timer();
+// -----------------------------------------------------------------
 
+
+extern
+bool _itwasme; // = false;
+
+char __buf[MAXNAMLEN],           // make name hidden/unique
+     *timer();
+#ifdef  __APPLE__
+#define BUGOUT( FMT, ... ) { \
+  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
+  fflush (stdout); \
+}
+#define BUGERR( FMT, ... ) { \
+  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
+  fflush (stderr); \
+}
+#define GTFOUT( FMT, ... ) { \
+  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
+  fprintf(stdout, " -- Exiting\n" ); \
+  fflush (stdout); \
+  _itwasme = true; \
+  kill( 0, SIGCONT ); \
+  exit( __LINE__ ); \
+}
+#define GTFERR( FMT, ... ) { \
+  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
+  fprintf(stderr, " -- Exiting\n" ); \
+  fflush (stderr); \
+  _itwasme = true; \
+  kill( 0, SIGUSR1 ); \
+  exit( __LINE__ ); \
+}
+#define TIMOUT( FMT, ... ) { \
+  fprintf(stdout, "%s: ", timer() ); \
+  fprintf(stdout, "%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
+  fflush (stdout); \
+}
+#else
 #define BUGOUT( FMT, ... ) { \
   fprintf(stdout, ":%s: %5d:%-24s:", __FILE__, __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
@@ -20,7 +64,8 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fprintf(stdout, " -- Exiting\n" ); \
   fflush (stdout); \
-  kill( 0, SIGINT ); \
+  _itwasme = true; \
+  kill( 0, SIGUSR1 ); \
   exit( __LINE__ ); \
 }
 #define GTFERR( FMT, ... ) { \
@@ -28,7 +73,8 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
   fprintf(stderr, FMT, ##__VA_ARGS__ ); \
   fprintf(stderr, " -- Exiting\n" ); \
   fflush (stderr); \
-  kill( 0, SIGINT ); \
+  _itwasme = true; \
+  kill( 0, SIGUSR1 ); \
   exit( __LINE__ ); \
 }
 #define TIMOUT( FMT, ... ) { \
@@ -37,7 +83,7 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fflush (stdout); \
 }
-
+#endif
 #define BUGNUL( FMT, ... ) { \
 }                // Do nothing
 #define STDOUT( FMT, ... ) { \
@@ -49,4 +95,3 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
 }
 #define STDNUL( FMT, ... ) { \
 }                // Do nothing
-
