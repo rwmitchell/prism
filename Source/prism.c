@@ -771,7 +771,11 @@ int main(int argc, char *argv[]) {
     *pch = myread( (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
-    while ( *pch > 0  && *pch < 255) {
+    while ( *pch > 0
+#ifndef __APPLE__
+        && *pch < 255
+#endif
+        ) {
 
       find_escape_sequences( *pch, &escape_state, &on );
 
