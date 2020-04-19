@@ -3,6 +3,9 @@
 #include <signal.h>
 #include <stdbool.h>
 
+#ifndef BUGOUT_H
+#define BUGOUT_H
+
 extern
 bool _itwasme; // = false;
 
@@ -90,3 +93,4 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
 }
 #define STDNUL( FMT, ... ) { \
 }                // Do nothing
+#endif
