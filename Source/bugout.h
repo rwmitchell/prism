@@ -9,21 +9,23 @@
 extern
 bool _itwasme; // = false;
 
-char __buf[MAXNAMLEN],           // make name hidden/unique
+#define _FCL const char *F, const char *C, int L
+
+char __dbuf[MAXNAMLEN],           // make name hidden/unique
      *timer();
 #ifdef  __APPLE__
 #define BUGOUT( FMT, ... ) { \
-  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __dbuf), __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fflush (stdout); \
 }
 #define BUGERR( FMT, ... ) { \
-  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __dbuf), __LINE__, __func__ ); \
   fprintf(stderr, FMT, ##__VA_ARGS__ ); \
   fflush (stderr); \
 }
 #define GTFOUT( FMT, ... ) { \
-  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, ":%s: %5d:%-24s:", basename_r(__FILE__, __dbuf), __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fprintf(stdout, " -- Exiting\n" ); \
   fflush (stdout); \
@@ -32,7 +34,7 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
   exit( __LINE__ ); \
 }
 #define GTFERR( FMT, ... ) { \
-  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stderr, ":%s: %5d:%-24s:", basename_r(__FILE__, __dbuf), __LINE__, __func__ ); \
   fprintf(stderr, FMT, ##__VA_ARGS__ ); \
   fprintf(stderr, " -- Exiting\n" ); \
   fflush (stderr); \
@@ -42,9 +44,19 @@ char __buf[MAXNAMLEN],           // make name hidden/unique
 }
 #define TIMOUT( FMT, ... ) { \
   fprintf(stdout, "%s: ", timer() ); \
-  fprintf(stdout, "%s: %5d:%-24s:", basename_r(__FILE__, __buf), __LINE__, __func__ ); \
+  fprintf(stdout, "%s: %5d:%-24s:", basename_r(__FILE__, __dbuf), __LINE__, __func__ ); \
   fprintf(stdout, FMT, ##__VA_ARGS__ ); \
   fflush (stdout); \
+}
+#define FCLOUT( F, C, L, FMT, ... ) { \
+  fprintf(stdout, ":%s: %5d:%-24s: ", basename_r( F, __dbuf), L, C ); \
+  fprintf(stdout, FMT, ##__VA_ARGS__ ); \
+  fflush (stdout); \
+}
+#define FCLERR( F, C, L, FMT, ... ) { \
+  fprintf(stderr, ":%s: %5d:%-24s: ", basename_r( F, __dbuf), L, C ); \
+  fprintf(stderr, FMT, ##__VA_ARGS__ ); \
+  fflush (stderr); \
 }
 #else
 #define BUGOUT( FMT, ... ) { \
