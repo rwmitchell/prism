@@ -3,7 +3,7 @@
 
 #ifndef __APPLE__
 #define _GNU_SOURCE         /* See feature_test_macros(7) */
-char *strcasestr(const char *haystack, const char *needle);   // above line isn't working
+  char *strcasestr(const char *haystack, const char *needle);   // above line isn't working
 #endif
 
 #include <string.h>  // strncasestr()
