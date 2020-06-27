@@ -540,7 +540,7 @@ int main(int argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8aBbfF:glLmn:p:Prs:SwtTH:V:d:uh1";   // Leading : makes all :'s optional
+  char *opts=":c:8aBbfF:glLmn:p:Prs:SwtTH:V:Zd:uh1";   // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
@@ -564,6 +564,7 @@ int main(int argc, char *argv[]) {
     { "bright",          no_argument, NULL, 'T' },
     { "horiz",     required_argument, NULL, 'H' },
     { "vert",      required_argument, NULL, 'V' },
+    { "notty",           no_argument, NULL, 'Z' },   // disable tty
     { "debug",     optional_argument, NULL, 'd' },
     { "help",            no_argument, NULL, 'h' },
     { "usage",           no_argument, NULL, 'u' },
@@ -586,6 +587,9 @@ int main(int argc, char *argv[]) {
   offx = (tv.tv_sec % 300) / 300.0;
 
   strcpy(myopt, "defval");
+
+  B_tty = isatty( STDOUT_FILENO );    // setcursor fails when stdout is piped
+//BUGOUT("tty: %s\n", ttyname(1) );
 
   // parse command line options
   while ( ( opt=getopt_long_only(argc, argv, opts, longopts, &longindex )) != EOF ) {
@@ -681,6 +685,8 @@ int main(int argc, char *argv[]) {
       case 'H': freq_h = strtod( optarg, NULL );       break;
       case 'V': freq_v = strtod( optarg, NULL );       break;
 
+      case 'Z': B_tty  = false    ;    break;
+
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
@@ -710,9 +716,6 @@ int main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
-  B_tty = isatty( STDOUT_FILENO );    // setcursor fails when stdout is piped
-//BUGOUT("tty: %s\n", ttyname(1) );
-
 //if ( SEQ[0] == -1 ) SEQ[0] = tseq;
   if ( debug & 0x0002 ) list_SEQ();
 
@@ -722,9 +725,9 @@ int main(int argc, char *argv[]) {
   }
 
   if ( ! sz_pal )
-    sz_pal = get_colors( pal_ndx, palette );
+  sz_pal = get_colors( pal_ndx, palette );        // no indent for alignment
 
-    sz_seq = set_SEQ   ( sz_seq, sz_pal, palette );
+  sz_seq = set_SEQ   ( sz_seq, sz_pal, palette );
 
   if ( debug & 0x0002 ) {
     list_SEQ();
