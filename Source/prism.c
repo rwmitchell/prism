@@ -439,8 +439,8 @@ char  mybufch    ( void *buf ) {
   return( *pch );
 }
 // "Borrowed" from lolcat.c - START
-#define NEW_ESC
-#ifdef  NEW_ESC
+#define ORIG_ESC_no
+#ifdef  ORIG_ESC
 static void find_escape_sequences(wint_t c, int* state, bool *on)
 {
   static char esc[32] = { '\0' };
@@ -473,16 +473,48 @@ static void find_escape_sequences(wint_t c, int* state, bool *on)
 //  if ( *state || cnt ) STDOUT( "[%d:%d:%d]", cnt, *state, *on );
 }
 #else
-static void find_escape_sequences(wint_t c, int* state)
-{
+static void find_escape_sequences(wint_t c, int* state, bool *on) {
+  static char esc[32] = { '\0' };
+  static char *pc = esc;
     if (c == '\033') { /* Escape sequence YAY */
-        *state = 1;
+      *state = 1;
     } else if (*state == 1) {
+      if ( c == ']' ) {
+        *state = 3;   // assume a ]1337 escape code
+//      printf( "Be Leet!\n" );
+      }
+      else {
+        *(pc++) = c;
         if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
-            *state = 2;
-    } else {
-        *state = 0;
+          *state = 2;
+      }
+    } else if ( *state == 2 ) {     // do not reset if *state == 3
+      *state = 0;
     }
+
+    // escape off sequence can be either \[[m or \[[0;0m
+
+    if ( *state == 2 ) {
+      pc--;
+//    STDOUT( "\n{%s:%c}\n", esc, *pc );
+      if ( *pc == 'm' || *pc == 'n' ) {
+        int f = 0, b = 0, s = 0;
+        sscanf( esc, "[%d%*c%d%*c%d", &b, &f, &s );
+        *on =  b+f ? true : false;
+  //    STDOUT("{%s: :%d:%d:%d}\n", esc, f, b, *on)
+      }
+      memset( esc, '\0', 31 );   // clear
+      pc = esc;                  // and reset
+    } else if ( *state == 3 ) {
+//    printf( ">%d|", c );
+      if ( c == '\a' ) {       // \a is ^G, end of 1337 code
+        // printf( "%c", *pc );
+        *state = 2;
+//      printf( "DONE Leet!\n" );
+      }
+    }
+
+//  if ( *state || cnt ) STDOUT( "[%d:%d:%d]", cnt, *state, *on );
 }
 #endif
 // "Borrowed" from lolcat.c - END
@@ -816,7 +848,10 @@ int main(int argc, char *argv[]) {
             }
           }
         }
-      } else if ( B_layer ) printf( "%c", *pch  );   // print escape codes if layering
+//    } else if ( escape_state == 3 ) {
+//      printf( "^%c$", *pch );
+      } else if ( B_layer || escape_state == 3 )
+        printf( "%c", *pch  );                // print escape codes if layering
 
 //    if ( pon != on ) STDOUT( "%c", on ? 'Z' : 'x' )
 //    pon = on;
