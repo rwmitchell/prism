@@ -4,7 +4,7 @@
 #    make.darwin
 #    make.solaris
 
-include make.$(OSTYPE)
+include make.$(OS)
 
 CC_RELEASE_FLAGS = -O3
 CC_DEBUG_FLAGS   = -g3 -DDEBUG_ALL
@@ -106,6 +106,7 @@ list:
 	@echo "help help_install"
 
 var:
+	@ echo "Platform: " $(OS) " - " $(MACHTYPE)
 	@ echo "OSTYPE  : $(OSTYPE)"
 	@ echo "MACHTYPE: $(MACHTYPE)"
 	@ echo "BASE    : $(BAS)"
