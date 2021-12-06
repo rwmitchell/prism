@@ -16,9 +16,7 @@
 #include <sys/param.h>  // str2arr(), INT_MAX, MIN()
 #include <locale.h>
 #include <wchar.h>
-#include "loadfile.h"
-#include "bugout.h"
-#include "helpd.h"
+#include <mylib.h>
 
 const
 char *cvsid = "$Id$";
@@ -69,7 +67,7 @@ bool getpos( int *row, int *col ) {
     struct termios term, initial_term;
 
     /*We store the actual properties of the input console and set it as:
-    no buffered (~ICANON): avoid blocking 
+    no buffered (~ICANON): avoid blocking
     no echoing (~ECHO): do not display the result on the console*/
     tcgetattr(STDIN_FILENO, &initial_term);
     term = initial_term;
@@ -88,7 +86,7 @@ bool getpos( int *row, int *col ) {
     time.tv_usec = 100000;
 
     //If it success we try to read the cursor value
-    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1) 
+    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
       if (scanf("\033[%d;%dR", row, col) == 2) success = true;
 
     //We set back the properties of the terminal
@@ -154,7 +152,7 @@ char *loadfile( char *fname, off_t *f_sz ) {
     BUGOUT("%s does not exist, exiting\n", fname );
     exit( __LINE__ );
   }
-  
+
   *f_sz = fsize( fname )+1;                // get file size
   if ( debug & 0x0001 )
     BUGOUT( "%12llu file size\n", *f_sz );
@@ -205,7 +203,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("printable characters\n");
   STDERR("\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -351,7 +349,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case 'h':
@@ -392,8 +390,8 @@ int main(int argc, char *argv[]) {
       free( arr );
     }
 
-    data = (char *) loadfile( argv[optind], (off_t *) &f_sz );
-    rc   = str2arr( data, "\n", &arr, f_sz );
+    data = (char *) RMloadfile( argv[optind], (off_t *) &f_sz, false );
+    rc   = RMstr2arr( data, "\n", &arr, f_sz );
 
     memset(screen, ' ', scr_sz );
 

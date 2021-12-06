@@ -6,13 +6,8 @@
 #include <fcntl.h>      // open()
 #include <sys/stat.h>   // fsize() / stat()
 #include <stdbool.h>    // bool
-#include "bugout.h"
-#include "shmem.h"
+#include <mylib.h>
 #include "traveler.h"
-#include "io.h"
-#include "loadfile.h"
-#include "now.h"
-#include "helpd.h"
 
 // Load 1K of text into shmem
 // This will be read by traveler.c
@@ -57,7 +52,7 @@ char *loadfile( char *fname, off_t *f_sz ) {
     BUGOUT("%s does not exist, exiting\n", fname );
     exit( __LINE__ );
   }
-  
+
   *f_sz = fsize( fname )+1;                // get file size
   if ( debug & 0x0001 )
     BUGOUT( "%12llu file size\n", *f_sz );
@@ -99,7 +94,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("try again later\n");
   STDERR("\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -217,7 +212,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case 'h':
@@ -242,11 +237,11 @@ int main(int argc, char *argv[]) {
   off_t       f_sz;
 
 
-  shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
+  shm_exists = RMcheck_shmem( KEY_TRAVELER,  &shmid_secret );
 //BUGOUT("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
 
   block_sz = sizeof( TRAVELER_t );
-  block    = (TRAVELER_t *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
+  block    = (TRAVELER_t *) RMsetup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   if ( B_rmid ) {
     BUGOUT( "Releasing shared memory");
@@ -257,8 +252,8 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-  if ( optind+1 == argc && file_exists( argv[optind] ) ) {
-    data = (char *) loadfile( argv[optind], &f_sz );
+  if ( optind+1 == argc && RMfile_exists( argv[optind] ) ) {
+    data = (char *) RMloadfile( argv[optind], &f_sz, false );
   } else {
 
 //if ( optind+1 < argc ) {     // if multiple args, assume it is the message
@@ -285,7 +280,7 @@ int main(int argc, char *argv[]) {
   }
   if ( pt - block->text + f_sz < MAX_SECRET ) {
       memcpy( pt, data, MAX_SECRET);
-      block->time = NOW() + wsec;
+      block->time = RMNOW() + wsec;
       block->lskp = lskp;
   }
   STDOUT("%lf\n", block->time );

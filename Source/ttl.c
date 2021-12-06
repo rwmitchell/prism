@@ -1,15 +1,13 @@
 // ttl: take too long - announce job that takes too long to complete
 #include <stdio.h>
 #include <stdlib.h>
-# define _GNU_SOURCE         // strcasestr()
+# define _GNU_SOURCE // strcasestr()
 #include <string.h>  // strcpy()
 #include <getopt.h>
 #include <ctype.h>   // isdigit()
 #include <stdbool.h> // bool
+#include <mylib.h>
 #include "ttl.h"
-#include "io.h"
-#include "bugout.h"
-#include "helpd.h"
 #ifndef __APPLE__
 #endif
 
@@ -54,7 +52,7 @@ int  *parse_line( const char *line ) {
 
   static
   int rv[10];    // max of 10 return elements
-  
+
   while ( ( pc = strchr( pc, '$' )) != NULL && i<10 ) {
     ++pc;               // move to next char;
     rv[i++] = *pc-'0';
@@ -74,6 +72,7 @@ int  restring( char *str ) {
   }
   return( cnt );
 }
+#ifdef USE_THIS
 void load_file( const char *fname ) {
   FILE *F_in;
   int rc,
@@ -109,6 +108,8 @@ void load_file( const char *fname ) {
   }
   STDOUT("->%s#\n", scmd.str );
 }
+#endif
+
 void one_line( const char *progname ) {
   STDOUT("%-20s: announce job completions for long running jobs\n", progname );
   exit(0);
@@ -123,7 +124,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("try again later\n");
   STDERR("\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -228,7 +229,7 @@ int  main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case '1': one_line( argv[0] ); break;
@@ -242,9 +243,15 @@ int  main(int argc, char *argv[]) {
 
   if (errflg) help(argv[0], opts, longopts);
 
+  off_t       f_sz;
+  char *buf   = NULL;
+
+  // 2021-12-06 Updated to use mylib routines, but was this program ever finished?
+
   for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     BUGOUT("%2d: %s\n", optind, argv[optind] );
-    load_file( argv[optind] );
+    buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
+//  load_file( argv[optind] );
   }                                         // for optind
 
   exit(0);

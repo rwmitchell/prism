@@ -17,8 +17,7 @@ char *cvsid = "$Id$";
 #include <ctype.h>   // isprint()
 #include <sys/ioctl.h>
 #include <stdbool.h>
-#include "bugout.h"
-#include "helpd.h"
+#include <mylib.h>
 
 const char *TF[]= {"False", "True"};
 const char *white = " \t\n";
@@ -95,7 +94,7 @@ void help( char *progname, const char *opt, struct option lopts[]) {
   STDERR( "-d INTEGER    (%d)\n", debug );
   STDERR( "try again later\n\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -173,7 +172,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case 'h':
