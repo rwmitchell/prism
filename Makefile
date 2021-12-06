@@ -6,27 +6,20 @@
 
 include make.$(OS)
 
-CC_RELEASE_FLAGS = -O3
-CC_DEBUG_FLAGS   = -g3 -DDEBUG_ALL
+CC_DEBUG_FLAGS  =-g3 -DDEBUG_ALL -DHGVERSION=\\\"\"${HGVERSIONf}\"\\\"
+CC_RELEASE_FLAGS=                -DHGVERSION=\\\"\"${HGVERSIONf}\"\\\"
+
+HGVERSION:= $(shell hg parents --template 'hgid: {date|date}')
+
+UID:= $(shell id -u)
 
 RLS  = release
 DBG  = debug
-PTH  = $(RLS)
+PTH := $(RLS)
+RUN  = all_make
 
-.PHONY: release
-release: CFLAGS += $(CC_RELEASE_FLAGS)
-release: PTH    := $(RLS)
-release: DSYM   := @echo
-release: make_it
+column = sed 's/ / 	/g' | tr ' |' '\n\n'
 
-.PHONY: debug
-debug: CFLAGS += $(CC_DEBUG_FLAGS)
-debug: PTH    := $(DBG)
-debug: DSYM   := dsymutil
-debug: make_it
-
-# Change "CPROG" and "SCRIPT" to something more appropriate
-#
 # Override this on the cmdline with: make prefix=/some/where/else
 prefix = $(BLD)
 
@@ -41,24 +34,24 @@ OBJ = $(BAS)/obj
 LBJ = $(BAS)/lobj
 LIB = $(BAS)/lib
 
+MYINC = -I$(BLD)/include -I$(SRC)
+MYLIB = -L$(BLD)/lib -lmylib
+
+.PHONY: release
+release: CFLAGS += $(CC_RELEASE_FLAGS) $(MYINC)
+release: PTH    := $(RLS)
+release: DSYM   := @echo
+release: make_it
+
+.PHONY: debug
+debug: CFLAGS += $(CC_DEBUG_FLAGS) $(MYINC)
+debug: PTH    := $(DBG)
+debug: DSYM   := dsymutil
+debug: make_it
+
+
 SRC = Source
 NST = $(prefix)/bin
-
-# Additional object files used with other programs
-LB_FILES = \
-	$(OBJ)/strings.o  \
-	$(OBJ)/io.o       \
-	$(OBJ)/loadfile.o \
-	$(OBJ)/helpd.o    \
-
-SM_FILES = \
-	$(OBJ)/shmem.o \
-	$(OBJ)/now.o   \
-	$(OBJ)/helpd.o \
-
-SM_PROGS  = \
-						$(DST)/traveler   \
-						$(DST)/trvlr_send \
 
 # Stand alone Programs
 DST_PROGS = \
@@ -67,6 +60,8 @@ DST_PROGS = \
 						$(DST)/matrix        \
 						$(DST)/prism         \
 						$(DST)/ttl           \
+						$(DST)/traveler   \
+						$(DST)/trvlr_send \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
@@ -92,7 +87,9 @@ $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
 
 $(OBJ)/%.o	:	$(SRC)/%.c $(DEP)/%.d
-	$(CC) -o $@ -c $(CFLAGS) $<
+	@ echo "OBJ:" \
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 #	@echo "SRC DEPEND: $@ on $^"
 
 ######## Define C programs ###########
@@ -126,7 +123,6 @@ all_make: \
 	$(DST)            \
 	$(DST_PROGS)      \
 	$(DST_SCRPT)      \
-	$(SM_PROGS)       \
 show_install        \
 
 
@@ -139,62 +135,18 @@ install:            \
 	$(NST)/trvlr_send \
 	$(NST)/prism      \
 
-$(SM_PROGS):	$(DST)/% : $(OBJ)/%.o $(SM_FILES) $(LB_FILES)
-	$(CC) -o $@ $^ $(LINKOPT)
-	@echo
-#	@echo "DEPF: $(DEPFILES)"
-#	@echo "$@: $^"
-
-$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES) $(LB_FILES)
-	$(CC) -o $@ $^ $(LINKOPT)
+$(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
+	$(CC) -o $@ $^ $(MYLIB)
 	$(DSYM) $@
 	@echo
 #	@echo "DEPF: $(DEPFILES)"
 #	@echo "$@: $^"
 
-##########################################################
-# Dependency code added here
-SUFFIXES += .d
-
-#We don't need to clean up when we're making these targets
-NODEPS:=clean tags svn install
-
-#Find all the C files in the $(SRC)/ directory
-SOURCES:=$(shell find $(SRC) -name "*.c")
-
-#These are the dependency files, which make will clean up after it creates them
-DEPFILES:=$(patsubst %.c,%.d,$(patsubst $(SRC)/%,$(DEP)/%, $(SOURCES)))
-
-#Don't create dependencies when we're cleaning, for instance
-ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
-    #Chances are, these files don't exist.  GMake will create them and
-    #clean up automatically afterwards
-    -include $(DEPFILES)
-endif
-
-#This is the rule for creating the dependency files
-$(DEP)/%.d: $(SRC)/%.c
-	mkdir -p $(DEP)
-	$(CC) $(CFLAGS) -I$(SRC) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< -MF $@
-
-# End of - Dependency code added here
-
-##########################################################
-
 clean:
-	$(RM) $(DEP)/*.d $(OBJ)/*.o $(DST_PROGS) $(DST_SCRPT) $(SM_PROGS)
+	$(RM) $(DEP)/*.d $(OBJ)/*.o $(DST_PROGS) $(DST_SCRPT)
 	rmdir $(OBJ) $(DST)
 
 ######## Describe how to Install #####
-
-$(NST)/bd:	$(DST)/bd
-	$(INSTALL)
-
-$(NST)/call:	$(DST)/call
-	$(INSTALL)
-
-$(NST)/weather:	$(DST)/weather
-	$(INSTALL)
 
 ######## For CPROGS you'll need to describe the the .o file dependecies
 
@@ -205,10 +157,24 @@ misc.o:
 make_it:
 	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" all_make
 
+# we jump through hoops with HGVERSIONf because chrooted vm1 lacks hg
+stamp: hgstamp
+	@ echo ${HGVERSIONf}
+
+hgstamp: dummy
+	@ [ -f $@ ] || touch $@
+	@ echo $(HGVERSION) | cmp -s $@ - || echo $(HGVERSION) >$@
+
+dummy: ;
+
+HGVERSIONf:= $(shell cat hgstamp)
+
 #We don't need to clean up when we're making these targets
 NODEPS:=clean tags svn install
+
 #Find all the C++ files in the $(SRC)/ directory
 SOURCES:=$(shell find $(SRC)  -name "*.c")
+
 #These are the dependency files, which make will clean up after it creates them
 DEPFILES:=$(patsubst %.c,%.d,$(patsubst $(SRC)/%,$(DEP)/%, $(SOURCES)))
 
@@ -222,22 +188,29 @@ endif
 #This is the rule for creating the dependency files
 $(DEP)/%.d: $(SRC)/%.c $(DEP)
 	@echo "START DEP: $@"
-	@echo $(CC) $(CFLAGS) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $<
-	$(CC) $(CFLAGS) -MG -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< > $@
+	@echo $(CC) $(CFLAGS) -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $< | $(column)
+	$(CC) $(CFLAGS) -MG -MM -MT '$(patsubst $(SRC)/%,$(OBJ)/%, $(patsubst %.c,%.o,$<))' $(MYINC) $< > $@
 	@echo "END   DEP: $@"
 # End of - Dependency code added here
 
-# Make a highlight file for types.  Requires Exuberant ctags and awk
+# Make a highlight file for types.  Requires Universal ctags and awk
 types: $(SRC)/.types.vim
 $(SRC)/.types.vim: $(SRC)/*.[ch]
-	ctags --c-kinds=gstu -o- $(SRC)/*.[ch] |\
-		awk 'BEGIN{printf("syntax keyword Type\t")}\
-		{printf("%s ", $$1)}END{print ""}' > $@
-	ctags --c-kinds=d -o- $(SRC)/*.h |\
-		awk 'BEGIN{printf("syntax keyword Debug\t")}\
-		{printf("%s ", $$1)}END{print ""}' >> $@
+	ctags --kinds-c=gstu -o- \
+		$(SRC)/*.[ch] \
+		$(BLD)/include/*.h \
+		| grep -v "^__anon" \
+		| awk 'BEGIN { printf("syntax keyword Type\t") } \
+				{ printf("%s ", $$1) } END { print "" }' > $@
+	ctags --kinds-c=d -o- \
+		$(SRC)/*.h \
+		$(BLD)/include/*.h \
+		| grep -v "^__anon" \
+		| awk 'BEGIN{ printf("syntax keyword Debug\t") } \
+				{ printf("%s ", $$1) } END { print "" }' >> $@
 # End types
 
-tags:
-	ctags --fields=+l --langmap=c:.c.h Source/*
-
+tags: $(SRC)/*.[ch]
+	ctags --fields=+l --langmap=c:.c.h \
+		$(SRC)/* \
+		$(BLD)/include/*

@@ -10,9 +10,7 @@
 #include <ctype.h>   // isdigit()
 #include <fcntl.h>   // open()
 #include <stdbool.h> // bool
-#include "loadfile.h"
-#include "bugout.h"
-#include "helpd.h"
+#include <mylib.h>
 
 // Reports the size of the terminal if run directly,
 // but cannot be run inside backticks or by another program
@@ -44,30 +42,30 @@ bool getpos( int *row, int *col ) {
     struct timeval time;
     struct termios term, initial_term;
 
-    /*We store the actual properties of the input console and set it as:
-    no buffered (~ICANON): avoid blocking 
-    no echoing (~ECHO): do not display the result on the console*/
+    /* We store the actual properties of the input console and set it as:
+       no buffered (~ICANON): avoid blocking
+       no echoing (~ECHO): do not display the result on the console */
     tcgetattr(STDIN_FILENO, &initial_term);
     term = initial_term;
     term.c_lflag &=~ICANON;
     term.c_lflag &=~ECHO;
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 
-    //We request position
+    // We request position
     printf("[6n");
     fflush(stdout);
 
-    //We wait 100ms for a terminal answer
+    // We wait 100ms for a terminal answer
     FD_ZERO(&readset);
     FD_SET(STDIN_FILENO, &readset);
     time.tv_sec = 0;
     time.tv_usec = 100000;
 
-    //If it success we try to read the cursor value
-    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1) 
+    // If it success we try to read the cursor value
+    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
       if (scanf("\033[%d;%dR", row, col) == 2) success = true;
 
-    //We set back the properties of the terminal
+    // We set back the properties of the terminal
     tcsetattr(STDIN_FILENO, TCSADRAIN, &initial_term);
 
     return success;
@@ -82,7 +80,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("-d INTEGER    (%d)\n", debug );
   STDERR("try again later\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -218,7 +216,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case 'h':

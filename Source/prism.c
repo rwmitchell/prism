@@ -17,9 +17,7 @@
 #include <sys/param.h> // MAX()
 #include <sys/time.h>  // gettimeofday()
 #include <wchar.h>     // wcwidth()
-#include "loadfile.h"
-#include "bugout.h"
-#include "helpd.h"
+#include <mylib.h>
 
 const
 char *cvsid = "$Id$";
@@ -556,7 +554,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
   STDERR("or  setenv PRISM \"#00FF00#00E000#00C000#00A000#008000\"\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -734,7 +732,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case '1': one_line( argv[0] ); break;
@@ -794,7 +792,7 @@ int main(int argc, char *argv[]) {
 //       pon= false;
 
     if ( ! f_sz ) {
-      buf   = (char *) loadfile ( argv[optind], &f_sz );
+      buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
       mybufch( buf );
       myread = mybufch;
     }

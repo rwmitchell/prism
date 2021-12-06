@@ -14,12 +14,8 @@
 #include <sys/param.h>  // str2arr(), INT_MAX, MIN()
 #include <locale.h>
 #include <wchar.h>
-#include "bugout.h"
-#include "shmem.h"
+#include <mylib.h>
 #include "traveler.h"
-#include "loadfile.h"
-#include "now.h"
-#include "helpd.h"
 
 const
 char *cvsid = "$Id$";
@@ -75,7 +71,7 @@ bool getpos( int *row, int *col ) {
     struct termios term, initial_term;
 
     /*We store the actual properties of the input console and set it as:
-    no buffered (~ICANON): avoid blocking 
+    no buffered (~ICANON): avoid blocking
     no echoing (~ECHO): do not display the result on the console*/
     tcgetattr(STDIN_FILENO, &initial_term);
     term = initial_term;
@@ -94,7 +90,7 @@ bool getpos( int *row, int *col ) {
     time.tv_usec = 100000;
 
     //If it success we try to read the cursor value
-    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1) 
+    if (select(STDIN_FILENO + 1, &readset, NULL, NULL, &time) == 1)
       if (scanf("\033[%d;%dR", row, col) == 2) success = true;
 
     //We set back the properties of the terminal
@@ -320,7 +316,7 @@ void help( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("Get messages from the future\n");
   STDERR("\n");
 
-  if ( debug ) helpd( lopts );
+  if ( debug ) RMhelpd( lopts );
 
   exit(-0);
 }
@@ -442,7 +438,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 'u': // output opts with spaces
-        usage( longopts );
+        RMusage( longopts );
         break;
 
       case 'h':
@@ -463,11 +459,11 @@ int main(int argc, char *argv[]) {
             **msg;
   int         msg_cnt;
 
-  shm_exists = check_shmem( KEY_TRAVELER,  &shmid_secret );
+  shm_exists = RMcheck_shmem( KEY_TRAVELER,  &shmid_secret );
 //printf("SHMEM %s: %d\n", shm_exists ? "Exists" : "------", shmid_secret);
 
   block_sz = sizeof( TRAVELER_t );
-  block    = (TRAVELER_t *) setup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
+  block    = (TRAVELER_t *) RMsetup_shmem( !shm_exists, KEY_TRAVELER, block_sz, &shmid_secret);
 
   if ( B_rmid ) {
     BUGOUT( "Releasing shared memory");
@@ -477,17 +473,17 @@ int main(int argc, char *argv[]) {
   }
 
   if ( B_time ) {
-    if ( block->time > 1.0 ) STDOUT("%d\n", (int)(block->time-NOW()));
+    if ( block->time > 1.0 ) STDOUT("%d\n", (int)(block->time-RMNOW()));
     exit(0);
   }
 
   if ( B_std && block->time <= 1.0 ) exit(0);
 
   STDOUT("....waiting for incoming msg....\n");
-  if ( B_std && block->time > NOW() ) sleep( (int) (block->time - NOW()) );
+  if ( B_std && block->time > RMNOW() ) sleep( (int) (block->time - RMNOW()) );
 
   memcpy(data, block->text, MAX_SECRET );               // copy shmem to data
-  msg_cnt = str2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
+  msg_cnt = RMstr2arr( data, "\n", &msg, MAX_SECRET );    // split data into arrays
   lskp = block->lskp;
 
   STDOUT("Incoming: %d\n", msg_cnt )
