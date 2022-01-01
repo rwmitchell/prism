@@ -130,6 +130,8 @@ int arr2nab( int row, int col, wchar_t **arr, wchar_t *nab, bool show, int cnt, 
   ln = swprintf(nrml, 16, L"[%d;%dm", 0, 1+31);  // normal  green
   lb = swprintf(bold, 16, L"[%d;%dm", 1, 1+31);  // bold    green
 
+  if ( lb < 0 ) BUGOUT( "swprintf returned: %d\n", lb );
+
   pnb = nab;
 
   for ( r=0; r<row-1; ++r ) {
@@ -233,12 +235,12 @@ wchar_t *dslv_msg( int cnt, int mi, int llen, int mcnt, wchar_t *line, const cha
 int rnd2arr( int row, int col, wchar_t wch, wchar_t ***arr) {
   int r, c;
   wchar_t ch,
-         *big, *pbg;
+         *big = NULL, *pbg = NULL;
 
   row -= 1;
 
-  big  = (wchar_t *)  malloc( sizeof( wchar_t *) * (row*col+1));
-  *arr = (wchar_t **) malloc( sizeof(wchar_t *) * row );   // alloc space for array of pointers
+  big  = (wchar_t *)  RMmalloc( big,  sizeof( wchar_t * ) * (row*col+1));
+  *arr = (wchar_t **) RMmalloc( *arr, sizeof( wchar_t * ) * row );   // alloc space for array of pointers
 
   init_rndgen();
 
@@ -326,7 +328,7 @@ int main(int argc, char *argv[]) {
       dinc   = 1,                // debug incrementor
       opt,
       i, j,
-      rc   = 0,
+//    rc   = 0,
       longindex;
 
   wchar_t **arr = NULL,
@@ -402,7 +404,6 @@ int main(int argc, char *argv[]) {
     // Normal Check
     switch (opt) {
       case ':':              // check optopt for previous option
-        B_have_arg = false;
         switch( optopt ) {
           case 'W': wch = 0x400; break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
@@ -503,7 +504,7 @@ int main(int argc, char *argv[]) {
   // Create a dummy test string
   for ( i=0; i<scr_sz; ++i ) screen[i] = ' ' + i%0x40 + wch;
 
-  rc = w.ws_row;
+//rc = w.ws_row;
   rnd2arr(w.ws_row, w.ws_col, wch, &arr );
 
   wchar_t *foo[32],
@@ -514,7 +515,7 @@ int main(int argc, char *argv[]) {
   start = w.ws_col * .25;
   stop  = start * 3;
 
-  nab  = (wchar_t *)  malloc( sizeof( wchar_t *) * (w.ws_row*w.ws_col*17+1));
+  nab  = (wchar_t *)  RMmalloc( nab, sizeof( wchar_t *) * (w.ws_row*w.ws_col*17+1));
 
   // allocate space for all the msgs
   rndmsg = (wchar_t *) malloc( sizeof(wchar_t) * w.ws_col * msg_cnt + 1);

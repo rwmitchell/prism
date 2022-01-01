@@ -334,6 +334,7 @@ void  inc_bypar  ( char ch, short *val, unsigned short cycle, int max ) {
 
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
+  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
   cnt %= cycle;
   if ( ch == '\n' && och == '\n' ) {
     cnt++;
@@ -349,6 +350,7 @@ void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
 
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
+  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
   cnt %= cycle;
   if ( ch == '\n' ) {
     cnt++;
@@ -369,6 +371,7 @@ void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
 
   if ( *val == -1    )    *val = pos = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
+  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
   cnt %= cycle;
   if ( ch == FS && fld <= ncol ) {
     cnt++;
@@ -389,8 +392,10 @@ void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   if ( *val == -1 ) *val = cnt = 0;
   if ( cnt == cycle ) { (*val)++; cpl++; }
   if ( ch == '\n' )  cpl = 0;
+  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
   cnt %= cycle;
   cnt++;
+  if ( max   == 0 ) max   = 1;               // make sure cycle is not zero
   *val %= max;
   if ( cpl >= ncol ) *val = -1;
 }
@@ -417,21 +422,23 @@ void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
   if ( och == '\n' ) {  wpl = 0; cnt = 1; }
 
   if ( cnt == cycle ) { (*val)++; *val %= max; ++wpl; }
+  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
   cnt %= cycle;
   if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char  mygetch    ( void *buf ) {
+char  mygetch    ( bool set, void *buf ) {
   static char *pch;               // these lines are not used directly,
-  if ( buf ) pch = (char *) buf;  // just staying compatible to mybufch()
+
+  if ( set ) pch = (char *) buf;  // just staying compatible to mybufch()
 
   return( getchar() );
 }
-char  mybufch    ( void *buf ) {
+char  mybufch    ( bool set, void *buf ) {
   static char *pch;
 
-  if ( buf ) pch = (char *) buf;
+  if ( set ) pch = (char *) buf;
   else ++pch;
 
   return( *pch );
@@ -610,7 +617,7 @@ int main(int argc, char *argv[]) {
 
   short tseq = -1;
 
-  char ( *myread)( void * );
+  char ( *myread)( bool, void * );
 
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -665,7 +672,6 @@ int main(int argc, char *argv[]) {
     switch (opt) {
       case ':':              // check optopt for previous option
 //      BUGOUT("Got a Colon for: %c\n", optopt );
-        B_have_arg = false;
         switch( optopt ) {
           case 'd': debug += dinc;
 //                  BUGOUT("debug level: %d\n", debug );
@@ -710,7 +716,10 @@ int main(int argc, char *argv[]) {
       case 'L': B_layer = !B_layer;    break;
       case 'S': B_strip = !B_strip;    break;
 
-      case 'F': mode = MFLD; ccnt = 1; FS = optarg[0]; break;
+      case 'F': if ( optarg ) {
+                  mode = MFLD; ccnt = 1; FS = optarg[0];
+                }
+                break;
       case 'l': mode = MLOL; ccnt = 1; B_256 = false;  break;
       case 'H': freq_h = strtod( optarg, NULL );       break;
       case 'V': freq_v = strtod( optarg, NULL );       break;
@@ -772,10 +781,6 @@ int main(int argc, char *argv[]) {
   char *buf   = NULL,
        *pch,
          ch;
-  int cmax,  cnt,
-      wmax, wcnt,
-      lcnt,
-      pcnt;
   short clr = -1,    // color
         stl =  1;    // style
 
@@ -793,15 +798,13 @@ int main(int argc, char *argv[]) {
 
     if ( ! f_sz ) {
       buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
-      mybufch( buf );
+      mybufch( true, buf );
       myread = mybufch;
     }
 
-    cmax = cnt = lcnt = pcnt = wmax = wcnt = 0;
-
 //  pch = buf;
     pch = &ch;
-    *pch = myread( (void *) NULL );
+    *pch = myread( false, (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
     while ( *pch > 0
@@ -854,7 +857,7 @@ int main(int argc, char *argv[]) {
 //    if ( pon != on ) STDOUT( "%c", on ? 'Z' : 'x' )
 //    pon = on;
 
-      *pch = myread( (void *) NULL );
+      *pch = myread( false, (void *) NULL );
     }
 
     f_sz = 0;

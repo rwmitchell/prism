@@ -46,10 +46,10 @@ int get_printable( char *str ) {
   return( cnt );
 }
 int asot_term( FILE *myin, char *str, int cnt ) {
-  int i=0,
-      ch,
-      col=1,
-      och;
+  int i   = 0,
+      ch  = 0,
+      col = 1,
+      och = 0;
 
   while ( (ch = fgetc( myin )) != EOF ) {
     if ( strchr( str, ch ) ) {

@@ -170,7 +170,6 @@ int main(int argc, char *argv[]) {
     switch (opt) {
       case ':':              // check optopt for previous option
         BUGOUT("Got a Colon for: %c\n", optopt );
-        B_have_arg = false;
         switch( optopt ) {
           case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
