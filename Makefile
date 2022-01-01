@@ -6,12 +6,11 @@
 
 include make.$(OS)
 
-CC_DEBUG_FLAGS  =-g3 -DDEBUG_ALL -DHGVERSION=\\\"\"${HGVERSIONf}\"\\\"
-CC_RELEASE_FLAGS=                -DHGVERSION=\\\"\"${HGVERSIONf}\"\\\"
+HGVERSION:=$(shell hg parents --template '\\\#define RWM_VERSION \\\"RWM_VERSION {reporoot|basename} {branch} {rev}:{node|short} {date|svnutcdate} {author|user}\\\"')
 
-HGVERSION:= $(shell hg parents --template 'hgid: {date|date}')
-
-UID:= $(shell id -u)
+CC_DEBUG_FLAGS    = -g3 -DDEBUG_ALL
+CC_CHECK_FLAGS    =  --analyzer-output text --analyze -I$(HOME)/Build/include -I$(SRC)
+CC_RELEASE_FLAGS  = -O3 -fcolor-diagnostics
 
 RLS  = release
 DBG  = debug
@@ -34,8 +33,19 @@ OBJ = $(BAS)/obj
 LBJ = $(BAS)/lobj
 LIB = $(BAS)/lib
 
+SRC = Source
+NST = $(prefix)/bin
+
 MYINC = -I$(BLD)/include -I$(SRC)
 MYLIB = -L$(BLD)/lib -lmylib
+
+.PHONY: check
+check: CFLAGS = $(CC_CHECK_FLAGS)
+check: .analyze
+
+.PHONY: check_all
+check_all: CFLAGS = $(CC_CHECK_FLAGS)
+check_all: make_check_all
 
 .PHONY: release
 release: CFLAGS += $(CC_RELEASE_FLAGS) $(MYINC)
@@ -49,9 +59,6 @@ debug: PTH    := $(DBG)
 debug: DSYM   := dsymutil
 debug: make_it
 
-
-SRC = Source
-NST = $(prefix)/bin
 
 # Stand alone Programs
 DST_PROGS = \
@@ -153,6 +160,14 @@ clean:
 # open_multiple.o:
 
 misc.o:
+
+.analyze: $(wildcard $(SRC)/*.c)
+	gcc $(CFLAGS) $?
+	@ touch .analyze
+
+make_check_all:
+	@ rm .analyze  || true
+	@ make CFLAGS="$(CFLAGS)" check
 
 make_it:
 	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" all_make

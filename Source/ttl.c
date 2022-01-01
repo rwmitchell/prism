@@ -195,7 +195,6 @@ int  main(int argc, char *argv[]) {
     switch (opt) {
       case ':':              // check optopt for previous option
         BUGOUT("Got a Colon for: %c\n", optopt );
-        B_have_arg = false;
         switch( optopt ) {
           case 'o': B_o = !B_o;    BUGOUT("No arg for o (%s)\n", myarg ); break;
           case 'd': debug += dinc; BUGOUT("debug level: %d\n", debug ); dinc <<= 1; break;
@@ -251,6 +250,10 @@ int  main(int argc, char *argv[]) {
   for (; optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     BUGOUT("%2d: %s\n", optind, argv[optind] );
     buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
+
+    // This line is just to keep "make check" happy
+    if ( ! buf ) BUGOUT( "Failed to load: %s\n", argv[optind] );
+
 //  load_file( argv[optind] );
   }                                         // for optind
 
