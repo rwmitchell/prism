@@ -6,7 +6,21 @@
 
 include make.$(OS)
 
-HGVERSION:=$(shell hg parents --template '\\\#define RWM_VERSION \\\"RWM_VERSION {reporoot|basename} {branch} {rev}:{node|short} {date|svnutcdate} {author|user}\\\"')
+REPO:=$(shell basename ${PWD})
+GITVERSION:='$(shell git show -s --date=format:"%F %T %z" --format="$(REPO) %ad %d %h %an %aE")'
+GITVERSION:=$(shell git show -s --date=format:"%F %T %z" --format="$(REPO) %h %d %ad %an %aE")
+GITVERSION:="\#define RWM_VERSION \"RWM_VERSION $(GITVERSION)\""
+
+VERSION           = Source/version.h
+
+stamp: $(VERSION)
+	@ echo ${GITVERSION}
+
+.PHONY: update_version
+$(VERSION): update_version
+	@ [ -f $@ ] || touch $@
+	@ echo "# " ${GITVERSION}
+	@ echo $(GITVERSION) | cmp -s $@ - || echo $(GITVERSION) >$@
 
 CC_DEBUG_FLAGS    = -g3 -DDEBUG_ALL
 CC_CHECK_FLAGS    =  --analyzer-output text --analyze -I$(HOME)/Build/include -I$(SRC)
@@ -171,18 +185,6 @@ make_check_all:
 
 make_it:
 	@make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" all_make
-
-# we jump through hoops with HGVERSIONf because chrooted vm1 lacks hg
-stamp: hgstamp
-	@ echo ${HGVERSIONf}
-
-hgstamp: dummy
-	@ [ -f $@ ] || touch $@
-	@ echo $(HGVERSION) | cmp -s $@ - || echo $(HGVERSION) >$@
-
-dummy: ;
-
-HGVERSIONf:= $(shell cat hgstamp)
 
 #We don't need to clean up when we're making these targets
 NODEPS:=clean tags svn install

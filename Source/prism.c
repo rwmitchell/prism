@@ -20,7 +20,11 @@
 #include <mylib.h>
 
 const
-char *cvsid = "$Id$";
+char *gitid = "$Id$",
+     *myid  = "$MyId$",
+     *date  = "$Date$",
+     *source= "$Source$",
+     *auth  = "$Auth$";
 
 const char *TF[]= {"False", "True"};
 
@@ -530,7 +534,8 @@ void  one_line   ( const char *progname ) {
 void  help       ( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
-  STDERR("%s\n\n", cvsid);
+  STDERR("%s\n", RWM_VERSION );
+  STDERR("%s\n\n", gitid);
   STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
   STDERR("colorize text either by character, column, row, or field\n");
   STDERR("\n");
@@ -602,6 +607,7 @@ int main(int argc, char *argv[]) {
     { "horiz",     required_argument, NULL, 'H' },
     { "vert",      required_argument, NULL, 'V' },
     { "notty",           no_argument, NULL, 'Z' },   // disable tty
+    { "version",         no_argument, NULL, 101 },
     { "debug",     optional_argument, NULL, 'd' },
     { "help",            no_argument, NULL, 'h' },
     { "usage",           no_argument, NULL, 'u' },
@@ -725,6 +731,16 @@ int main(int argc, char *argv[]) {
       case 'V': freq_v = strtod( optarg, NULL );       break;
 
       case 'Z': B_tty  = false    ;    break;
+
+      case 101:
+                STDOUT( "%s\n", RWM_VERSION );
+                STDOUT( "%s\n", gitid       );
+                STDOUT( "%s\n", myid        );
+                STDOUT( "%s\n", source      );
+                STDOUT( "%s\n", date        );
+                STDOUT( "%s\n", auth        );
+                exit(0);
+                break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
