@@ -6,7 +6,7 @@
  * However, a prism is also very appropriate for refracting or
  * combining colors of light
  *
- * $Log$
+  $Log$
  *
  */
 
