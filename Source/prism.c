@@ -5,6 +5,9 @@
  * In some texts she is depicted wearing a coat of many colors.
  * However, a prism is also very appropriate for refracting or
  * combining colors of light
+ *
+ * $Log$
+ *
  */
 
 #include <stdio.h>
