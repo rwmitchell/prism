@@ -334,7 +334,8 @@ int   get_colors ( int ndx, unsigned int *hex ) {
 void  set_cursor ( bool on) {
   if ( on ) {
     printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
-    printf("]1337;CursorShape=0");           // set block cursor
+//  printf("]1337;CursorShape=0");           // set block     cursor
+    printf("]1337;CursorShape=2");           // set underline cursor
     printf("[%d;m", 0 );  // not bold
   } else {
     printf("]1337;HighlightCursorLine=no"); // Disable cursor guide in iTerm
