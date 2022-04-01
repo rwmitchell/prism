@@ -6,7 +6,18 @@
  * However, a prism is also very appropriate for refracting or
  * combining colors of light
  *
-  $Log$
+  $Log:
+  Sun, 13 Mar 2022 08:06:31 -0400
+  git-kw plugin changes Log line
+
+  - gitkwshrink did not return Log kw line to its original state
+
+  Sun, 13 Mar 2022 07:54:14 -0400
+  Add Log keyword to intro comment
+
+  Sun, 13 Mar 2022 07:45:54 -0400
+  Convert from HG to Git
+  :Log$
  *
  */
 
@@ -538,7 +549,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n", RWM_VERSION );
-  STDERR("%s\n\n", gitid);
+  STDERR("%s\n%s\n\n", gitid, source );
   STDERR("usage: %s [-%s] [FILE]\n", progname, opt);
   STDERR("colorize text either by character, column, row, or field\n");
   STDERR("\n");
