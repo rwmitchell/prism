@@ -559,6 +559,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -b: greenbar colors\n");
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -l: lolcat   colors\n");
+  STDERR( " -L: leave existing escape codes along\n" );
   STDERR("  -H: lolcat horizontal frequency :%.3lf\n", freq_h );
   STDERR("  -V: lolcat vertical   frequency :%.3lf\n", freq_v );
   STDERR("  -m: metal    colors\n");
