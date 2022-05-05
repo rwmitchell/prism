@@ -51,6 +51,8 @@ double offx   = 0.0, // randomize output colors
        freq_v = 0.1;
 int    debug  = 0,
        ccnt   = 2;   // contiguous colors
+unsigned long
+    foregrnd = 0xFF0000;
 
 enum { MAX_SEQ = 64 };
 int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
@@ -59,6 +61,7 @@ int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 
 bool
      B_256   = true,
+     B_ONE   = false,    // output a single color
      B_align = false,
      B_bkgnd = false,
      B_fix   = false,
@@ -609,6 +612,7 @@ int main(int argc, char *argv[]) {
     { "num",       required_argument, NULL, 'n' },
     { "palette",   required_argument, NULL, 'p' },  // choose a palette
     { "backgrnd",        no_argument, NULL, 'B' },  // set background color
+    { "foreground",optional_argument, NULL, 202 },
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",       required_argument, NULL, 's' },
@@ -623,7 +627,7 @@ int main(int argc, char *argv[]) {
     { "horiz",     required_argument, NULL, 'H' },
     { "vert",      required_argument, NULL, 'V' },
     { "notty",           no_argument, NULL, 'Z' },   // disable tty
-    { "version",         no_argument, NULL, 101 },
+    { "version",         no_argument, NULL, 201 },
     { "debug",     optional_argument, NULL, 'd' },
     { "help",            no_argument, NULL, 'h' },
     { "usage",           no_argument, NULL, 'u' },
@@ -665,6 +669,7 @@ int main(int argc, char *argv[]) {
     // Pre-Check
     if ( optarg ) {                // only check if not null
       switch (opt) {               // check only args with possible STRING options
+        case 202:
         case 'd':
           if ( *optarg == '\0' ) {
             BUGOUT("optarg is empty\n");
@@ -680,10 +685,10 @@ int main(int argc, char *argv[]) {
             --optind;
             B_have_arg = false;
           } else {
-            BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
+//          BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
 
             strcpy(myarg, optarg);
-            BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
+//          BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
           }
           break;
       }
@@ -748,7 +753,7 @@ int main(int argc, char *argv[]) {
 
       case 'Z': B_tty  = false    ;    break;
 
-      case 101:
+      case 201:
                 STDOUT( "%s\n", RWM_VERSION );
                 STDOUT( "%s\n", gitid       );
                 STDOUT( "%s\n", myid        );
@@ -757,6 +762,17 @@ int main(int argc, char *argv[]) {
                 STDOUT( "%s\n", auth        );
                 exit(0);
                 break;
+
+      case 202:
+        if ( B_have_arg ) {
+          foregrnd = strtol(myarg, NULL, 16 );
+          if ( foregrnd == 0 ) {        // we didn't get a number
+            foregrnd = 0xFF0000;
+            --optind;
+          }
+        }
+        B_ONE = true;
+        break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
@@ -866,6 +882,8 @@ int main(int argc, char *argv[]) {
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
+              if ( B_ONE ) set_color256( foregrnd, B_bkgnd );
+              else
               if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
