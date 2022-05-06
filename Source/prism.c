@@ -206,12 +206,12 @@ void set_color256 ( unsigned long clr, bool BG) {
 
 #define COLORS_256
 #ifdef  COLORS_256
+  if ( B_bold ) printf( "[1;m");
   if ( BG ) {
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, 0, 0, 0);  // Black text
     printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
   } else
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
-  if ( B_bold ) printf( "[1;m");
 
 #else
 
@@ -854,6 +854,8 @@ int main(int argc, char *argv[]) {
       mybufch( true, buf );
       myread = mybufch;
     }
+
+    reset_attr();                                   // clear any cruft
 
 //  pch = buf;
     pch = &ch;
