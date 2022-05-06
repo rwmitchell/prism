@@ -62,6 +62,7 @@ int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 bool
      B_256   = true,
      B_ONE   = false,    // output a single color
+     B_bold  = false,
      B_align = false,
      B_bkgnd = false,
      B_fix   = false,
@@ -210,6 +211,7 @@ void set_color256 ( unsigned long clr, bool BG) {
     printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
   } else
     printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+  if ( B_bold ) printf( "[1;m");
 
 #else
 
@@ -613,6 +615,7 @@ int main(int argc, char *argv[]) {
     { "palette",   required_argument, NULL, 'p' },  // choose a palette
     { "backgrnd",        no_argument, NULL, 'B' },  // set background color
     { "foreground",optional_argument, NULL, 202 },
+    { "bold",            no_argument, NULL, 203 },  // set background color
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",       required_argument, NULL, 's' },
@@ -773,6 +776,8 @@ int main(int argc, char *argv[]) {
         }
         B_ONE = true;
         break;
+
+      case 203: B_bold = !B_bold; break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
