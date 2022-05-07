@@ -561,7 +561,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -b: greenbar colors\n");
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -l: lolcat   colors\n");
-  STDERR( " -L: leave existing escape codes along\n" );
+  STDERR("  -L: leave existing escape codes along\n" );
   STDERR("  -H: lolcat horizontal frequency :%.3lf\n", freq_h );
   STDERR("  -V: lolcat vertical   frequency :%.3lf\n", freq_v );
   STDERR("  -m: metal    colors\n");
@@ -579,6 +579,9 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
   STDERR("  -d INTEGER    (%d)\n", debug );
+  STDERR("\n");
+  STDERR("  -bold : set output text to bold\n");
+  STDERR("  -foreground %06lX : set single color for output\n", foregrnd );
   STDERR("\n");
   STDERR("A custom palette can be set using the environment variable 'PRISM'. \n");
   STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
