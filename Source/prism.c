@@ -62,6 +62,7 @@ int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 bool
      B_256   = true,
      B_ONE   = false,    // output a single color
+     B_clrz  = true,     // output colorize sequence
      B_bold  = false,
      B_align = false,
      B_bkgnd = false,
@@ -197,6 +198,7 @@ unsigned long brighten( unsigned long clr ) {
 }
 void reset_attr   ( ) {
   printf("\e[0m");
+  B_clrz = true;
 }
 void set_color256 ( unsigned long clr, bool BG) {
 
@@ -204,28 +206,33 @@ void set_color256 ( unsigned long clr, bool BG) {
       G = (clr & 0x00FF00) >>  8,
       B = (clr & 0x0000FF);
 
+  if ( B_clrz ) {
+    B_clrz = false;
+
 #define COLORS_256
 #ifdef  COLORS_256
-  if ( B_bold ) printf( "[1;m");
-  if ( BG ) {
-    printf(  "[%d;2;%03d;%03d;%03dm", FGC, 0, 0, 0);  // Black text
-    printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
-  } else
-    printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+    if ( B_bold ) printf( "[1;m");
+    if ( BG ) {
+      printf(  "[%d;2;%03d;%03d;%03dm", FGC, 0, 0, 0);  // Black text
+      printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
+    } else
+      printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
 
 #else
 
-  R /= 16;
-  G /= 16;
-  B /= 16;
+    R /= 16;
+    G /= 16;
+    B /= 16;
 
-  if ( BG ) {
-    printf(  "[%d;2;%02d;%02d;%02dm", FGC, 0, 0, 0);  // Black text
-    printf(  "[%d;2;%02d;%02d;%02dm", BGC, R, G, B);
-  } else
-    printf(  "[%d;%d;%d;m", R, G, B);
+    if ( BG ) {
+      printf(  "[%d;2;%02d;%02d;%02dm", FGC, 0, 0, 0);  // Black text
+      printf(  "[%d;2;%02d;%02d;%02dm", BGC, R, G, B);
+    } else
+      printf(  "[%d;%d;%d;m", R, G, B);
 #endif
+  }
 }
+
 float brightness  ( unsigned long clr) {
   float brght;
 
@@ -519,6 +526,7 @@ static void find_escape_sequences(wint_t c, int* state, bool *on) {
       }
     } else if ( *state == 2 ) {     // do not reset if *state == 3
       *state = 0;
+      B_clrz = true;
     }
 
     // escape off sequence can be either \[[m or \[[0;0m
@@ -835,7 +843,8 @@ int main(int argc, char *argv[]) {
        *pch,
          ch;
   short clr = -1,    // color
-        stl =  1;    // style
+        stl =  1,    // style
+        oclr;
 
   if ( B_tty ) set_cursor( false );
 //if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
@@ -878,6 +887,7 @@ int main(int argc, char *argv[]) {
           if ( B_strip ) printf( "%c", *pch );
           else {
 
+            oclr = clr;
             switch ( mode ) {
               case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
               case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
@@ -886,6 +896,7 @@ int main(int argc, char *argv[]) {
               case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
               case MLOL: inc_bylol( *pch, &clr ); break;
             }
+            if ( oclr != clr ) B_clrz = true;
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
