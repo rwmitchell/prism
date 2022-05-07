@@ -1,0 +1,17 @@
+#!/bin/zsh
+
+# copied from git-kw.plugin.sh -> guk()
+  fl=($( git diff-tree --name-only --no-commit-id -r -a HEAD ))
+  printf "Update: %s\n" $fl
+  for file in $fl
+  do
+    rsp=$(prompt -p "delete ?: $file" "yYnNaq")
+    case "$rsp" in
+      (n)  ;;
+      (N | a | q) break ;;
+      (y | Y) rm $file
+        git checkout -f $file ;;
+    esac
+  done
+
+  ssay "Files have been committed"
