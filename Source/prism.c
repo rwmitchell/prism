@@ -592,11 +592,12 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
   exit(-0);
 }
 int main(int argc, char *argv[]) {
-  int errflg = 0,
-      dinc   = 1,                // debug incrementor
-      opt,
-      pal_ndx  = -1,
-      longindex=  0;
+  SI32 errflg = 0,
+       dinc   = 1,                // debug incrementor
+       opt,
+       pal_ndx  = -1,
+       longindex=  0;
+  UI16 optcnt = 1;
   bool B_have_arg = true;
   extern int   optind,
                optopt;
@@ -658,45 +659,49 @@ int main(int argc, char *argv[]) {
 //BUGOUT("tty: %s\n", ttyname(1) );
 
   // parse command line options
+  SI32 has_arg = 0;
   while ( ( opt=getopt_long_only(argc, argv, opts, longopts, &longindex )) != EOF ) {
 
     B_have_arg = true;
     memset( myarg, '\0', 1024 );      // reset
 
-    if ( opt == 0 ) {                 // we got a longopt
-      opt = longopts[longindex].val;  // set opt to short opt value
-//  } else {
-//    BUGOUT("shortopt: %c:%d (%s)\n", opt, opt, optarg );
+//  BUGOUT("(%d:%c): %d longindex\n", opt, opt, longindex );
+    if ( longindex ) {                        // we got a longopt
+      opt     = longopts[longindex].val;      // set opt to short opt value
+      has_arg = longopts[longindex].has_arg;
+
+      // optarg is already set if -option=value was used
+      // optarg is NULL        if -option value was used
+      if ( has_arg == 2 && ! optarg ) optarg = argv[optind];
+//    BUGOUT( "(%d:%c) %d[%s] LONGOPT\n", opt, opt, longindex, optarg );
     }
+//  BUGOUT( "has_arg: %d (%s : %d)\n", has_arg, optarg, optopt );
 
     // Pre-Check
     if ( optarg ) {                // only check if not null
       switch (opt) {               // check only args with possible STRING options
         case 202:
         case 'd':
-          if ( *optarg == '\0' ) {
-            BUGOUT("optarg is empty\n");
+          if ( !optarg || *optarg == '\0' ) {
+//          BUGOUT("optarg is empty\n");
             if ( argv[optind] == NULL ) {
               BUGOUT("next arg is also NULL\n");
+            } else if ( *optarg == '-' ) {  // optarg is actually the next option
+//            BUGOUT("optarg is: %s, probably next option\n", optarg);
+              if ( !longindex ) optind--;   // only decrement if not longopt
               B_have_arg = false;
             } else {
-              BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
+//            BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
               strcpy(myarg, argv[optind++]);
+              if (  longindex ) optind++;   // increment twice for longopt?
             }
-          } else if ( *optarg == '-' ) {  // optarg is actually the next option
-            BUGOUT("optarg is: %s, probably next option\n", optarg);
-            --optind;
-            B_have_arg = false;
-          } else {
-//          BUGOUT("optional arg for %s is %s\n", longopts[longindex].name, optarg );
-
-            strcpy(myarg, optarg);
-//          BUGOUT("optarg = %c(%s)\n", *optarg, myarg);
           }
           break;
       }
     } else
       B_have_arg = false;          // optarg was null
+
+    if ( opt == ':' ) opt = optopt;
 
     // Normal Check
     switch (opt) {
@@ -767,13 +772,18 @@ int main(int argc, char *argv[]) {
                 break;
 
       case 202:
+//      BUGOUT( "have_arg: %s  optind: %d\n", TF[ B_have_arg ], optind )
+//      BUGOUT( "ARGS: (%s:%s)\n", myarg, optarg );
         if ( B_have_arg ) {
-          foregrnd = strtol(myarg, NULL, 16 );
+//        BUGOUT( "myarg: %s : %s\n", myarg, optarg );
+          foregrnd = strtol(optarg, NULL, 16 );
           if ( foregrnd == 0 ) {        // we didn't get a number
             foregrnd = 0xFF0000;
+            B_have_arg = false;
             --optind;
           }
         }
+//      BUGOUT( "FORE: %0lX  optind: %d\n", foregrnd, optind )
         B_ONE = true;
         break;
 
@@ -804,6 +814,9 @@ int main(int argc, char *argv[]) {
         ++errflg;
         break;
     }
+    optcnt += B_have_arg ? 2 : 1;
+    longindex = 0;   // Reset value
+    has_arg = 0;
   }
 
   if (errflg) help(argv[0], opts, longopts);
@@ -841,7 +854,8 @@ int main(int argc, char *argv[]) {
   if ( B_tty ) set_cursor( false );
 //if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
 
-  if ( optind == argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
+//if ( optind == argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
+  if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
