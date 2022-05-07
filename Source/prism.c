@@ -893,16 +893,20 @@ int main(int argc, char *argv[]) {
           if ( B_strip ) printf( "%c", *pch );
           else {
 
-            oclr = clr;
-            switch ( mode ) {
-              case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
-              case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
-              case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
-              case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
-              case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-              case MLOL: inc_bylol( *pch, &clr ); break;
+            if ( B_ONE )
+                clr = B_clrz;
+            else {
+              oclr = clr;
+              switch ( mode ) {
+                case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
+                case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+                case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+                case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+                case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
+                case MLOL: inc_bylol( *pch, &clr ); break;
+              }
+              if ( oclr != clr ) B_clrz = true;
             }
-            if ( oclr != clr ) B_clrz = true;
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
