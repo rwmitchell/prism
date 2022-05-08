@@ -1,10 +1,5 @@
 /* prism.c                                        2018-12-31  rwm
- * As a goddess, Iris is associated with communication, messages,
- * the rainbow and new endeavors. This personification of a rainbow
- * was once described as being a link to the heavens and earth.
- * In some texts she is depicted wearing a coat of many colors.
- * However, a prism is also very appropriate for refracting or
- * combining colors of light
+ * colorize or strip colors from stdin
  *
   $GLog$
  *
@@ -31,22 +26,20 @@ char *gitid = "$Id$",
 
 const char *TF[]= {"False", "True"};
 
-char myarg[1024],   // temporary optarg value
-     myopt[1024],   // example optional argument
+char myarg[1024],        // temporary optarg value
      FS = ' ';
 
-double offx   = 0.0, // randomize output colors
-       freq_h = 0.23,
-       freq_v = 0.1;
-int    debug  = 0,
-       ccnt   = 2;   // contiguous colors
-unsigned long
-    foregrnd = 0xFF0000;
+FP64 offx   = 0.0,       // randomize output colors
+     freq_h = 0.23,
+     freq_v = 0.1;
+SI32 debug  = 0,
+     ccnt   = 2;         // contiguous colors
+UI64 foregrnd = 0xFF0000;
 
 enum { MAX_SEQ = 64 };
-int SEQ[]  = { [0 ... MAX_SEQ] = -1 },
-    sz_seq =   0,
-    ncol   = 999;    // max columns to color
+SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
+     sz_seq =   0,
+     ncol   = 999;       // max columns to color
 
 bool
      B_256   = true,
@@ -86,18 +79,18 @@ typedef enum {
   MFLD = 5,
 } Mode_t;
 Mode_t mode = MCOL;
-int  append_SEQ   ( int val ) {                      // append -y args to an array
-  int cnt=0,
-     *ps = SEQ;
+SI32  append_SEQ  ( SI32 val ) {                      // append -y args to an array
+  SI32 cnt=0,
+      *ps = SEQ;
 
   while ( cnt++ < MAX_SEQ && *ps != -1  ) ++ps;
   *ps = val;
 
   return( cnt );
 }
-short   set_SEQ   ( short nseq, int npal, unsigned int pal[] ) {   // set the color sequence order
-  short i,
-        t;
+SI32   set_SEQ    ( SI32 nseq, SI32 npal, UI32 pal[] ) {   // set the color sequence order
+  SI32 i,
+       t;
 
   if ( debug & 0x0002 ) {
     STDOUT("%2d: nseq\n", nseq );
@@ -117,7 +110,6 @@ short   set_SEQ   ( short nseq, int npal, unsigned int pal[] ) {   // set the co
     t++;
   } else t = 0;
 
-//for ( i=nseq; i<npal; ++i, ++t ) { STDOUT("%2d: %2d %2d\n", i, t, t%npal ); SEQ[i] = t%npal; }
   for ( i=nseq; i<npal; ++i, ++t ) SEQ[i] = t%npal;
   nseq = MAX( nseq, npal );
   for ( i=0; i<nseq; ++i ) SEQ[i] = pal[ SEQ[i] ];
@@ -125,8 +117,8 @@ short   set_SEQ   ( short nseq, int npal, unsigned int pal[] ) {   // set the co
   return( nseq );
 }
 void   list_SEQ   ( ) {
-  int cnt=0,
-     *ps = SEQ;
+  SI32 cnt=0,
+      *ps = SEQ;
 
   STDOUT("Y: " );
   while ( cnt++ < MAX_SEQ && *ps != -1  ) STDOUT(" %06X", *ps++ );
@@ -173,11 +165,11 @@ const char *altcolors[] = {
 
 // https://trendct.org/2016/01/22/how-to-choose-a-label-color-to-contrast-with-background/
 
-unsigned long brighten( unsigned long clr ) {
+UI64 brighten    ( UI64 clr ) {
 
-  int R = (clr & 0xFF0000) >> 16,
-      G = (clr & 0x00FF00) >>  8,
-      B = (clr & 0x0000FF);
+  SI32 R = (clr & 0xFF0000) >> 16,
+       G = (clr & 0x00FF00) >>  8,
+       B = (clr & 0x0000FF);
 
   R = MIN( 0xFF, R+0x10);
   G = MIN( 0xFF, G+0x10);
@@ -185,15 +177,15 @@ unsigned long brighten( unsigned long clr ) {
 
   return( (R<<16)+(G<<8)+B );
 }
-void reset_attr   ( ) {
+void reset_attr  ( ) {
   printf("\e[0m");
   B_clrz = true;
 }
-void set_color256 ( unsigned long clr, bool BG) {
+void set_color256( UI64 clr, bool BG) {
 
-  int R = (clr & 0xFF0000) >> 16,
-      G = (clr & 0x00FF00) >>  8,
-      B = (clr & 0x0000FF);
+  SI32 R = (clr & 0xFF0000) >> 16,
+       G = (clr & 0x00FF00) >>  8,
+       B = (clr & 0x0000FF);
 
   if ( B_clrz ) {
     B_clrz = false;
@@ -222,30 +214,29 @@ void set_color256 ( unsigned long clr, bool BG) {
   }
 }
 
-float brightness  ( unsigned long clr) {
-  float brght;
+FP32 brightness  ( UI64 clr) {
+  FP32 brght;
 
-  int R = (clr & 0xFF0000) >> 16,
-      G = (clr & 0x00FF00) >>  8,
-      B = (clr & 0x0000FF);
+  SI32 R = (clr & 0xFF0000) >> 16,
+       G = (clr & 0x00FF00) >>  8,
+       B = (clr & 0x0000FF);
 
   brght = ( 299.0*R + 587.0*G + 114.0*B ) / 1000;  // This formula is real
 
 //if ( brit > 150 ) printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x22, 0x35, 0x46);
 //else              printf(  "[%d;2;%03d;%03d;%03dm", BGC, 0x7F, 0x7F, 0x7F);
 //printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
-//printf(" %3d ", (int) brit );
+//printf(" %3d ", (SI32) brit );
 
   return ( brght );
 }
-void  mycontrast  ( int pal[], int len ) {
-  float txt, bkg,
-        con;           // contrast
-  int   i;
+void mycontrast  ( SI32 pal[], SI32 len ) {
+  FP32 txt, bkg,
+       con;            // contrast
+  SI32  i;
 
-  unsigned
-  int rgb = 0X0C1E04, // test values - background color
-      tmp;
+  UI32 rgb = 0X0C1E04, // test values - background color
+       tmp;
 
   bkg = brightness( rgb );
 
@@ -265,13 +256,12 @@ void  mycontrast  ( int pal[], int len ) {
   }
   exit( 0 );
 }
-void  bright_pal  ( int pal[], int len ) {
-  float txt, bkg,
-        con;           // contrast
-  int   i;
+void bright_pal  ( SI32 pal[], SI32 len ) {
+  FP32 txt, bkg,
+       con;            // contrast
+  SI32 i;
 
-  unsigned
-  int rgb = 0X0C1E04, // test values - background color
+  UI32 rgb = 0X0C1E04, // test values - background color
       tmp;
 
   bkg = brightness( rgb );
@@ -286,12 +276,12 @@ void  bright_pal  ( int pal[], int len ) {
     pal[i] = tmp;
   }
 }
-void  show_colors ( ) {
+void show_colors ( ) {
   const
   char *pt;
-  int i,
-      cnt = ARRAY_SIZE( altcolors );
-  unsigned long hex;
+  SI32 i,
+       cnt = ARRAY_SIZE( altcolors );
+  UI64 hex;
 
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
@@ -307,11 +297,10 @@ void  show_colors ( ) {
   }
   exit(0);
 }
-unsigned
-int   str2hex    ( const char *str, unsigned int *hex ) {
+UI32 str2hex     ( const char *str, UI32 *hex ) {
   const
   char *pt;
-  int pos = 0;
+  SI32 pos = 0;
 
   pt = str;
   while ( ( pt=strchr( pt, '#') ) ) {
@@ -321,9 +310,8 @@ int   str2hex    ( const char *str, unsigned int *hex ) {
 
   return( pos );
 }
-unsigned
-int   get_colors ( int ndx, unsigned int *hex ) {
-  int cnt = ARRAY_SIZE( altcolors ) - 1;
+UI32 get_colors  ( SI32 ndx, UI32 *hex ) {
+  SI32 cnt = ARRAY_SIZE( altcolors ) - 1;
 
   if ( ndx < 0 || ndx > cnt ) {
     BUGERR("ndx %d is invalid, expected 0 to %d\n", ndx, cnt );
@@ -332,7 +320,7 @@ int   get_colors ( int ndx, unsigned int *hex ) {
 
   return( str2hex( altcolors[ndx], hex ) );
 }
-void  set_cursor ( bool on) {
+void set_cursor  ( bool on) {
   if ( on ) {
     printf("]1337;HighlightCursorLine=yes"); // enable cursor guide in iTerm
 //  printf("]1337;CursorShape=0");           // set block     cursor
@@ -344,12 +332,12 @@ void  set_cursor ( bool on) {
     printf("[%d;m", 1 );  // bold
   }
 }
-void  set_color8 ( short stl, short clr) {
+void set_color8  ( SI16 stl, SI16 clr) {
   printf("[%d;%dm", stl, clr+31);
 }
-void  inc_bypar  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0,
-               par = 0;        // total paragraphs
+void inc_bypar   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
+  static SI16 cnt = 0,
+              par = 0;        // total paragraphs
   static char och = '\0';
 
   if ( *val == -1    )    *val = cnt = 0;
@@ -364,9 +352,9 @@ void  inc_bypar  ( char ch, short *val, unsigned short cycle, int max ) {
   och = ch;
   if ( par >= ncol ) *val = -1;
 }
-void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0,
-               row = 0;
+void inc_byrow   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
+  static SI32 cnt = 0,
+              row = 0;
 
   if ( *val == -1    )    *val = cnt = 0;
   if (  cnt == cycle ) { (*val)++; *val %= max; }
@@ -379,12 +367,12 @@ void  inc_byrow  ( char ch, short *val, unsigned short cycle, int max ) {
   }
   if ( row > ncol ) *val = -1;
 }
-void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0,
-               pos = 0,
-               fld = 0,
-               fpl = 0,
-               fpm[64] = { 0 };    // max pos for each fld
+void inc_byfld   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
+  static SI32 cnt = 0,
+              pos = 0,
+              fld = 0,
+              fpl = 0,
+              fpm[64] = { 0 };    // max pos for each fld
 
   pos++;
   if ( ch == '\n' ) {  fld = fpl = 0; cnt = 1; }
@@ -400,14 +388,13 @@ void  inc_byfld  ( char ch, short *val, unsigned short cycle, int max ) {
     if ( fpm[fld] == 0 ) fpm[fld] = pos;
     fpm[fld] = MAX( fpm[fld], MIN( fpm[fld]+4, pos ) );           // limit increasing field separator position
     if ( B_align && fpm[fld] >= pos) STDOUT("%*s", fpm[fld] - pos, "");
-//  STDOUT("(%2d:%2d:%2d)", fld, pos, fpm[fld] );
     pos = 0;
   }
   if ( fpl >= ncol ) *val = -1;
 }
-void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
-  static short cnt = 0,
-               cpl = 0;    // columns per line
+void inc_bycol   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
+  static SI32 cnt = 0,
+              cpl = 0;    // columns per line
 
   if ( *val == -1 ) *val = cnt = 0;
   if ( cnt == cycle ) { (*val)++; cpl++; }
@@ -419,43 +406,43 @@ void  inc_bycol  ( char ch, short *val, unsigned short cycle, int max ) {
   *val %= max;
   if ( cpl >= ncol ) *val = -1;
 }
-void  inc_bylol  ( char ch, short *val ) {
-  static int i = 0,
+void inc_bylol   ( char ch, SI32 *val ) {
+  static SI32 i = 0,
              l = 0;
   if ( ch == '\n' ) { l++; i=0; }
   else {
 #ifdef __APPLE__
-    int nval = offx * ARRAY_SIZE(codes) + (int)((i += wcwidth(ch)) * freq_h + l * freq_v);
+    SI32 nval = offx * ARRAY_SIZE(codes) + (SI32)((i += wcwidth(ch)) * freq_h + l * freq_v);
 #else
-    int nval = offx * ARRAY_SIZE(codes) + (int)((i += 1          ) * freq_h + l * freq_v);
+    SI32 nval = offx * ARRAY_SIZE(codes) + (SI32)((i += 1          ) * freq_h + l * freq_v);
 #endif
 
     if ( *val != nval )
       wprintf(L"\033[38;5;%hhum", codes[(*val = nval) % ARRAY_SIZE(codes)]);
   }
 }
-void  inc_bywrd  ( char ch, short *val, unsigned short cycle, int max ) {
-  static char  och = '\0';
-  static short cnt = 0,
-               wpl = 0;        // words per line
+void inc_bywrd   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
+  static char och = '\0';
+  static SI32 cnt = 0,
+              wpl = 0;             // words per line
 
   if ( och == '\n' ) {  wpl = 0; cnt = 1; }
 
   if ( cnt == cycle ) { (*val)++; *val %= max; ++wpl; }
-  if ( cycle == 0 ) cycle = 1;               // make sure cycle is not zero
+  if ( cycle == 0 ) cycle = 1;     // make sure cycle is not zero
   cnt %= cycle;
   if ( !isspace( och ) &&  isspace( ch ) ) cnt++;
   och = ch;
   if ( wpl > ncol ) *val = -1;
 }
-char  mygetch    ( bool set, void *buf ) {
+char mygetch     ( bool set, void *buf ) {
   static char *pch;               // these lines are not used directly,
 
   if ( set ) pch = (char *) buf;  // just staying compatible to mybufch()
 
   return( getchar() );
 }
-char  mybufch    ( bool set, void *buf ) {
+char mybufch     ( bool set, void *buf ) {
   static char *pch;
 
   if ( set ) pch = (char *) buf;
@@ -464,91 +451,50 @@ char  mybufch    ( bool set, void *buf ) {
   return( *pch );
 }
 // "Borrowed" from lolcat.c - START
-#define ORIG_ESC_no
-#ifdef  ORIG_ESC
-static void find_escape_sequences(wint_t c, int* state, bool *on)
-{
+static
+void find_escape_sequences(wint_t c, SI32* state, bool *on) {
   static char esc[32] = { '\0' };
   static char *pc = esc;
-    if (c == '\033') { /* Escape sequence YAY */
-        *state = 1;
-    } else if (*state == 1) {
-        *(pc++) = c;
-        if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
-            *state = 2;
-    } else {
-        *state = 0;
+
+  if (c == '\033') { /* Escape sequence YAY */
+    *state = 1;
+  } else if (*state == 1) {
+    if ( c == ']' ) {
+      *state = 3;   // assume a ]1337 escape code
     }
-
-    // escape off sequence can be either \[[m or \[[0;0m
-
-    if ( *state == 2 ) {
-      pc--;
-//    STDOUT( "\n{%s:%c}\n", esc, *pc );
-      if ( *pc == 'm' ) {
-        int f = 0, b = 0, s = 0;
-        sscanf( esc, "[%d%*c%d%*c%d", &b, &f, &s );
-        *on =  b+f ? true : false;
-  //    STDOUT("{%s: :%d:%d:%d}\n", esc, f, b, *on)
-      }
-      memset( esc, '\0', 31 );   // clear
-      pc = esc;                  // and reset
-    }
-
-//  if ( *state || cnt ) STDOUT( "[%d:%d:%d]", cnt, *state, *on );
-}
-#else
-static void find_escape_sequences(wint_t c, int* state, bool *on) {
-  static char esc[32] = { '\0' };
-  static char *pc = esc;
-    if (c == '\033') { /* Escape sequence YAY */
-      *state = 1;
-    } else if (*state == 1) {
-      if ( c == ']' ) {
-        *state = 3;   // assume a ]1337 escape code
-//      printf( "Be Leet!\n" );
-      }
-      else {
-        *(pc++) = c;
-        if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
-          *state = 2;
-      }
-    } else if ( *state == 2 ) {     // do not reset if *state == 3
-      *state = 0;
-      B_clrz = true;
-    }
-
-    // escape off sequence can be either \[[m or \[[0;0m
-
-    if ( *state == 2 ) {
-      pc--;
-//    STDOUT( "\n{%s:%c}\n", esc, *pc );
-      if ( *pc == 'm' || *pc == 'n' ) {
-        int f = 0, b = 0, s = 0;
-        sscanf( esc, "[%d%*c%d%*c%d", &b, &f, &s );
-        *on =  b+f ? true : false;
-  //    STDOUT("{%s: :%d:%d:%d}\n", esc, f, b, *on)
-      }
-      memset( esc, '\0', 31 );   // clear
-      pc = esc;                  // and reset
-    } else if ( *state == 3 ) {
-//    printf( ">%d|", c );
-      if ( c == '\a' ) {       // \a is ^G, end of 1337 code
-        // printf( "%c", *pc );
+    else {
+      *(pc++) = c;
+      if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
         *state = 2;
-//      printf( "DONE Leet!\n" );
-      }
     }
+  } else if ( *state == 2 ) {     // do not reset if *state == 3
+    *state = 0;
+    B_clrz = true;
+  }
 
-//  if ( *state || cnt ) STDOUT( "[%d:%d:%d]", cnt, *state, *on );
+  // escape off sequence can be either \[[m or \[[0;0m
+
+  if ( *state == 2 ) {
+    pc--;
+    if ( *pc == 'm' || *pc == 'n' ) {
+      SI32 f = 0, b = 0, s = 0;
+      sscanf( esc, "[%d%*c%d%*c%d", &b, &f, &s );
+      *on =  b+f ? true : false;
+    }
+    memset( esc, '\0', 31 );      // clear
+    pc = esc;                     // and reset
+  } else if ( *state == 3 ) {
+    if ( c == '\a' ) {            // \a is ^G, end of 1337 code
+      *state = 2;
+    }
+  }
 }
-#endif
 // "Borrowed" from lolcat.c - END
-void  one_line   ( const char *progname ) {
+void one_line    ( const char *progname ) {
   STDOUT("%-20s: Colorize input\n", progname );
   exit(0);
 }
-void  help       ( char *progname, const char *opt, struct option lopts[] ) {
+void help        ( char *progname, const char *opt, struct option lopts[] ) {
 
   STDERR("%s %s\n", __DATE__, __TIME__ );
   STDERR("%s\n", RWM_VERSION );
@@ -591,7 +537,7 @@ void  help       ( char *progname, const char *opt, struct option lopts[] ) {
 
   exit(-0);
 }
-int main(int argc, char *argv[]) {
+SI32 main(SI32 argc, char *argv[]) {
   SI32 errflg = 0,
        dinc   = 1,                // debug incrementor
        opt,
@@ -599,7 +545,7 @@ int main(int argc, char *argv[]) {
        longindex=  0;
   UI16 optcnt = 1;
   bool B_have_arg = true;
-  extern int   optind,
+  extern SI32  optind,
                optopt;
   extern char *optarg;
 
@@ -641,11 +587,10 @@ int main(int argc, char *argv[]) {
 
   char *env_col = getenv("PRISM");
 
-  unsigned
-  int palette[32] = { 0 },
+  UI32 palette[32] = { 0 },
       sz_pal = 0;
 
-  short tseq = -1;
+  SI32 tseq = -1;
 
   char ( *myread)( bool, void * );
 
@@ -653,10 +598,7 @@ int main(int argc, char *argv[]) {
   gettimeofday(&tv, NULL);
   offx = (tv.tv_sec % 300) / 300.0;
 
-  strcpy(myopt, "defval");
-
   B_tty = isatty( STDOUT_FILENO );    // setcursor fails when stdout is piped
-//BUGOUT("tty: %s\n", ttyname(1) );
 
   // parse command line options
   SI32 has_arg = 0;
@@ -665,7 +607,6 @@ int main(int argc, char *argv[]) {
     B_have_arg = true;
     memset( myarg, '\0', 1024 );      // reset
 
-//  BUGOUT("(%d:%c): %d longindex\n", opt, opt, longindex );
     if ( longindex ) {                        // we got a longopt
       opt     = longopts[longindex].val;      // set opt to short opt value
       has_arg = longopts[longindex].has_arg;
@@ -673,9 +614,7 @@ int main(int argc, char *argv[]) {
       // optarg is already set if -option=value was used
       // optarg is NULL        if -option value was used
       if ( has_arg == 2 && ! optarg ) optarg = argv[optind];
-//    BUGOUT( "(%d:%c) %d[%s] LONGOPT\n", opt, opt, longindex, optarg );
     }
-//  BUGOUT( "has_arg: %d (%s : %d)\n", has_arg, optarg, optopt );
 
     // Pre-Check
     if ( optarg ) {                // only check if not null
@@ -683,15 +622,12 @@ int main(int argc, char *argv[]) {
         case 202:
         case 'd':
           if ( !optarg || *optarg == '\0' ) {
-//          BUGOUT("optarg is empty\n");
             if ( argv[optind] == NULL ) {
               BUGOUT("next arg is also NULL\n");
             } else if ( *optarg == '-' ) {  // optarg is actually the next option
-//            BUGOUT("optarg is: %s, probably next option\n", optarg);
               if ( !longindex ) optind--;   // only decrement if not longopt
               B_have_arg = false;
             } else {
-//            BUGOUT("next arg is %d:%s\n", optind, argv[optind] );
               strcpy(myarg, argv[optind++]);
               if (  longindex ) optind++;   // increment twice for longopt?
             }
@@ -706,10 +642,8 @@ int main(int argc, char *argv[]) {
     // Normal Check
     switch (opt) {
       case ':':              // check optopt for previous option
-//      BUGOUT("Got a Colon for: %c\n", optopt );
         switch( optopt ) {
           case 'd': debug += dinc;
-//                  BUGOUT("debug level: %d\n", debug );
                     dinc <<= 1;
                     break;
           default : BUGOUT("No arg for %c\n", optopt ); break;
@@ -772,10 +706,7 @@ int main(int argc, char *argv[]) {
                 break;
 
       case 202:
-//      BUGOUT( "have_arg: %s  optind: %d\n", TF[ B_have_arg ], optind )
-//      BUGOUT( "ARGS: (%s:%s)\n", myarg, optarg );
         if ( B_have_arg ) {
-//        BUGOUT( "myarg: %s : %s\n", myarg, optarg );
           foregrnd = strtol(optarg, NULL, 16 );
           if ( foregrnd == 0 ) {        // we didn't get a number
             foregrnd = 0xFF0000;
@@ -783,7 +714,6 @@ int main(int argc, char *argv[]) {
             --optind;
           }
         }
-//      BUGOUT( "FORE: %0lX  optind: %d\n", foregrnd, optind )
         B_ONE = true;
         break;
 
@@ -847,22 +777,18 @@ int main(int argc, char *argv[]) {
   char *buf   = NULL,
        *pch,
          ch;
-  short clr = -1,    // color
-        stl =  1,    // style
-        oclr;
+  SI32 clr = -1,    // color
+       stl =  1,    // style
+       oclr;
 
   if ( B_tty ) set_cursor( false );
-//if ( optind == argc ) buf = (char *) loadstdin( &f_sz );
-
-//if ( optind == argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
   if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
   for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
-    int escape_state = 0;
+    SI32 escape_state = 0;
     bool on = false;
-//       pon= false;
 
     if ( ! f_sz ) {
       buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
@@ -872,7 +798,6 @@ int main(int argc, char *argv[]) {
 
     reset_attr();                                   // clear any cruft
 
-//  pch = buf;
     pch = &ch;
     *pch = myread( false, (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
@@ -931,9 +856,6 @@ int main(int argc, char *argv[]) {
 //      printf( "^%c$", *pch );
       } else if ( B_layer || escape_state == 3 )
         printf( "%c", *pch  );                // print escape codes if layering
-
-//    if ( pon != on ) STDOUT( "%c", on ? 'Z' : 'x' )
-//    pon = on;
 
       *pch = myread( false, (void *) NULL );
     }
