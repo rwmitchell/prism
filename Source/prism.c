@@ -1,8 +1,8 @@
 /* prism.c                                        2018-12-31  rwm
  * colorize or strip colors from stdin
  *
-  $GLog$
- *
+  $GLog:
+  :GLog$
  */
 
 #include <stdio.h>
