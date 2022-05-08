@@ -1,9 +1,0 @@
-Traveler Notes
-
-= W values =
-  -   60 : lower case letters
-  - 2800 : braile
-= Text Messages =
-  * How can we generate random text msgs?
-    - bofh
-    - 
