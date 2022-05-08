@@ -75,14 +75,8 @@ debug: make_it
 
 
 # Stand alone Programs
-DST_PROGS = \
-						$(DST)/asot_term     \
-						$(DST)/getwinsz      \
-						$(DST)/matrix        \
-						$(DST)/prism         \
-						$(DST)/ttl           \
-						$(DST)/traveler   \
-						$(DST)/trvlr_send \
+DST_PROGS =    \
+	$(DST)/prism \
 
 # All Scripts (basename, no extensions ie: foo, not foo.pl)
 DST_SCRPT = \
@@ -147,13 +141,7 @@ all_make: \
 show_install        \
 
 
-# 2007-08-22: does not compile
-#	$(DST)/testbyteorder \
-
 install:            \
-	$(NST)/matrix     \
-	$(NST)/traveler   \
-	$(NST)/trvlr_send \
 	$(NST)/prism      \
 
 $(DST_PROGS):	$(DST)/% : $(OBJ)/%.o $(DEPFILES)
