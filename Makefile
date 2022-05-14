@@ -74,7 +74,13 @@ ifdef GIT_VERSION
 	endif
 endif
 
-BLD = $(HOME)/Build
+# Override this on the cmdline with: make buildroot=/some/where/else
+# base for all compiler output
+# buildroot = $(HOME)
+buildroot = .
+
+BLD = $(buildroot)/Build
+INC = $(BLD)/include
 MCH = $(BLD)/$(MACHTYPE)
 BAS = $(MCH)/$(PTH)/$(DIR)
 DEP = $(MCH)/.dep/$(DIR)
@@ -94,18 +100,17 @@ MYINC = -I$(BLD)/include -I$(SRC)
 MYLIB = -L$(BLD)/lib -lmylib
 
 DIRS =       \
-			$(BAS) \
 			$(DEP) \
-			$(DST) \
-			$(NST) \
 			$(OBJ) \
+			$(BAS) \
+			$(DST) \
+			$(NST)
 
 # Optimistic selection
 ALL_SRC  = $(wildcard $(SRC)/*.c)
-ALL_DEP  = $(wildcard $(DEP)/*.d)
 
 # Realistic  selection
-# ALL_SRC \
+# ALL_SRC        \
 #	$(SRC)/prism.c \
 
 ALL_OBJ := $(ALL_SRC:%.c=%.o)
@@ -113,13 +118,13 @@ ALL_OBJ := $(ALL_OBJ:$(SRC)/%=$(OBJ)/%)
 
 # Stand alone Programs
 DST_PROGS =    \
-	$(DST)/prism \
+	$(DST)/prism
 
 $(DST_PROGS): $(ALL_OBJ)
 	@ printf "\n"
 	@ printf "Making: $@ $^" | $(scolumn)
 	@ printf "\n\n"
-	@ $(CC) -o $@ $^ $(LIBS)
+	@ $(CC) -o $@ $^
 	$(DSYM) $@
 	@ printf "\n"
 
@@ -128,8 +133,8 @@ $(DST_PROGS): $(ALL_OBJ)
 list:
 	@echo "debug release"
 	@echo "all install"
-	@echo "foo"
 	@echo "help help_install"
+	@echo $(DST_PROGS)
 
 all:                \
 	$(DIRS)           \
@@ -150,10 +155,10 @@ $(DST)/%:	$(SRC)/%.sh
 
 NST_PROGS = $(subst $(DST),$(NST),$(DST_PROGS))
 
-.PHONY: install help help_install
-
 $(NST)/%: $(DST)/%
 	install -m ugo+rx $< $@
+
+.PHONY: install help help_install
 
 install:            \
 	$(NST)            \
@@ -168,7 +173,7 @@ clean:
 	@ printf "\n$(RM):\t"; printf "$(ALL_OBJ)"    | $(scolumn); printf "\n"
 	@ printf "\nrmdir:\t"; printf "$(DEP) $(OBJ)" | $(scolumn); printf "\n"
 	$(RM) $(ALL_DEP) $(ALL_OBJ)
-	rmdir $(DEP) $(OBJ)
+	rmdir $(DEP) $(OBJ) $(DST)
 
 clobber: clean
 	@ printf "\n$(RM):\t"; printf "$(DST_PROGS)"  | $(scolumn); printf "\n"
@@ -178,11 +183,12 @@ clobber: clean
 
 vars:
 	@ printf "Platform: %s - %s\n" $(OS) $(MACHTYPE)
+	@ printf "\nOBJ :\t%s" $(OBJ)
 	@ printf "\nDST :\t%s" $(DST)
 	@ printf "\nNST :\t%s" $(NST)
-	@ printf "\nOBJ :\t%s" $(OBJ)
 	@ printf "\nSRC :\t%s" $(SRC)
 	@ printf "\nSRC :\t"; printf "$(ALL_SRC)"   | $(scolumn); printf "\n"
+	@ printf "\nDEP :\t"; printf "$(ALL_DEP)"   | $(scolumn); printf "\n"
 	@ printf "\nOBJ :\t"; printf "$(ALL_OBJ)"   | $(scolumn); printf "\n"
 	@ printf "\nDIR :\t"; printf "$(DIRS)"      | $(scolumn); printf "\n"
 	@ printf "\nDST :\t"; printf "$(DST_PROGS)" | $(scolumn); printf "\n"
@@ -191,9 +197,11 @@ vars:
 help: real_help help_install
 
 real_help:
+	@ printf "\nUse: '-buildroot=$(buildroot)' to specify build root"
+	@ printf "\nUse: '-prefix=$(prefix)' to specify install root"
+	@ printf "\nUse: 'make vars' : to show all paths\n"
 	@ printf "\nmake release\n"
 	@ printf "\nDST:\t"; printf "$(DST_PROGS)" | $(scolumn); printf "\n"
-#	@ printf "\nSCR:\t"; printf "$(DST_SCRPT)" | $(scolumn); printf "\n"
 	@ printf "\nThese programs need to be compiled:\n"
 	@ make -sn release
 
@@ -214,7 +222,7 @@ make_check_all:
 make_it:
 	@ echo "make_it: "$(CFLAGS)
 	@ echo make PTH=$(PTH) CFLAGS="$(CFLAGS)" $(RUN)
-	@ make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" all
+	@ make PTH=$(PTH) CFLAGS="$(CFLAGS)" DSYM="$(DSYM)" $(RUN)
 
 
 ######################################
@@ -222,17 +230,14 @@ make_it:
 #We don't need to clean up when we're making these targets
 NODEPS:=clean tags svn install
 
-#Find all the C++ files in the $(SRC)/ directory
-SOURCES:=$(shell find $(SRC)  -name "*.c")
-
 #These are the dependency files, which make will clean up after it creates them
-DEPFILES:=$(patsubst %.c,%.d,$(patsubst $(SRC)/%,$(DEP)/%, $(SOURCES)))
+ALL_DEP:=$(patsubst %.c,%.d,$(patsubst $(SRC)/%,$(DEP)/%, $(ALL_SRC)))
 
 #Don't create dependencies when we're cleaning, for instance
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
     #Chances are, these files don't exist.  GMake will create them and
     #clean up automatically afterwards
-    -include $(DEPFILES)
+    -include $(ALL_DEP)
 endif
 
 #This is the rule for creating the dependency files
@@ -248,13 +253,13 @@ types: $(SRC)/.types.vim
 $(SRC)/.types.vim: $(SRC)/*.[ch]
 	ctags --kinds-c=gstu -o- \
 		$(SRC)/*.[ch] \
-		$(BLD)/include/*.h \
+		$(INC)/*.h \
 		| grep -v "^__anon" \
 		| awk 'BEGIN { printf("syntax keyword Type\t") } \
 				{ printf("%s ", $$1) } END { print "" }' > $@
 	ctags --kinds-c=d -o- \
 		$(SRC)/*.h \
-		$(BLD)/include/*.h \
+		$(INC)/*.h \
 		| grep -v "^__anon" \
 		| awk 'BEGIN{ printf("syntax keyword Debug\t") } \
 				{ printf("%s ", $$1) } END { print "" }' >> $@
@@ -263,4 +268,4 @@ $(SRC)/.types.vim: $(SRC)/*.[ch]
 tags: $(SRC)/*.[ch]
 	ctags --fields=+l --langmap=c:.c.h \
 		$(SRC)/* \
-		$(BLD)/include/*
+		$(INC)/*
