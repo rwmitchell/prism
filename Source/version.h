@@ -1,1 +1,13 @@
-#define RWM_VERSION "RWM_VERSION prism e429b09  (HEAD -> main, origin/main, origin/HEAD) 2022-05-16 08:38:33 -0400 Richard Mitchell rwmitchell@gmail.com"
+#ifndef VERSION_H
+#define VERSION_H
+
+#ident "$File$"
+
+static const char *VersionID = "\
+  $Id$\n\
+  $MyId$\n\
+  $Date$\n\
+  $Source$\n\
+  $Auth$\n\
+  ";
+#endif
