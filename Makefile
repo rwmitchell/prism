@@ -6,22 +6,6 @@
 
 include make.$(OS)
 
-REPO:=$(shell basename ${PWD})
-GITVERSION:='$(shell git show -s --date=format:"%F %T %z" --format="$(REPO) %ad %d %h %an %aE")'
-GITVERSION:=$(shell git show -s --date=format:"%F %T %z" --format="$(REPO) %h %d %ad %an %aE")
-GITVERSION:="\#define RWM_VERSION \"RWM_VERSION $(GITVERSION)\""
-
-VERSION           = Source/version.h
-
-stamp: $(VERSION)
-	@ echo ${GITVERSION}
-
-.PHONY: update_version
-$(VERSION): update_version
-	@ [ -f $@ ] || touch $@
-	@ echo "# " ${GITVERSION}
-	@ echo $(GITVERSION) | cmp -s $@ - || echo $(GITVERSION) >$@
-
 CC_DEBUG_FLAGS    = -g3 -DDEBUG_ALL
 CC_CHECK_FLAGS    =  --analyzer-output text --analyze -I$(HOME)/Build/include -I$(SRC)
 CC_RELEASE_FLAGS  = -O3 -fcolor-diagnostics
