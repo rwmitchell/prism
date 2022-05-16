@@ -96,15 +96,16 @@ prefix = $(BLD)
 SRC = Source
 NST = $(prefix)/bin
 
-MYINC = -I$(BLD)/include -I$(SRC)
+MYINC = -I$(INC) -I$(SRC)
 MYLIB = -L$(BLD)/lib -lmylib
 
-DIRS =       \
-			$(DEP) \
-			$(OBJ) \
-			$(BAS) \
-			$(DST) \
-			$(NST)
+DIRS =   \
+	$(BLD) \
+	$(DEP) \
+	$(OBJ) \
+	$(BAS) \
+	$(DST) \
+	$(NST)
 
 # Optimistic selection
 ALL_SRC  = $(wildcard $(SRC)/*.c)
