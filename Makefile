@@ -234,7 +234,23 @@ $(DEP)/%.d: $(SRC)/%.c $(DEP)
 # End of - Dependency code added here
 
 # Make a highlight file for types.  Requires Universal ctags and awk
+CTAGS := $(shell ctags --version 2>/dev/null)
+
+ifdef CTAGS
 types: $(SRC)/.types.vim
+tags: dotags
+
+else
+types: notypes
+tags: nodotags
+endif
+
+nodotags:
+	@echo No Tags to do
+
+notypes:
+	@echo No Types to do
+
 $(SRC)/.types.vim: $(SRC)/*.[ch]
 	ctags --kinds-c=gstu -o- \
 		$(SRC)/*.[ch] \
@@ -250,7 +266,7 @@ $(SRC)/.types.vim: $(SRC)/*.[ch]
 				{ printf("%s ", $$1) } END { print "" }' >> $@
 # End types
 
-tags: $(SRC)/*.[ch]
+dotags: $(SRC)/*.[ch]
 	ctags --fields=+l --langmap=c:.c.h \
 		$(SRC)/* \
 		$(INC)/*
