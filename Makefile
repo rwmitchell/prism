@@ -6,10 +6,6 @@
 
 include make.$(OS)
 
-CC_DEBUG_FLAGS    = -g3 -DDEBUG_ALL
-CC_CHECK_FLAGS    =  --analyzer-output text --analyze -I$(HOME)/Build/include -I$(SRC)
-CC_RELEASE_FLAGS  = -O3 -fcolor-diagnostics
-
 RLS  = release
 DBG  = debug
 PTH := $(RLS)
@@ -45,12 +41,15 @@ columns = $(scolumn) | column -c 80
 # else leave DIR alone
 
 GIT_VERSION := $(shell git --version 2>/dev/null)
-# $(warning GIT $(GIT_VERSION) )
+$(warning GIT $(GIT_VERSION) )
+
+GIT_VRSN := $(shell git --version | cut -f2 -d.)
+$(warning GIT $(GIT_VRSN) )
 
 DIR  = $(shell basename $(CURDIR))
 ifdef GIT_VERSION
-	BCH := $(shell git branch --show-current)
-	BCH := $(if $(BCH),$(BCH),"TEST")
+	BCH := $(shell git branch --show-current 2>/dev/null)
+	BCH := $(if $(BCH),$(BCH),TEST)
 #	BCH := $(shell echo main)
 	ifeq ($(BCH),main)                   # Lack of whitespace is intentional
 	else
@@ -80,8 +79,8 @@ prefix = $(BLD)
 SRC = Source
 NST = $(prefix)/bin
 
-MYINC = -I$(INC) -I$(SRC)
-MYLIB = -L$(BLD)/lib -lmylib
+MYINC = -I$(INC) -I$(SRC) -I$(HOME)/Build/include
+MYLIB = -L$(BLD)/lib -L$(HOME)/Build/lib -lmylib $(LIBS)
 
 DIRS =   \
 	$(BLD) \
@@ -109,7 +108,7 @@ $(DST_PROGS): $(ALL_OBJ)
 	@ printf "\n"
 	@ printf "Making: $@ $^" | $(scolumn)
 	@ printf "\n\n"
-	@ $(CC) -o $@ $^
+	  $(CC) -o $@ $^ $(MYLIB)
 	$(DSYM) $@
 	@ printf "\n"
 
@@ -130,6 +129,7 @@ all:                \
 
 $(OBJ)/%.o : $(SRC)/%.c $(DEP)/%.d
 	@ echo "OBJ:" \
+	$(CC) -o $@ -c $< $(CFLAGS) $(MYINC)
 	$(CC) -o $@ -c $< $(CFLAGS) $(MYINC)
 
 $(DIRS):
