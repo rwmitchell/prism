@@ -637,6 +637,22 @@ SI32 main(SI32 argc, char *argv[]) {
     } else
       B_have_arg = false;          // optarg was null
 
+    if ( opt == ':' ) {            // check for missing required args
+      switch( optopt ) {
+        case 'c':
+        case 'n':
+        case 'p':
+        case 's':
+        case 'F':
+        case 'H':
+        case 'V':
+          // if there is no arg for a required longopt, longindex is not set
+          // thus cannot show original 'name'
+          GTFOUT( "Missing required argument for '%c'\n", optopt )
+          break;
+      }
+    }
+
     if ( opt == ':' ) opt = optopt;
 
     // Normal Check
