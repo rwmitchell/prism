@@ -6,10 +6,6 @@
 
 include make.$(OS)
 
-CC_DEBUG_FLAGS    = -g3 -DDEBUG_ALL
-CC_CHECK_FLAGS    =  --analyzer-output text --analyze -I$(HOME)/Build/include -I$(SRC)
-CC_RELEASE_FLAGS  = -O3 -fcolor-diagnostics
-
 RLS  = release
 DBG  = debug
 PTH := $(RLS)
@@ -45,12 +41,15 @@ columns = $(scolumn) | column -c 80
 # else leave DIR alone
 
 GIT_VERSION := $(shell git --version 2>/dev/null)
-# $(warning GIT $(GIT_VERSION) )
+$(warning GIT $(GIT_VERSION) )
+
+GIT_VRSN := $(shell git --version | cut -f2 -d.)
+$(warning GIT $(GIT_VRSN) )
 
 DIR  = $(shell basename $(CURDIR))
 ifdef GIT_VERSION
-	BCH := $(shell git branch --show-current)
-	BCH := $(if $(BCH),$(BCH),"TEST")
+	BCH := $(shell git branch --show-current 2>/dev/null)
+	BCH := $(if $(BCH),$(BCH),TEST)
 #	BCH := $(shell echo main)
 	ifeq ($(BCH),main)                   # Lack of whitespace is intentional
 	else
@@ -80,15 +79,16 @@ prefix = $(BLD)
 SRC = Source
 NST = $(prefix)/bin
 
-MYINC = -I$(BLD)/include -I$(SRC)
-MYLIB = -L$(BLD)/lib -lmylib
+MYINC = -I$(INC) -I$(SRC) -I$(HOME)/Build/include
+MYLIB = -L$(BLD)/lib -L$(HOME)/Build/lib -lmylib $(LIBS)
 
-DIRS =       \
-			$(DEP) \
-			$(OBJ) \
-			$(BAS) \
-			$(DST) \
-			$(NST)
+DIRS =   \
+	$(BLD) \
+	$(DEP) \
+	$(OBJ) \
+	$(BAS) \
+	$(DST) \
+	$(NST)
 
 # Optimistic selection
 ALL_SRC  = $(wildcard $(SRC)/*.c)
@@ -108,7 +108,7 @@ $(DST_PROGS): $(ALL_OBJ)
 	@ printf "\n"
 	@ printf "Making: $@ $^" | $(scolumn)
 	@ printf "\n\n"
-	@ $(CC) -o $@ $^
+	  $(CC) -o $@ $^ $(MYLIB)
 	$(DSYM) $@
 	@ printf "\n"
 
@@ -129,6 +129,7 @@ all:                \
 
 $(OBJ)/%.o : $(SRC)/%.c $(DEP)/%.d
 	@ echo "OBJ:" \
+	$(CC) -o $@ -c $< $(CFLAGS) $(MYINC)
 	$(CC) -o $@ -c $< $(CFLAGS) $(MYINC)
 
 $(DIRS):
@@ -233,7 +234,23 @@ $(DEP)/%.d: $(SRC)/%.c $(DEP)
 # End of - Dependency code added here
 
 # Make a highlight file for types.  Requires Universal ctags and awk
+CTAGS := $(shell ctags --version 2>/dev/null)
+
+ifdef CTAGS
 types: $(SRC)/.types.vim
+tags: dotags
+
+else
+types: notypes
+tags: nodotags
+endif
+
+nodotags:
+	@echo No Tags to do
+
+notypes:
+	@echo No Types to do
+
 $(SRC)/.types.vim: $(SRC)/*.[ch]
 	ctags --kinds-c=gstu -o- \
 		$(SRC)/*.[ch] \
@@ -249,7 +266,7 @@ $(SRC)/.types.vim: $(SRC)/*.[ch]
 				{ printf("%s ", $$1) } END { print "" }' >> $@
 # End types
 
-tags: $(SRC)/*.[ch]
+dotags: $(SRC)/*.[ch]
 	ctags --fields=+l --langmap=c:.c.h \
 		$(SRC)/* \
 		$(INC)/*
