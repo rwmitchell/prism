@@ -55,6 +55,7 @@ bool
      B_layer = false,    // keep original colors
      B_strip = false;    // strip colors
 
+#define UNUSED(x) (void)(x)    // silence warning
 #define MAX_CON 28.0
 #define ARRAY_SIZE(foo) (sizeof(foo) / sizeof(foo[0]))
 const unsigned char codes[] = {
@@ -436,9 +437,10 @@ void inc_bywrd   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   if ( wpl > ncol ) *val = -1;
 }
 char mygetch     ( bool set, void *buf ) {
-  static char *pch;               // these lines are not used directly,
-
-  if ( set ) pch = (char *) buf;  // just staying compatible to mybufch()
+  UNUSED( set );                  // args need to match mybufch()
+  UNUSED( buf );
+//static char *pch;               // these lines are not used directly,
+//if ( set ) pch = (char *) buf;  // just staying compatible to mybufch()
 
   return( getchar() );
 }
