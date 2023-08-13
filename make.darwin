@@ -1,0 +1,8 @@
+# Mac compile options
+
+# These are just samples, YMMV
+CFLAGS= -ISource -Imisc
+LIB=	 -lm -lc
+# LIB=	-L/usr/X11R6/lib -lm -lc
+
+INSTALL = install -m ugo+rx $< $@
