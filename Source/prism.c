@@ -162,6 +162,7 @@ const char *altcolors[] = {
    "#eeeeee#cccccc#bbbbbb#aaaaaa#777777",
    "#eeedee#dddddd#cccccc#bbbbbb#aaaaaa",
    "#d0d8d9#c9d0ce#c6c8c9#bac4c8#b2babf",
+   "#90ee90#f0f0f0",                              // real greenbar
 };
 
 // https://trendct.org/2016/01/22/how-to-choose-a-label-color-to-contrast-with-background/
@@ -507,6 +508,7 @@ void help        ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -c CNT: change color every %d units\n", ccnt );
   STDERR("  -8: 8 bit    colors      [%5s]\n", TF[ !B_256 ]);
   STDERR("  -b: greenbar colors\n");
+  STDERR("  -G: simulate greenbar paper\n" );
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -l: lolcat   colors\n");
   STDERR("  -L: leave existing escape codes along\n" );
@@ -552,12 +554,13 @@ SI32 main(SI32 argc, char *argv[]) {
   extern char *optarg;
 
   const
-  char *opts=":c:8aBbfF:glLmn:p:Prs:SwtTH:V:Zd:uh1";   // Leading : makes all :'s optional
+  char *opts=":c:8aBbfF:gGlLmn:p:Prs:SwtTH:V:Zd:uh1";   // Leading : makes all :'s optional
   static struct option longopts[] = {
     { "cnt",       required_argument, NULL, 'c' },
     { "8bit",            no_argument, NULL, '8' },
     { "align",           no_argument, NULL, 'a' },
     { "bar",             no_argument, NULL, 'b' },
+    { "greenbar",        no_argument, NULL, 'G' },
     { "gay",             no_argument, NULL, 'g' },
     { "metal",           no_argument, NULL, 'm' },
     { "num",       required_argument, NULL, 'n' },
@@ -676,6 +679,11 @@ SI32 main(SI32 argc, char *argv[]) {
                 break;
       case 'g': pal_ndx = 0; break;      // rainbow - gay
       case 'b': pal_ndx = 4; break;      // greenbar
+      case 'G': pal_ndx =35;             // real greenbar
+                mode    = MROW;
+                B_bkgnd = true;
+                break;
+
       case 'm': pal_ndx = 5; break;      // metal
 
       case 'n': ncol = strtol( optarg, NULL, 10 );
