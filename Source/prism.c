@@ -883,7 +883,10 @@ SI32 main(SI32 argc, char *argv[]) {
       } else if ( B_layer || escape_state == 3 )
         printf( "%c", *pch  );                // print escape codes if layering
 
-      *pch = myread( false, (void *) NULL );
+      do {
+        *pch = myread( false, (void *) NULL );
+      } while ( *pch == '\r' || *pch < -2 );  // skip carriage returns and chars > 128
+
     }
 
     f_sz = 0;
