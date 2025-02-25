@@ -894,5 +894,11 @@ SI32 main(SI32 argc, char *argv[]) {
   }                                         // for optind
 
   if ( B_tty ) set_cursor( true  );
+  // 2025-02-25: failed attempt to reset greenbar background color
+  // next line of output's background AFTER prism will be in prism's background color
+  // Resetting with 49m or 0m does NOT fix it.
+  // Outputting a newline DOES but adds an extra line of output
+//printf("\e[49mReset Background\n");
+//STDOUT( "\n" )
   exit(0);
 }
