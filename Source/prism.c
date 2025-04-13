@@ -567,7 +567,8 @@ SI32 main(SI32 argc, char *argv[]) {
     { "palette",   required_argument, NULL, 'p' },  // choose a palette
     { "backgrnd",        no_argument, NULL, 'B' },  // set background color
     { "foreground",optional_argument, NULL, 202 },
-    { "bold",            no_argument, NULL, 203 },  // set background color
+    { "fg",        optional_argument, NULL, 202 },  // new, shorter  foreground
+    { "bold",            no_argument, NULL, 203 },  // set bold font
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
     { "seq",       required_argument, NULL, 's' },
