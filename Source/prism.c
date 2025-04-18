@@ -511,7 +511,7 @@ void help        ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -G: simulate greenbar paper\n" );
   STDERR("  -g: rainbow  colors\n");
   STDERR("  -l: lolcat   colors\n");
-  STDERR("  -L: leave existing escape codes along\n" );
+  STDERR("  -L: leave existing escape codes alone\n" );
   STDERR("  -H: lolcat horizontal frequency :%.3lf\n", freq_h );
   STDERR("  -V: lolcat vertical   frequency :%.3lf\n", freq_v );
   STDERR("  -m: metal    colors\n");
@@ -808,7 +808,7 @@ SI32 main(SI32 argc, char *argv[]) {
        stl =  1,    // style
        oclr;
 
-  if ( B_tty ) set_cursor( false );
+  if ( B_tty && ! B_strip ) set_cursor( false );
   if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
@@ -823,7 +823,7 @@ SI32 main(SI32 argc, char *argv[]) {
       myread = mybufch;
     }
 
-    reset_attr();                                   // clear any cruft
+    if ( !B_strip ) reset_attr();                                   // clear any cruft
 
     pch = &ch;
     *pch = myread( false, (void *) NULL );
