@@ -5,7 +5,7 @@
   printf "Update: %s\n" $fl
   for file in $fl
   do
-    rsp=$(prompt -p "delete ?: $file" "yYnNaq")
+    rsp=$(prompt -p "delete ?: $file" "yY" "nN" "aq")
     case "$rsp" in
       (n)  ;;
       (N | a | q) break ;;
