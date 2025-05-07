@@ -34,7 +34,8 @@ FP64 offx   = 0.0,       // randomize output colors
      freq_v = 0.1;
 SI32 debug  = 0,
      ccnt   = 2;         // contiguous colors
-UI64 foregrnd = 0xFF0000;
+UI64 foregrnd = 0xFF0000,// Red
+     backgrnd = 0x000000;// Black
 
 enum { MAX_SEQ = 64 };
 SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
@@ -201,6 +202,8 @@ void set_color256( UI64 clr, bool BG) {
     } else
       printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
 
+//  STDOUT( "[%03d:%03d:%03d]", R, G, B)
+
 #else
 
     R /= 16;
@@ -287,13 +290,15 @@ void show_colors ( ) {
 
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
+    B_clrz = true;
     set_color256( 0xFFFFFF, B_bkgnd );
     STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
       hex = strtol( pt, NULL, 16 );
+      B_clrz = true;
       set_color256(    hex, B_bkgnd );
-      STDOUT("#%06lX", hex ); // fflush(stdout);
+      STDOUT("#%06lX ", hex );    // added space breaks cut/paste output into PRISM=
     }
     STDOUT("\n");
   }
@@ -528,10 +533,12 @@ void help        ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -F SEP : change color by field [%c]\n", FS);
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
+  STDERR("  -fg [HEX]: Set foreground color to single color\n" );
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
   STDERR("  -bold : set output text to bold\n");
   STDERR("  -foreground %06lX : set single color for output\n", foregrnd );
+  STDERR("  -background %06lX : set single color for output\n", backgrnd );
   STDERR("\n");
   STDERR("A custom palette can be set using the environment variable 'PRISM'. \n");
   STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
@@ -565,9 +572,10 @@ SI32 main(SI32 argc, char *argv[]) {
     { "metal",           no_argument, NULL, 'm' },
     { "num",       required_argument, NULL, 'n' },
     { "palette",   required_argument, NULL, 'p' },  // choose a palette
-    { "backgrnd",        no_argument, NULL, 'B' },  // set background color
+    { "backgrnd",        no_argument, NULL, 'B' },  // set background color instead of foreground
     { "foreground",optional_argument, NULL, 202 },
     { "fg",        optional_argument, NULL, 202 },  // new, shorter  foreground
+    { "bg",        optional_argument, NULL, 204 },  // set background color to value
     { "bold",            no_argument, NULL, 203 },  // set bold font
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
@@ -626,6 +634,7 @@ SI32 main(SI32 argc, char *argv[]) {
     if ( optarg ) {                // only check if not null
       switch (opt) {               // check only args with possible STRING options
         case 202:
+        case 204:
         case 'd':
           if ( !optarg || *optarg == '\0' ) {
             if ( argv[optind] == NULL ) {
@@ -738,20 +747,31 @@ SI32 main(SI32 argc, char *argv[]) {
           if ( foregrnd == 0 ) {        // we didn't get a number
             foregrnd = 0xFF0000;
             B_have_arg = false;
-            --optind;
-          }
+            optind--;
+          } else optind++;
         }
         B_ONE = true;
         break;
 
       case 203: B_bold = !B_bold; break;
 
+      case 204:
+        if ( B_have_arg ) {
+          backgrnd = strtol(optarg, NULL, 16 );
+          if ( backgrnd == 0 ) {        // we didn't get a number
+            backgrnd = 0xFF0000;
+            B_have_arg = false;
+            optind--;
+          } else optind++;
+        }
+        break;
+
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
           if ( debug == 0 ) {        // we didn't get a number
             debug = 1;               // we could verify by checking errno, but why?
-            --optind;
+            optind--;
           }
         } else {
           BUGOUT("increasing debug(%d) by %d\n", debug, dinc );
@@ -817,6 +837,13 @@ SI32 main(SI32 argc, char *argv[]) {
     SI32 escape_state = 0;
     bool on = false;
 
+    if ( RMhas_stdin()    ) {
+      buf   = (char *) RMloadstdin ( &f_sz );
+      mybufch( true, buf );
+      myread = mybufch;
+      optind--;   // don't increment
+    } else
+
     if ( ! f_sz ) {
       buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
       mybufch( true, buf );
@@ -829,6 +856,8 @@ SI32 main(SI32 argc, char *argv[]) {
     *pch = myread( false, (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
+    set_color256( backgrnd, true );
+    B_clrz = true;
     while ( *pch > 0
 #ifndef __APPLE__
         && *pch < 255
