@@ -193,6 +193,13 @@ void set_color256( UI64 clr, bool BG) {
   if ( B_clrz ) {
     B_clrz = false;
 
+    if ( backgrnd > 0 ) {
+      SI32 r = ( backgrnd & 0xFF0000 ) >> 16,
+           g = ( backgrnd & 0x00FF00 ) >>  8,
+           b = ( backgrnd & 0x0000FF );
+      printf(  "[%d;2;%03d;%03d;%03dm", BGC, r, g, b);
+    }
+
 #define COLORS_256
 #ifdef  COLORS_256
     if ( B_bold ) printf( "[1;m");
@@ -636,6 +643,10 @@ SI32 main(SI32 argc, char *argv[]) {
       switch (opt) {               // check only args with possible STRING options
         case 202:
         case 204:
+//        BUGERR( "Test -> %s: %s\n", optarg,  TF[ RMexists( "", optarg ) ] )
+          if ( RMexists( "", optarg))
+            B_have_arg = false;
+          // FallThru
         case 'd':
           if ( !optarg || *optarg == '\0' ) {
             if ( argv[optind] == NULL ) {
@@ -744,13 +755,17 @@ SI32 main(SI32 argc, char *argv[]) {
 
       case 202:
         if ( B_have_arg ) {
-          foregrnd = strtol(optarg, NULL, 16 );
-          if ( foregrnd == 0 ) {        // we didn't get a number
+//        BUGERR( "FG arg: %s\n", optarg )
+          if ( isalnum( *optarg)  ) {
+            foregrnd = strtol(optarg, NULL, 16 );
+            optind++;
+          } else {
             foregrnd = 0xFF0000;
             B_have_arg = false;
-            optind--;
-          } else optind++;
-        }
+//          optind--;
+          }
+        } else
+          foregrnd = 0xFF0000;
         B_ONE = true;
         break;
 
@@ -758,13 +773,17 @@ SI32 main(SI32 argc, char *argv[]) {
 
       case 204:
         if ( B_have_arg ) {
-          backgrnd = strtol(optarg, NULL, 16 );
-          if ( backgrnd == 0 ) {        // we didn't get a number
-            backgrnd = 0xFF0000;
+//        BUGERR( "BG arg: %s\n", optarg )
+          if ( isalnum( *optarg ) ) {
+            backgrnd = strtol(optarg, NULL, 16 );
+            optind++;
+          } else {
+            backgrnd = 0xFFFFFF;
             B_have_arg = false;
-            optind--;
-          } else optind++;
-        }
+//          optind--;
+          }
+        } else
+            backgrnd = 0xFFFFFF;
         break;
 
       case 'd':                      // set debug level
@@ -836,7 +855,7 @@ SI32 main(SI32 argc, char *argv[]) {
 
 //TIMOUT( "Checking stdin\n" )
 
-  bool has_stdin = RMhas_stdin( 0, 2000 );               // do only once
+  bool has_stdin = RMhas_stdin( 0, 500000 );               // do only once
 
 //TIMOUT( "Checking stdin - DONE\n" )
 
@@ -864,7 +883,7 @@ SI32 main(SI32 argc, char *argv[]) {
     *pch = myread( false, (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
-    set_color256( backgrnd, true );
+//  set_color256( backgrnd, true );
     B_clrz = true;
     while ( *pch > 0
 #ifndef __APPLE__
@@ -899,9 +918,26 @@ SI32 main(SI32 argc, char *argv[]) {
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
-              if ( B_ONE ) set_color256( foregrnd, B_bkgnd );
-              else
-              if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+              if ( B_ONE ) {
+#ifdef DOTHIS
+                if ( backgrnd > 0 ) {
+                  B_clrz = true;
+                  set_color256( backgrnd, true );
+                  B_clrz = true;
+                }
+#endif
+                set_color256( foregrnd, B_bkgnd );
+              } else
+                if ( B_256 ) {
+#ifdef DOTHIS
+                  if ( backgrnd > 0 ) {
+                    B_clrz = true;
+                    set_color256( backgrnd, true );
+                    B_clrz = true;
+                  }
+#endif
+                  set_color256( SEQ[clr], B_bkgnd );
+                }
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
         //      ++clr; clr %= 7;              // increment color
