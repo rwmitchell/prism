@@ -918,26 +918,11 @@ SI32 main(SI32 argc, char *argv[]) {
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
-              if ( B_ONE ) {
-#ifdef DOTHIS
-                if ( backgrnd > 0 ) {
-                  B_clrz = true;
-                  set_color256( backgrnd, true );
-                  B_clrz = true;
-                }
-#endif
+              if ( B_ONE )
                 set_color256( foregrnd, B_bkgnd );
-              } else
-                if ( B_256 ) {
-#ifdef DOTHIS
-                  if ( backgrnd > 0 ) {
-                    B_clrz = true;
-                    set_color256( backgrnd, true );
-                    B_clrz = true;
-                  }
-#endif
+              else
+                if ( B_256 )
                   set_color256( SEQ[clr], B_bkgnd );
-                }
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
         //      ++clr; clr %= 7;              // increment color
