@@ -452,11 +452,12 @@ char mygetch     ( bool set, void *buf ) {
 }
 char mybufch     ( bool set, void *buf ) {
   static char *pch;
+  char och = *pch;
 
   if ( set ) pch = (char *) buf;
-  else ++pch;
+  else pch++;
 
-  return( *pch );
+  return( och );
 }
 // "Borrowed" from lolcat.c - START
 static
@@ -829,15 +830,22 @@ SI32 main(SI32 argc, char *argv[]) {
        oclr;
 
   if ( B_tty && ! B_strip ) set_cursor( false );
-  if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
+//if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
-  for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
+//TIMOUT( "Checking stdin\n" )
+
+  bool has_stdin = RMhas_stdin( 0, 2000 );               // do only once
+
+//TIMOUT( "Checking stdin - DONE\n" )
+
+  for (; has_stdin || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     SI32 escape_state = 0;
     bool on = false;
 
-    if ( RMhas_stdin()    ) {
+    if ( has_stdin ) {
+      has_stdin = false;                                 // only do once
       buf   = (char *) RMloadstdin ( &f_sz );
       mybufch( true, buf );
       myread = mybufch;
