@@ -562,7 +562,7 @@ SI32 main(SI32 argc, char *argv[]) {
        opt,
        pal_ndx  = -1,
        longindex=  0;
-  UI16 optcnt = 1;
+//UI16 optcnt = 1;
   bool B_have_arg = true;
   extern SI32  optind,
                optopt;
@@ -811,7 +811,7 @@ SI32 main(SI32 argc, char *argv[]) {
         ++errflg;
         break;
     }
-    optcnt += B_have_arg ? 2 : 1;
+//  optcnt += B_have_arg ? 2 : 1;
     longindex = 0;   // Reset value
     has_arg = 0;
   }
