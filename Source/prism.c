@@ -34,7 +34,8 @@ FP64 offx   = 0.0,       // randomize output colors
      freq_v = 0.1;
 SI32 debug  = 0,
      ccnt   = 2;         // contiguous colors
-UI64 foregrnd = 0xFF0000;
+UI64 foregrnd = 0xFF0000,// Red
+     backgrnd = 0x000000;// Black
 
 enum { MAX_SEQ = 64 };
 SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
@@ -192,6 +193,13 @@ void set_color256( UI64 clr, bool BG) {
   if ( B_clrz ) {
     B_clrz = false;
 
+    if ( backgrnd > 0 ) {
+      SI32 r = ( backgrnd & 0xFF0000 ) >> 16,
+           g = ( backgrnd & 0x00FF00 ) >>  8,
+           b = ( backgrnd & 0x0000FF );
+      printf(  "[%d;2;%03d;%03d;%03dm", BGC, r, g, b);
+    }
+
 #define COLORS_256
 #ifdef  COLORS_256
     if ( B_bold ) printf( "[1;m");
@@ -200,6 +208,8 @@ void set_color256( UI64 clr, bool BG) {
       printf(  "[%d;2;%03d;%03d;%03dm", BGC, R, G, B);
     } else
       printf(  "[%d;2;%03d;%03d;%03dm", FGC, R, G, B);
+
+//  STDOUT( "[%03d:%03d:%03d]", R, G, B)
 
 #else
 
@@ -287,13 +297,15 @@ void show_colors ( ) {
 
   for (i=0; i<cnt; ++i ) {
     pt = altcolors[i];
+    B_clrz = true;
     set_color256( 0xFFFFFF, B_bkgnd );
     STDOUT("%2d: ", i );
     while ( ( pt=strchr( pt, '#') ) ) {
       pt++;
       hex = strtol( pt, NULL, 16 );
+      B_clrz = true;
       set_color256(    hex, B_bkgnd );
-      STDOUT("#%06lX", hex ); // fflush(stdout);
+      STDOUT("#%06lX ", hex );    // added space breaks cut/paste output into PRISM=
     }
     STDOUT("\n");
   }
@@ -447,11 +459,12 @@ char mygetch     ( bool set, void *buf ) {
 }
 char mybufch     ( bool set, void *buf ) {
   static char *pch;
+  char och = *pch;
 
   if ( set ) pch = (char *) buf;
-  else ++pch;
+  else pch++;
 
-  return( *pch );
+  return( och );
 }
 // "Borrowed" from lolcat.c - START
 static
@@ -528,10 +541,12 @@ void help        ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -F SEP : change color by field [%c]\n", FS);
   STDERR("  -t: show color palettes  [%5s]\n", TF[  B_test  ]);
   STDERR("  -T: show brightness val  [%5s]\n", TF[  B_brght ]);
+  STDERR("  -fg [HEX]: Set foreground color to single color\n" );
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
   STDERR("  -bold : set output text to bold\n");
   STDERR("  -foreground %06lX : set single color for output\n", foregrnd );
+  STDERR("  -background %06lX : set single color for output\n", backgrnd );
   STDERR("\n");
   STDERR("A custom palette can be set using the environment variable 'PRISM'. \n");
   STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
@@ -547,7 +562,7 @@ SI32 main(SI32 argc, char *argv[]) {
        opt,
        pal_ndx  = -1,
        longindex=  0;
-  UI16 optcnt = 1;
+//UI16 optcnt = 1;
   bool B_have_arg = true;
   extern SI32  optind,
                optopt;
@@ -565,9 +580,10 @@ SI32 main(SI32 argc, char *argv[]) {
     { "metal",           no_argument, NULL, 'm' },
     { "num",       required_argument, NULL, 'n' },
     { "palette",   required_argument, NULL, 'p' },  // choose a palette
-    { "backgrnd",        no_argument, NULL, 'B' },  // set background color
+    { "backgrnd",        no_argument, NULL, 'B' },  // set background color instead of foreground
     { "foreground",optional_argument, NULL, 202 },
     { "fg",        optional_argument, NULL, 202 },  // new, shorter  foreground
+    { "bg",        optional_argument, NULL, 204 },  // set background color to value
     { "bold",            no_argument, NULL, 203 },  // set bold font
     { "fix",             no_argument, NULL, 'f' },  // adjust brightness of palette selection
     { "row",             no_argument, NULL, 'r' },  // color rows instead of columns
@@ -626,6 +642,11 @@ SI32 main(SI32 argc, char *argv[]) {
     if ( optarg ) {                // only check if not null
       switch (opt) {               // check only args with possible STRING options
         case 202:
+        case 204:
+//        BUGERR( "Test -> %s: %s\n", optarg,  TF[ RMexists( "", optarg ) ] )
+          if ( RMexists( "", optarg))
+            B_have_arg = false;
+          // FallThru
         case 'd':
           if ( !optarg || *optarg == '\0' ) {
             if ( argv[optind] == NULL ) {
@@ -734,24 +755,43 @@ SI32 main(SI32 argc, char *argv[]) {
 
       case 202:
         if ( B_have_arg ) {
-          foregrnd = strtol(optarg, NULL, 16 );
-          if ( foregrnd == 0 ) {        // we didn't get a number
+//        BUGERR( "FG arg: %s\n", optarg )
+          if ( isalnum( *optarg)  ) {
+            foregrnd = strtol(optarg, NULL, 16 );
+            optind++;
+          } else {
             foregrnd = 0xFF0000;
             B_have_arg = false;
-            --optind;
+//          optind--;
           }
-        }
+        } else
+          foregrnd = 0xFF0000;
         B_ONE = true;
         break;
 
       case 203: B_bold = !B_bold; break;
+
+      case 204:
+        if ( B_have_arg ) {
+//        BUGERR( "BG arg: %s\n", optarg )
+          if ( isalnum( *optarg ) ) {
+            backgrnd = strtol(optarg, NULL, 16 );
+            optind++;
+          } else {
+            backgrnd = 0xFFFFFF;
+            B_have_arg = false;
+//          optind--;
+          }
+        } else
+            backgrnd = 0xFFFFFF;
+        break;
 
       case 'd':                      // set debug level
         if ( B_have_arg ) {
           debug |= strtol(myarg, NULL, 16 );
           if ( debug == 0 ) {        // we didn't get a number
             debug = 1;               // we could verify by checking errno, but why?
-            --optind;
+            optind--;
           }
         } else {
           BUGOUT("increasing debug(%d) by %d\n", debug, dinc );
@@ -771,7 +811,7 @@ SI32 main(SI32 argc, char *argv[]) {
         ++errflg;
         break;
     }
-    optcnt += B_have_arg ? 2 : 1;
+//  optcnt += B_have_arg ? 2 : 1;
     longindex = 0;   // Reset value
 //  has_arg = 0;      // 2025-05-10: Never read?
   }
@@ -809,13 +849,27 @@ SI32 main(SI32 argc, char *argv[]) {
        oclr;
 
   if ( B_tty && ! B_strip ) set_cursor( false );
-  if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
+//if ( optcnt >= argc ) { myread = mygetch; f_sz = 1; }  // read from stdin
 
 //if( B_wrd ) inc_bywrd( ' ', &clr, ccnt, sz_pal ); // solves space/nospace issue on first call
 
-  for (; f_sz || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
+//TIMOUT( "Checking stdin\n" )
+
+  bool has_stdin = RMhas_stdin( 0, 500000 );               // do only once
+
+//TIMOUT( "Checking stdin - DONE\n" )
+
+  for (; has_stdin || optind < argc; optind++) {         // process remainder of cmdline using argv[optind]
     SI32 escape_state = 0;
     bool on = false;
+
+    if ( has_stdin ) {
+      has_stdin = false;                                 // only do once
+      buf   = (char *) RMloadstdin ( &f_sz );
+      mybufch( true, buf );
+      myread = mybufch;
+      optind--;   // don't increment
+    } else
 
     if ( ! f_sz ) {
       buf   = (char *) RMloadfile ( argv[optind], &f_sz, false );
@@ -829,6 +883,8 @@ SI32 main(SI32 argc, char *argv[]) {
     *pch = myread( false, (void *) NULL );
     if( mode == MWRD && *pch != '\n' )
       inc_bywrd( ' ', &clr, ccnt, sz_pal );         // solves space/nospace issue on first call
+//  set_color256( backgrnd, true );
+    B_clrz = true;
     while ( *pch > 0
 #ifndef __APPLE__
         && *pch < 255
@@ -862,9 +918,11 @@ SI32 main(SI32 argc, char *argv[]) {
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
-              if ( B_ONE ) set_color256( foregrnd, B_bkgnd );
+              if ( B_ONE )
+                set_color256( foregrnd, B_bkgnd );
               else
-              if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
+                if ( B_256 )
+                  set_color256( SEQ[clr], B_bkgnd );
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
         //      ++clr; clr %= 7;              // increment color
