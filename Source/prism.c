@@ -754,8 +754,21 @@ SI32 main(SI32 argc, char *argv[]) {
                 break;
 
       case 202:
-        if ( B_have_arg ) {
-//        BUGERR( "FG arg: %s\n", optarg )
+        {
+          char *t = NULL;                          // declaration cannot directly follow case:
+          if ( B_have_arg ) {
+//          BUGERR( "FG arg: %s\n", optarg )
+            t = RMmalloc( t, strlen( optarg )+2 );
+            if ( *optarg != '#' ) *t='#';          // str2hex() requires leading '#'
+            else                  *t=' ';
+            strcpy( t+1, optarg );
+            optind++;
+          } else {
+            t="#FF0000";                           // supply default color
+          }
+          sz_pal = str2hex( t, palette );
+        }
+#ifdef  OLD_METHOD
           if ( isalnum( *optarg)  ) {
             foregrnd = strtol(optarg, NULL, 16 );
             optind++;
@@ -767,6 +780,7 @@ SI32 main(SI32 argc, char *argv[]) {
         } else
           foregrnd = 0xFF0000;
         B_ONE = true;
+#endif
         break;
 
       case 203: B_bold = !B_bold; break;
