@@ -34,8 +34,8 @@ FP64 offx   = 0.0,       // randomize output colors
      freq_v = 0.1;
 SI32 debug  = 0,
      ccnt   = 2;         // contiguous colors
-UI64 foregrnd = 0xFF0000,// Red
-     backgrnd = 0x000000;// Black
+UI64  backgrnd = 0x000000;  // Black
+char *foregrnd = "#FF0000"; // Red
 
 enum { MAX_SEQ = 64 };
 SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
@@ -44,7 +44,6 @@ SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 
 bool
      B_256   = true,
-     B_ONE   = false,    // output a single color
      B_clrz  = true,     // output colorize sequence
      B_bold  = false,
      B_align = false,
@@ -545,8 +544,8 @@ void help        ( char *progname, const char *opt, struct option lopts[] ) {
   STDERR("  -d INTEGER    (%d)\n", debug );
   STDERR("\n");
   STDERR("  -bold : set output text to bold\n");
-  STDERR("  -foreground %06lX : set single color for output\n", foregrnd );
-  STDERR("  -background %06lX : set single color for output\n", backgrnd );
+  STDERR("  -foreground %s : set colors for output\n",           foregrnd );
+  STDERR("  -background  %06lX : set single color for output\n", backgrnd );
   STDERR("\n");
   STDERR("A custom palette can be set using the environment variable 'PRISM'. \n");
   STDERR("Ex: export PRISM=\"#00FF00#00E000#00C000#00A000#008000\"\n");
@@ -755,32 +754,16 @@ SI32 main(SI32 argc, char *argv[]) {
 
       case 202:
         {
-          char *t = NULL;                          // declaration cannot directly follow case:
           if ( B_have_arg ) {
 //          BUGERR( "FG arg: %s\n", optarg )
-            t = RMmalloc( t, strlen( optarg )+2 );
-            if ( *optarg != '#' ) *t='#';          // str2hex() requires leading '#'
-            else                  *t=' ';
-            strcpy( t+1, optarg );
+            foregrnd = RMmalloc( foregrnd, strlen( optarg )+2 );
+            if ( *optarg != '#' ) *foregrnd='#';          // str2hex() requires leading '#'
+            else                  *foregrnd=' ';
+            strcpy( foregrnd+1, optarg );
             optind++;
-          } else {
-            t="#FF0000";                           // supply default color
           }
-          sz_pal = str2hex( t, palette );
+          sz_pal = str2hex( foregrnd, palette );
         }
-#ifdef  OLD_METHOD
-          if ( isalnum( *optarg)  ) {
-            foregrnd = strtol(optarg, NULL, 16 );
-            optind++;
-          } else {
-            foregrnd = 0xFF0000;
-            B_have_arg = false;
-//          optind--;
-          }
-        } else
-          foregrnd = 0xFF0000;
-        B_ONE = true;
-#endif
         break;
 
       case 203: B_bold = !B_bold; break;
@@ -915,28 +898,23 @@ SI32 main(SI32 argc, char *argv[]) {
           if ( B_strip ) printf( "%c", *pch );
           else {
 
-            if ( B_ONE )
-                clr = B_clrz;
-            else {
-              oclr = clr;
-              switch ( mode ) {
-                case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
-                case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
-                case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
-                case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
-                case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
-                case MLOL: inc_bylol( *pch, &clr ); break;
-              }
-              if ( oclr != clr ) B_clrz = true;
+            oclr = clr;
+            switch ( mode ) {
+              case MCOL: inc_bycol( *pch, &clr, ccnt, sz_seq ); break;
+              case MROW: inc_byrow( *pch, &clr, ccnt, sz_seq ); break;
+              case MWRD: inc_bywrd( *pch, &clr, ccnt, sz_seq ); break;
+              case MPAR: inc_bypar( *pch, &clr, ccnt, sz_seq ); break;
+              case MFLD: inc_byfld( *pch, &clr, ccnt, sz_seq ); break;
+              case MLOL: inc_bylol( *pch, &clr ); break;
             }
+            if ( oclr != clr ) B_clrz = true;
 
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
-              if ( B_ONE )
-                set_color256( foregrnd, B_bkgnd );
-              else
-                if ( B_256 )
-                  set_color256( SEQ[clr], B_bkgnd );
+
+              if ( B_256 )
+                set_color256( SEQ[clr], B_bkgnd );
+
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
         //      ++clr; clr %= 7;              // increment color
