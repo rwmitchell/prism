@@ -810,7 +810,7 @@ SI32 main(SI32 argc, char *argv[]) {
     }
 //  optcnt += B_have_arg ? 2 : 1;
     longindex = 0;   // Reset value
-    has_arg = 0;
+//  has_arg = 0;      // 2025-05-10: Never read?
   }
 
   if (errflg) help(argv[0], opts, longopts);
