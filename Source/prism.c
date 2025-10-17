@@ -951,5 +951,9 @@ SI32 main(SI32 argc, char *argv[]) {
   // Outputting a newline DOES but adds an extra line of output
 //printf("\e[49mReset Background\n");
 //STDOUT( "\n" )
+
+    // 2025-10-17: MAGIC to resetting BG color, [K is clear to end
+    printf( "\e[49m\e[K" );
+
   exit(0);
 }
