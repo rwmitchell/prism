@@ -40,12 +40,12 @@ char *foregrnd = "#FF0000"; // Red
 enum { MAX_SEQ = 64 };
 SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
      sz_seq =   0,
+     mlen   =   0,       // max line length
      ncol   = 999;       // max columns to color
 
 bool
      B_256   = true,
      B_clrz  = true,     // output colorize sequence
-     B_clrz2 = true,     // output colorize sequence again if "\n\n" sequence
      B_bold  = false,
      B_align = false,
      B_bkgnd = false,
@@ -369,6 +369,7 @@ void inc_bypar   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
 void inc_byrow   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   static SI32 cnt = 0,
               och = 0,
+              pos = 0,
               row = 0;
 
   if ( *val == -1    )    *val = cnt = 0;
@@ -378,11 +379,25 @@ void inc_byrow   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   if ( ch == '\n' ) {
     cnt++;
     row++;
-    printf( "[0K");                        // 2025-10-21: this is correct, for here
 
-    if ( och == '\n' )
-      B_clrz2 = true;
-  }
+    while ( pos < mlen ) { printf(" "); pos++;  }  // pad to width
+    printf( "\e[49m\e[K");
+    pos = 0;
+
+    B_clrz = true;
+    set_color256( SEQ[*val], B_bkgnd );
+
+    if ( och == '\n') {
+      printf( "\r\e[0K" );
+
+      while ( pos < mlen ) { printf(" "); pos++;  }  // pad to width
+      printf( "\e[49m\e[K");
+      pos = 0;
+    }
+
+//  printf( "[0K");                        // 2025-10-21: this was correct, for here
+
+  } else pos++;
   och = ch;
   if ( row > ncol ) *val = -1;
 }
@@ -880,6 +895,19 @@ SI32 main(SI32 argc, char *argv[]) {
       myread = mybufch;
     }
 
+    mlen     = 0;      // reset for new buffer
+
+    // Find longest line length
+    SI32 len = 0;
+    pch = ( char *) buf;
+    while ( *pch > 0 ) {
+      if ( *pch == '\n' ) { mlen = MAX( len, mlen ); len = 0; }
+      else len++;
+      pch++;
+    }
+//  STDERR( "MLEN: %d\n", mlen );
+
+
     if ( !B_strip ) reset_attr();                                   // clear any cruft
 
     pch = &ch;
@@ -918,23 +946,7 @@ SI32 main(SI32 argc, char *argv[]) {
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
 
-              if ( B_256 ) {
-                set_color256( SEQ[clr], B_bkgnd );
-
-                // 2025-10-21: B_clrz2 set in inc_byrow when 2 \n's are together
-                // this fixes an issue where the first line after a color change
-                // where that line only has a \n, that line is in the same color
-                // as the previous line, ie: it didn't change.
-                // this forces the color to change.
-                // this is all being done to improve greenbar output
-                if ( B_clrz2 ) {
-                  B_clrz  = true;
-                  B_clrz2 = false;
-                  printf( "\e[K" );
-                  set_color256( SEQ[clr], B_bkgnd );
-                }
-              }
-
+              if ( B_256 ) set_color256( SEQ[clr], B_bkgnd );
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
         //      ++clr; clr %= 7;              // increment color
@@ -967,7 +979,7 @@ SI32 main(SI32 argc, char *argv[]) {
   if ( B_tty  ) set_cursor( true  );
 
     // 2025-10-17: MAGIC to resetting BG color
-    // [49m resets background 
+    // [49m resets background
     // [K is clear to end
   if (!B_strip)  printf( "\e[49m\e[K" );
 
