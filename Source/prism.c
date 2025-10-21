@@ -45,6 +45,7 @@ SI32 SEQ[]  = { [0 ... MAX_SEQ] = -1 },
 bool
      B_256   = true,
      B_clrz  = true,     // output colorize sequence
+     B_clrz2 = true,     // output colorize sequence again if "\n\n" sequence
      B_bold  = false,
      B_align = false,
      B_bkgnd = false,
@@ -360,13 +361,14 @@ void inc_bypar   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   if ( ch == '\n' && och == '\n' ) {
     cnt++;
     par++;
-    printf( "[0K");
+    printf( "[0K" );
   }
   och = ch;
   if ( par >= ncol ) *val = -1;
 }
 void inc_byrow   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   static SI32 cnt = 0,
+              och = 0,
               row = 0;
 
   if ( *val == -1    )    *val = cnt = 0;
@@ -376,8 +378,12 @@ void inc_byrow   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
   if ( ch == '\n' ) {
     cnt++;
     row++;
-    printf( "[0K");
+    printf( "[0K");                        // 2025-10-21: this is correct, for here
+
+    if ( och == '\n' )
+      B_clrz2 = true;
   }
+  och = ch;
   if ( row > ncol ) *val = -1;
 }
 void inc_byfld   ( char ch, SI32 *val, UI16 cycle, SI32 max ) {
@@ -912,8 +918,22 @@ SI32 main(SI32 argc, char *argv[]) {
             if ( clr == -1 ) { reset_attr(); on = false; escape_state = 0; }
             else {
 
-              if ( B_256 )
+              if ( B_256 ) {
                 set_color256( SEQ[clr], B_bkgnd );
+
+                // 2025-10-21: B_clrz2 set in inc_byrow when 2 \n's are together
+                // this fixes an issue where the first line after a color change
+                // where that line only has a \n, that line is in the same color
+                // as the previous line, ie: it didn't change.
+                // this forces the color to change.
+                // this is all being done to improve greenbar output
+                if ( B_clrz2 ) {
+                  B_clrz  = true;
+                  B_clrz2 = false;
+                  printf( "\e[K" );
+                  set_color256( SEQ[clr], B_bkgnd );
+                }
+              }
 
               else {
                 if ( mode != MLOL ) set_color8  ( stl, clr );
@@ -944,16 +964,12 @@ SI32 main(SI32 argc, char *argv[]) {
     if ( buf  ) { free( buf  ); buf = NULL; }
   }                                         // for optind
 
-  if ( B_tty ) set_cursor( true  );
-  // 2025-02-25: failed attempt to reset greenbar background color
-  // next line of output's background AFTER prism will be in prism's background color
-  // Resetting with 49m or 0m does NOT fix it.
-  // Outputting a newline DOES but adds an extra line of output
-//printf("\e[49mReset Background\n");
-//STDOUT( "\n" )
+  if ( B_tty  ) set_cursor( true  );
 
-    // 2025-10-17: MAGIC to resetting BG color, [K is clear to end
-    printf( "\e[49m\e[K" );
+    // 2025-10-17: MAGIC to resetting BG color
+    // [49m resets background 
+    // [K is clear to end
+  if (!B_strip)  printf( "\e[49m\e[K" );
 
   exit(0);
 }
